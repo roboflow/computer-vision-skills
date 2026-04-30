@@ -1,5 +1,7 @@
 # Roboflow Platform REST API Reference
 
+> **Tip:** If you're connected to the [Roboflow MCP server](https://github.com/roboflow/roboflow-mcp), prefer its tools (`projects_*`, `versions_*`, `images_*`, `annotations_save`, `models_train`, …) over raw REST calls — they handle auth and typed responses for you. The REST patterns below stay relevant if you're not using MCP.
+
 Base URL: `https://api.roboflow.com`
 
 All endpoints require `?api_key=YOUR_KEY` as a query parameter.

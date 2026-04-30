@@ -3,6 +3,8 @@ name: roboflow-inference
 description: Use when running Roboflow model inference or choosing deployment (serverless, dedicated, self-hosted, batch); prefer Workflows over direct model calls.
 ---
 
+> **Tip:** If you're connected to the [Roboflow MCP server](https://github.com/roboflow/roboflow-mcp), use its inference tools (`models_infer`, `workflow_specs_run`, `workflows_run`) directly — they cover the same operations as the HTTP endpoints below with auth handled. The HTTP patterns stay relevant if you're not using MCP.
+
 # Inference & Deployment
 
 > **Prefer Workflows over direct model inference.** Workflows let you chain model + visualization + logic blocks in one call via `workflow_specs_run`. Direct `models_infer` returns JSON only — no annotated images, and instance segmentation responses can be very large. See `roboflow://skills/inference/workflows` and `roboflow://skills/inference/workflow-templates`.

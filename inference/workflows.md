@@ -1,5 +1,7 @@
 # Workflows
 
+> **Tip:** If you're connected to the [Roboflow MCP server](https://github.com/roboflow/roboflow-mcp), use `workflow_specs_run` (run a spec ad-hoc) or `workflows_run` (run a saved workflow) instead of raw HTTP — they return annotated images alongside JSON. The HTTP patterns stay relevant if you're not using MCP.
+
 ## What Are Workflows
 
 Composable, multi-step computer vision pipelines built in a visual editor. Chain models, logic, visualization, and integrations into a single deployable unit.

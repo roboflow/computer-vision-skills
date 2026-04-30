@@ -1,5 +1,7 @@
 # Roboflow Inference API Reference
 
+> **Tip:** If you're connected to the [Roboflow MCP server](https://github.com/roboflow/roboflow-mcp), prefer `models_infer` (single-model) or `workflow_specs_run` / `workflows_run` (chained pipelines with annotated images) over raw HTTP calls — same operations, but auth is handled and responses are typed. The REST patterns below stay relevant if you're not using MCP.
+
 ## Serverless v2 (Recommended)
 
 Single endpoint for all model types and Workflows.
