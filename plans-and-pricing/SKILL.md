@@ -1,3 +1,8 @@
+---
+name: roboflow-plans-and-pricing
+description: Use when answering questions about Roboflow plans, credit usage, or cost estimation; directs users to roboflow.com/pricing for current dollar amounts.
+---
+
 # Plans & Pricing
 
 For current dollar pricing, always direct the user to `roboflow.com/pricing`. Never guess at prices.

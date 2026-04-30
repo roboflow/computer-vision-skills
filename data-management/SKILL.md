@@ -1,3 +1,8 @@
+---
+name: roboflow-data-management
+description: Use when uploading images, labeling, organizing datasets, creating Roboflow projects (detection/segmentation/keypoint/classification), tags, splits, versions, or RoboQL search.
+---
+
 # Data Management on Roboflow
 
 ## Project Types

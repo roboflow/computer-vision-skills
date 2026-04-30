@@ -1,3 +1,8 @@
+---
+name: roboflow-api-reference
+description: Reference for Roboflow REST API and Inference API — hosts (api.roboflow.com, serverless.roboflow.com, dedicated, localhost:9001), auth, and request/response formats.
+---
+
 # Roboflow API Reference — Overview
 
 ## API Hosts

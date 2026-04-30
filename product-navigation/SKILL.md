@@ -1,3 +1,8 @@
+---
+name: roboflow-product-navigation
+description: Use when explaining where Roboflow features live in the app.roboflow.com web app, mapping intents like upload, annotate, train, deploy to specific page URLs.
+---
+
 # Roboflow Web App Navigation
 
 Base URL: `https://app.roboflow.com`

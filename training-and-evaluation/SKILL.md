@@ -1,3 +1,8 @@
+---
+name: roboflow-training-and-evaluation
+description: Use when training Roboflow models or improving accuracy - covers architecture selection, model IDs, checkpoints, evaluation metrics, and the iterative improvement playbook.
+---
+
 # Training & Evaluation on Roboflow
 
 ## Training Flow

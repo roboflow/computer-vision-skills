@@ -1,3 +1,8 @@
+---
+name: roboflow-universe
+description: Use when searching for or using public datasets/models on Roboflow Universe (universe.roboflow.com), the open repository of 1M+ computer vision datasets and 50K+ pre-trained models.
+---
+
 # Roboflow Universe
 
 Open repository of 1M+ computer vision datasets and 50K+ pre-trained models at `universe.roboflow.com`.
