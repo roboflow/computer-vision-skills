@@ -1,0 +1,157 @@
+{
+  "name": "smoke",
+  "description": "Core Roboflow skill behaviors that should not regress.",
+  "cases": [
+    {
+      "id": "inference-segmentation-visualization",
+      "prompt": "I have an instance segmentation model and want an annotated image back, not a huge JSON polygon response. What should I use?",
+      "expected": {
+        "must_include": [
+          "Workflows",
+          "workflow_specs_run"
+        ],
+        "must_include_any": [
+          [
+            "visualization",
+            "annotated image"
+          ]
+        ],
+        "must_not_include": [
+          "models_infer as the primary"
+        ]
+      }
+    },
+    {
+      "id": "mcp-preferred-over-raw-rest",
+      "prompt": "I am connected to the Roboflow MCP server and need to run a saved workflow on a few images. Should I write raw REST code or use a tool?",
+      "expected": {
+        "must_include": [
+          "MCP",
+          "workflows_run"
+        ],
+        "must_not_include": [
+          "curl https://serverless.roboflow.com",
+          "api_key=YOUR_KEY"
+        ]
+      }
+    },
+    {
+      "id": "rapid-exclusion-ocr",
+      "prompt": "I want to detect serial numbers and printed text on product labels. Should I use Roboflow Rapid?",
+      "expected": {
+        "must_include": [
+          "Rapid",
+          "OCR"
+        ],
+        "must_include_any": [
+          [
+            "custom training",
+            "fine-tuned"
+          ],
+          [
+            "RF-DETR",
+            "rfdetr"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "training-model-id-rfdetr",
+      "prompt": "For a custom object detection model where accuracy matters more than speed, which Roboflow training model family and model_id should I pick?",
+      "expected": {
+        "must_include": [
+          "RF-DETR"
+        ],
+        "must_include_any": [
+          [
+            "rfdetr-large",
+            "rfdetr-xlarge",
+            "rfdetr-2xlarge"
+          ]
+        ],
+        "must_not_include": [
+          "rf-detr-large",
+          "rfdetr-xl"
+        ]
+      }
+    },
+    {
+      "id": "universe-checkpoint-flow",
+      "prompt": "I found a relevant model on Roboflow Universe. How do I use it as a starting point for my own project?",
+      "expected": {
+        "must_include": [
+          "Universe",
+          "checkpoint"
+        ],
+        "must_include_any": [
+          [
+            "star",
+            "fork"
+          ],
+          [
+            "models_infer",
+            "universe_search"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "data-upload-split",
+      "prompt": "I have a local folder of images and want to upload them into Roboflow with train/valid/test splits. What should the agent recommend?",
+      "expected": {
+        "must_include": [
+          "split"
+        ],
+        "must_include_any": [
+          [
+            "project.upload",
+            "images_prepare_upload"
+          ],
+          [
+            "train",
+            "valid",
+            "test"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "pricing-current-dollar-amounts",
+      "prompt": "How much does Roboflow cost right now? Give me exact dollar amounts if you know them.",
+      "expected": {
+        "must_include": [
+          "roboflow.com/pricing"
+        ],
+        "must_include_any": [
+          [
+            "current",
+            "latest"
+          ],
+          [
+            "verify",
+            "pricing page"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "product-navigation-upload-page",
+      "prompt": "Where in the Roboflow web app do I upload images for an existing project?",
+      "expected": {
+        "must_include": [
+          "upload"
+        ],
+        "must_include_any": [
+          [
+            "/{ws}/{proj}/upload",
+            "/upload"
+          ],
+          [
+            "Upload",
+            "Images"
+          ]
+        ]
+      }
+    }
+  ]
+}

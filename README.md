@@ -55,6 +55,34 @@ See [`vercel-labs/skills`](https://github.com/vercel-labs/skills) for the full C
 - **training-and-evaluation**: training models and improving accuracy
 - **universe**: searching and using Roboflow Universe
 
+## Evals
+
+This repo includes a lightweight eval harness for skill changes. Cases live in [`evals/cases/`](evals/cases/) and compare agent responses against expected and forbidden phrases.
+
+List the smoke cases:
+
+```bash
+make eval-list
+```
+
+Preview the agent commands without running them:
+
+```bash
+make eval-dry-run AGENT=claude
+```
+
+Run the smoke suite against the current checkout:
+
+```bash
+make eval AGENT=claude SUITE=smoke
+```
+
+Compare two refs after the plugin layout exists on both refs:
+
+```bash
+make eval BASE=main CANDIDATE=HEAD AGENT=claude SUITE=smoke
+```
+
 ## MCP and skills
 
 The [Roboflow MCP server](https://mcp.roboflow.com/) should expose live tools for projects, images, annotations, versions, models, Workflows, Universe, and feedback. This plugin should own the expert guidance in skills.

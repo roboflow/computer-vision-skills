@@ -1,0 +1,5 @@
+.claude/settings.local.json
+.idea/
+evals/runs/
+__pycache__/
+*.pyc
