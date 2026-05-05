@@ -1,0 +1,16 @@
+{
+  "name": "computer-vision-skills",
+  "version": "1.0.0",
+  "description": "Roboflow and computer vision skills for Codex — API reference, inference, data management, training, evaluation, and Roboflow Universe.",
+  "author": {
+    "name": "Roboflow",
+    "url": "https://roboflow.com"
+  },
+  "homepage": "https://github.com/roboflow/computer-vision-skills",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.codex.json",
+  "interface": {
+    "displayName": "Computer Vision Skills",
+    "category": "Developer Tools"
+  }
+}

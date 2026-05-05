@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "roboflow": {
+      "type": "http",
+      "url": "https://mcp.roboflow.com/mcp",
+      "headers": {
+        "x-api-key": "$ROBOFLOW_API_KEY",
+        "Accept": "application/json, text/event-stream"
+      }
+    }
+  }
+}
