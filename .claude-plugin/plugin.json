@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "computer-vision-skills",
+  "version": "1.0.0",
+  "description": "Roboflow and computer vision skills for Claude Code — API reference, inference, data management, training, evaluation, and Roboflow Universe.",
+  "author": {
+    "name": "Roboflow",
+    "url": "https://roboflow.com"
+  },
+  "homepage": "https://github.com/roboflow/computer-vision-skills",
+  "repository": "https://github.com/roboflow/computer-vision-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "computer-vision",
+    "roboflow",
+    "inference",
+    "object-detection",
+    "machine-learning",
+    "dataset",
+    "training"
+  ]
+}
