@@ -7,7 +7,7 @@ description: Use when running Roboflow model inference or choosing deployment (s
 
 # Inference & Deployment
 
-> **Prefer Workflows over direct model inference.** Workflows let you chain model + visualization + logic blocks in one call via `workflow_specs_run`. Direct `models_infer` returns JSON only — no annotated images, and instance segmentation responses can be very large. See `roboflow://skills/inference/workflows` and `roboflow://skills/inference/workflow-templates`.
+> **Prefer Workflows over direct model inference.** Workflows let you chain model + visualization + logic blocks in one call via `workflow_specs_run`. Direct `models_infer` returns JSON only — no annotated images, and instance segmentation responses can be very large. See [workflows.md](./workflows.md) and [workflow-templates.md](./workflow-templates.md).
 
 ## Deployment Options
 

@@ -1,6 +1,7 @@
 ---
 name: roboflow-api-reference
 description: Reference for Roboflow REST API and Inference API — hosts (api.roboflow.com, serverless.roboflow.com, dedicated, localhost:9001), auth, and request/response formats.
+when_to_use: Use when making raw REST or Inference API calls to Roboflow, debugging API authentication, selecting the right SDK or host, or building integrations without the Roboflow MCP server.
 ---
 
 > **Tip:** If you're connected to the [Roboflow MCP server](https://github.com/roboflow/roboflow-mcp), prefer its tools (`projects_*`, `versions_*`, `models_*`, `workflows_*`, `images_*`, …) over raw REST calls — they handle auth, pagination, and typed responses for you. The REST patterns below stay relevant if you're not using MCP.
@@ -84,5 +85,5 @@ result = model.predict("image.jpg", confidence=40).json()
 
 ## Related Pages
 
-- `roboflow://skills/api-reference/inference` — inference URL patterns, request/response formats
-- `roboflow://skills/api-reference/rest-api` — platform REST API endpoints (CRUD, upload, training)
+- [inference.md](./inference.md) — inference URL patterns, request/response formats
+- [rest-api.md](./rest-api.md) — platform REST API endpoints (CRUD, upload, training)

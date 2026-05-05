@@ -62,7 +62,7 @@ POST https://<deployment-name>.roboflow.cloud/{projectId}/{versionNumber}
 
 ### Visualization
 
-The recommended approach for visualization is **Workflows** — use `workflow_specs_run` with a visualization block (Bounding Box, Label, Mask, etc.). This gives you full control over rendering and works reliably across all model types. See `roboflow://skills/inference/workflows`.
+The recommended approach for visualization is **Workflows** — use `workflow_specs_run` with a visualization block (Bounding Box, Label, Mask, etc.). This gives you full control over rendering and works reliably across all model types. See [inference/workflows.md](../inference/workflows.md).
 
 ## Response Shapes
 

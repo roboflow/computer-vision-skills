@@ -18,5 +18,14 @@
     "machine-learning",
     "dataset",
     "training"
-  ]
+  ],
+  "userConfig": {
+    "roboflow_api_key": {
+      "type": "string",
+      "title": "Roboflow API key",
+      "description": "Workspace API key — find it at app.roboflow.com/{workspace}/settings/api",
+      "sensitive": true,
+      "required": true
+    }
+  }
 }

@@ -147,5 +147,5 @@ Returns: name, url, type, classes, classCount, images, description, tags, licens
 
 ## Related Skills
 
-- `roboflow://skills/data-management/index` — managing datasets after import
-- `roboflow://skills/training-and-evaluation/index` — training on forked data
+- [data-management](../data-management/SKILL.md) — managing datasets after import
+- [training-and-evaluation](../training-and-evaluation/SKILL.md) — training on forked data
