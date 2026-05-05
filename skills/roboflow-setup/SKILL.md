@@ -61,11 +61,13 @@ Keys are **workspace-scoped**. Use a different key per workspace to isolate proj
 
 ## Auth methods
 
-| Method | Scope | How |
-|--------|-------|-----|
-| `.env` file | Per project (gitignored) | Run this skill with your key |
-| Plugin settings | Global | `claude plugin configure computer-vision-skills` |
-| Scope-local install | Per project | `claude plugin install computer-vision-skills --scope local` then configure |
-| Shell env var | Session | `export ROBOFLOW_API_KEY=xxx` |
+| Method | Agent | Scope | How |
+|--------|-------|-------|-----|
+| `.env` file | Both | Per project (gitignored) | Run this skill with your key |
+| Shell env var | Both | Session | `export ROBOFLOW_API_KEY=xxx` |
+| Plugin settings (Claude Code) | Claude Code | Global | `claude plugin configure computer-vision-skills` |
+| Scope-local install (Claude Code) | Claude Code | Per project | `claude plugin install computer-vision-skills --scope local` then configure |
 
-**Per-project isolation:** `--scope local` stores plugin settings in `.claude/settings.local.json` (gitignored). Each project gets independent plugin config including its own API key.
+**Claude Code per-project isolation:** `--scope local` stores plugin settings in `.claude/settings.local.json` (gitignored). Each project gets independent plugin config including its own API key.
+
+**Codex per-project isolation:** write `ROBOFLOW_API_KEY` to `.env` (this skill) or set it in your shell profile per project directory.

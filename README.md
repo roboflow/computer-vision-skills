@@ -4,6 +4,25 @@ Agent-ready Skills for Roboflow and general computer vision workflows, covering 
 
 Each directory under `skills/` is a Skill: expert knowledge packaged for AI agents (Claude Code, Cursor, Codex, OpenCode, and others). Skills follow the [Agent Skills](https://code.claude.com/docs/en/skills) convention: a `SKILL.md` with YAML frontmatter (`name`, `description`) plus optional supporting markdown pages.
 
+## Install as a Codex Plugin
+
+```bash
+# Test locally
+codex --plugin-dir ./path/to/computer-vision-skills
+
+# Install from marketplace
+codex plugin install computer-vision-skills@<marketplace-name>
+```
+
+Set your API key before starting Codex (the plugin reads `$ROBOFLOW_API_KEY`):
+
+```bash
+export ROBOFLOW_API_KEY=your_key
+# or use the roboflow-setup skill to write it to .env
+```
+
+The plugin auto-connects the Roboflow MCP server and loads all 8 skills.
+
 ## Install as a Claude Code Plugin
 
 This repo is a Claude Code plugin. Install it from the [Claude Code marketplace](https://claude.ai/settings/plugins) or run it locally for development:
