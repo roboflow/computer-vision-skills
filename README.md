@@ -1,10 +1,33 @@
-# Roboflow and Computer Vision Skills
+# Roboflow Agent Plugin
 
-Agent-ready Skills for Roboflow and general computer vision workflows, covering data management, training, evaluation, inference, model selection, and Roboflow-specific topics like the platform APIs, Universe, and plans.
+Agent-ready Roboflow skills plus MCP configuration for computer vision workflows: data management, training, evaluation, inference, model selection, Workflows, Universe, plans, and Roboflow platform APIs.
 
-Each top-level directory is a Skill: expert knowledge packaged for AI agents (Claude Code, Cursor, Codex, OpenCode, and others). Skills follow the [Agent Skills](https://code.claude.com/docs/en/skills) convention: a `SKILL.md` with YAML frontmatter (`name`, `description`) plus optional supporting markdown pages.
+This repository is a plugin-shaped source of truth for AI agents (Claude Code, Codex, Cursor, OpenCode, and others). The canonical skill content lives in [`skills/`](skills/); plugin manifests point at those files instead of copying them elsewhere.
 
-## Install with `npx skills`
+## Install as a plugin
+
+The repo includes both plugin manifests:
+
+- Codex: [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json)
+- Claude Code: [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json)
+
+Both manifests load skills from [`skills/`](skills/) and bundle the Roboflow MCP server config from [`.mcp.json`](.mcp.json).
+
+Set your Roboflow API key in the environment used by your agent before enabling the plugin:
+
+```bash
+export ROBOFLOW_API_KEY=YOUR_ROBOFLOW_API_KEY
+```
+
+The bundled MCP server connects to `https://mcp.roboflow.com/mcp` and sends the API key as the `x-api-key` header.
+
+For local Claude Code plugin testing:
+
+```bash
+claude --plugin-dir .
+```
+
+## Install standalone skills
 
 Install all skills:
 
@@ -32,13 +55,19 @@ See [`vercel-labs/skills`](https://github.com/vercel-labs/skills) for the full C
 - **training-and-evaluation**: training models and improving accuracy
 - **universe**: searching and using Roboflow Universe
 
-## Also exposed via MCP
+## MCP and skills
 
-These same skills are served as MCP resources by the [Roboflow MCP server](https://github.com/roboflow/roboflow-mcp) under URIs like `roboflow://skills/<skill>/SKILL`. Connected MCP clients can browse and read them on demand without installing anything locally.
+The [Roboflow MCP server](https://mcp.roboflow.com/) should expose live tools for projects, images, annotations, versions, models, Workflows, Universe, and feedback. This plugin should own the expert guidance in skills.
+
+That separation keeps the install model simple:
+
+- MCP server: live Roboflow tools and authenticated API access
+- Plugin skills: durable product guidance and workflow playbooks
+- This repo: canonical source for skill updates and plugin distribution
 
 ## Contributing
 
-Skills are markdown. Open a PR with edits or a new skill folder. Each new skill must have a `SKILL.md` at its root with `name` and `description` frontmatter.
+Skills are markdown. Open a PR with edits or a new folder under [`skills/`](skills/). Each new skill must have a `SKILL.md` at its root with `name` and `description` frontmatter.
 
 ## License
 

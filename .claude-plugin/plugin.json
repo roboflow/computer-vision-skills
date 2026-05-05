@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "roboflow",
+  "version": "0.1.0",
+  "description": "Roboflow computer vision skills and MCP tools for datasets, annotation, training, workflows, inference, and deployment.",
+  "author": {
+    "name": "Roboflow",
+    "url": "https://roboflow.com/"
+  },
+  "homepage": "https://roboflow.com/",
+  "repository": "https://github.com/roboflow/computer-vision-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "roboflow",
+    "computer-vision",
+    "datasets",
+    "annotation",
+    "training",
+    "inference",
+    "workflows",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}
