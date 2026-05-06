@@ -37,6 +37,12 @@ description: Use when running Roboflow model inference or choosing deployment (s
 | `workflows_run` | Run a saved workflow on images |
 | `workflow_specs_run` | Run an inline workflow definition (no save needed) |
 
+## Local tooling: when MCP isn't enough
+
+For most operations, prefer the Roboflow MCP tools above — they handle auth and need nothing installed locally. Reach for local Python packages only for the gaps: **integration scripts** (`inference-sdk`), **Batch Processing / Data Staging** (`inference-cli`), the **self-hosted server** (`inference-cli`), and asset scripts that need typed Python objects.
+
+See [`local-tooling`](local-tooling.md) for what to install for which use case, the recommended `uv`-based env setup, conda / venv fallbacks, and common pitfalls.
+
 ## Response Shapes by Task
 
 ### Object Detection
