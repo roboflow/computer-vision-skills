@@ -13,6 +13,18 @@ Reach for local Python packages only when an operation has no MCP equivalent.
 | **Self-hosted inference server** (Docker, on-prem, edge) | `inference-cli` | `inference server start` |
 | Asset scripts that need typed Python objects (e.g. [`assets/poll_batch_job.py`](assets/poll_batch_job.py)) | `inference-cli` | `from inference_cli.lib.roboflow_cloud…` |
 
+## Confirm the target env with the user first
+
+**Before installing anything, ask which Python env to install into — the user owns that decision.** Don't assume `uv`, conda, or venv based on what looks cleanest; an agent that silently picks an env can pollute the system Python, break a pre-existing project env, or duplicate dependencies the user already has.
+
+Ask (or infer from explicit prior signals like `CLAUDE.md`/memory) and always(!) confirm:
+
+- Is there an existing project env to reuse? (look for `.venv/`, `pyproject.toml` + `uv.lock`, an active conda env, an `environment.yml`)
+- If creating a new env, which manager — `uv`, conda, or stdlib `venv`?
+- Which Python version, if not already pinned?
+
+Only after the user has confirmed should you run `pip install` / `uv pip install` / `conda install`. The recommendations below are defaults to *propose*, not defaults to *act on*.
+
 ## Recommended setup: `uv`
 
 [uv](https://docs.astral.sh/uv/) is the recommended Python package + env manager for these tools. Fast, reproducible, no boilerplate. Default to `uv` unless the user explicitly asks for something else.
@@ -73,6 +85,24 @@ pip install inference-sdk inference-cli
 ```
 
 In all cases: **never install into the system Python or a pre-existing shared env**. Both packages have heavy dependency trees that conflict easily with unrelated projects.
+
+## Self-hosted server: Docker prerequisite
+
+`inference server start` / `stop` / `status` are thin wrappers around Docker — they pull and run the `roboflow/roboflow-inference-server-*` image. **Before invoking any of them, verify Docker is installed and the daemon is running.** Don't just `pip install inference-cli` and assume the server will come up.
+
+Quick check:
+
+```bash
+docker info --format '{{.ServerVersion}}'   # exits 0 only if the daemon is reachable
+```
+
+Note: `inference server start` itself will detect the running container, agent should just check if Docker daemon is running.
+
+If it fails:
+
+- **Not installed** — point the user to Docker Desktop (macOS/Windows) or the appropriate `docker-ce` package (Linux). Don't install Docker silently; it's a system-level dependency the user owns.
+- **Installed but daemon not running** — on macOS/Windows, ask the user to launch Docker Desktop; on Linux, `sudo systemctl start docker` (or rootless equivalent - but ALWAYS ASK FOR CONFIRMATION OF SUCH OPERATION). Wait for the daemon before retrying.
+- **Permission denied on the socket** (Linux) — user is not in the `docker` group; surface the error rather than `sudo`-ing around it.
 
 ## Common pitfalls
 
