@@ -1,0 +1,19 @@
+{
+  "name": "roboflow",
+  "owner": {
+    "name": "Roboflow",
+    "url": "https://roboflow.com/"
+  },
+  "plugins": [
+    {
+      "name": "roboflow",
+      "description": "Roboflow computer vision skills and MCP tools for datasets, annotation, training, workflows, inference, and deployment.",
+      "author": {
+        "name": "Roboflow"
+      },
+      "category": "development",
+      "source": "./",
+      "homepage": "https://github.com/roboflow/computer-vision-skills"
+    }
+  ]
+}

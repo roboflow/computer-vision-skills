@@ -1,6 +1,6 @@
 ---
 name: roboflow-api-reference
-description: Reference for Roboflow REST API and Inference API — hosts (api.roboflow.com, serverless.roboflow.com, dedicated, localhost:9001), auth, and request/response formats.
+description: Use when looking up Roboflow REST or Inference API hosts, authentication patterns, SDK choice, or request/response formats; covers api.roboflow.com, serverless.roboflow.com, dedicated, and self-hosted localhost endpoints.
 ---
 
 > **Tip:** If you're connected to the [Roboflow MCP server](https://github.com/roboflow/roboflow-mcp), prefer its tools (`projects_*`, `versions_*`, `models_*`, `workflows_*`, `images_*`, …) over raw REST calls — they handle auth, pagination, and typed responses for you. The REST patterns below stay relevant if you're not using MCP.
