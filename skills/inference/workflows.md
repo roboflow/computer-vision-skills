@@ -150,6 +150,8 @@ result = client.run_workflow(
 
 For real-time video — webcam, RTSP, or file — use the **WebRTC API** in `inference_sdk.webrtc`. It opens a peer connection to either the serverless GPU fleet or a local `inference server`, streams frames up, and returns annotated frames + workflow data over the data channel.
 
+> **Reasoning trap to avoid:** the MCP `workflows_run` tool only handles single static images. That's expected — it does not mean you should fall back to `inference.InferencePipeline.init_with_workflow(...)` for live video. WebRTC is the recommended path for both serverless and local. `InferencePipeline` is the lower-level escape hatch (see "What about `InferencePipeline`?" below), not the default.
+
 > **Always ask the user: serverless or local?** before generating the script. The two variants differ only in `api_url` and a few `StreamConfig` fields, but the choice has cost/latency implications.
 
 #### Variant A — Serverless GPU (hosted)

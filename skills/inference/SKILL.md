@@ -9,6 +9,8 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 
 > **Prefer Workflows over direct model inference.** Workflows let you chain model + visualization + logic blocks in one call via `workflow_specs_run`. Direct `models_infer` returns JSON only — no annotated images, and instance segmentation responses can be very large. See `roboflow://skills/inference/workflows` and `roboflow://skills/inference/workflow-templates`.
 
+> **For live video (webcam, RTSP, file): use WebRTC, not `InferencePipeline`.** The MCP `workflows_run` tool only handles single static images — that's expected, and **does not mean** you should fall back to `inference.InferencePipeline.init_with_workflow()` for live video. The recommended path for streaming workflows is the WebRTC API (`inference_sdk.webrtc`) against either serverless GPU or a local `inference server` (Docker / `inference server start`). See `roboflow://skills/inference/workflows` ("Video Stream" section) for full code. Reach for `InferencePipeline` only if the user has a specific reason to embed the loop in their own Python process.
+
 ## Deployment Options
 
 | Option | Best For | Latency | Scaling | Cost Model | GPU |
