@@ -61,13 +61,13 @@ Snapshot of a single job: planned vs current stage, output batch IDs per stage, 
 
 #### Polling for completion
 
-`show-job-details` prints a Rich table — convenient to read, painful to parse. For automation, use the asset script [`assets/poll_batch_job.py`](assets/poll_batch_job.py): it calls `inference_cli`'s `get_batch_job_metadata` in a loop, prints stage transitions and the latest notification message as the job moves through stages, and exits `0` on success / `1` on terminal error / `2` on timeout.
+`show-job-details` prints a Rich table — convenient to read, painful to parse. For automation, use the asset script [`bin/poll_batch_job.py`](bin/poll_batch_job.py): it calls `inference_cli`'s `get_batch_job_metadata` in a loop, prints stage transitions and the latest notification message as the job moves through stages, and exits `0` on success / `1` on terminal error / `2` on timeout.
 
 ```bash
 pip install inference-cli
 export ROBOFLOW_API_KEY=...
-skills/inference/assets/poll_batch_job.py JOB_ID        # direct; relative to skill dir: assets/poll_batch_job.py
-# or: python skills/inference/assets/poll_batch_job.py JOB_ID
+skills/inference/bin/poll_batch_job.py JOB_ID        # direct; relative to skill dir: bin/poll_batch_job.py
+# or: python skills/inference/bin/poll_batch_job.py JOB_ID
 # optional: --interval 30 --max-wait 7200
 ```
 
