@@ -49,28 +49,23 @@ claude --plugin-dir .
 
 ### Codex
 
-Install from a local clone:
+This repo includes a repo-scoped Codex marketplace file at [`.agents/plugins/marketplace.json`](.agents/plugins/marketplace.json), so a local clone can be registered directly.
 
 ```bash
 git clone https://github.com/roboflow/computer-vision-skills
 cd computer-vision-skills
-codex plugin install .
+codex plugin marketplace add .
 ```
 
-For a throwaway test without touching the installed-plugins list:
+Restart Codex after adding the marketplace, then open `/plugins` to browse the `roboflow` entry.
+
+For a remote marketplace source:
 
 ```bash
-codex --plugin-dir .
+codex plugin marketplace add roboflow/computer-vision-skills
 ```
 
-<details>
-<summary>Marketplace install (once published)</summary>
-
-```bash
-codex plugin install roboflow
-```
-
-</details>
+The current Codex CLI does not expose `codex plugin install` or `codex --plugin-dir`.
 
 Codex picks up `ROBOFLOW_API_KEY` from the same shell environment that launches the `codex` binary. Use a project-scoped `.env` if you need different keys per project.
 

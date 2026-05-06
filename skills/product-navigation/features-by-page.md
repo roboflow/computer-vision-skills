@@ -108,9 +108,9 @@ Base URL: `https://app.roboflow.com`
 | Check credit usage | `/{ws}/settings/usage` | -- |
 | Purchase credits | `/{ws}/settings/plan` -> Buy Credits | -- |
 | Update payment method | `/{ws}/settings/plan` -> Payment tab | -- |
-
-For plans, credits, and cost estimation, see `roboflow://skills/plans-and-pricing/index`.
 | Get workspace API key | `/{ws}/settings/api` | -- |
 | Get personal API key | `/settings/account` -> API Keys | -- |
 | Configure SSO | `/{ws}/settings/plan` (Enterprise) | -- |
 | View audit logs | `/{ws}/settings/audit-logs` (Enterprise) | -- |
+
+For plans, credits, and cost estimation, see `roboflow://skills/plans-and-pricing/SKILL`.
