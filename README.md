@@ -49,7 +49,7 @@ claude --plugin-dir .
 
 ### Codex
 
-Codex installs plugins through marketplaces. Current Codex builds do not have `codex plugin install .`, and `codex --plugin-dir .` is not a supported throwaway plugin flow.
+The Codex CLI currently exposes `codex plugin marketplace add`, `upgrade`, and `remove`. It does not expose a direct `codex plugin install` command or a `codex --plugin-dir` flow, so add this repo as a marketplace source and install the plugin from the plugin browser.
 
 Install from GitHub:
 
@@ -57,7 +57,18 @@ Install from GitHub:
 codex plugin marketplace add roboflow/computer-vision-skills
 ```
 
-Or install from a local clone while developing:
+Restart Codex, then open the plugin browser:
+
+```text
+codex /plugins
+```
+
+Choose the **Roboflow** marketplace source, select the **Roboflow** plugin, install it, and press <kbd>Space</kbd> if it is installed but still disabled.
+
+<details>
+<summary>Local clone workflow</summary>
+
+When editing a local clone, register it as a local marketplace source:
 
 ```bash
 git clone https://github.com/roboflow/computer-vision-skills
@@ -65,21 +76,21 @@ cd computer-vision-skills
 codex plugin marketplace add .
 ```
 
-Restart Codex. Open the Plugin Directory, choose the **Roboflow** marketplace source, then install and enable the **Roboflow** plugin.
-
-When editing a local clone, Codex's marketplace entry already points at this directory. Restart Codex after edits. If the Plugin Directory still shows stale metadata, remove and re-add the local marketplace:
+Restart Codex after edits. If the plugin browser still shows stale metadata, remove and re-add the local marketplace:
 
 ```bash
 codex plugin marketplace remove roboflow
 codex plugin marketplace add .
 ```
 
-If you registered the GitHub marketplace source instead, refresh that source with `codex plugin marketplace upgrade roboflow`.
+</details>
+
+If you registered the GitHub marketplace source instead, refresh it with `codex plugin marketplace upgrade roboflow`.
 
 <details>
 <summary>What the Codex marketplace file does</summary>
 
-Codex reads [`.agents/plugins/marketplace.json`](.agents/plugins/marketplace.json), which exposes the repo root as the local plugin source. The plugin itself is described by [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json), loads skills from [`skills/`](skills/), and bundles the Roboflow MCP server config from [`.mcp.json`](.mcp.json).
+Codex reads [`.agents/plugins/marketplace.json`](.agents/plugins/marketplace.json), which points `source.path` at the repo root via `./`. Codex resolves `source.path` relative to the marketplace root, so the plugin manifest in [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json), the skills in [`skills/`](skills/), and the Roboflow MCP server config in [`.mcp.json`](.mcp.json) are all loaded from this repository.
 
 Codex caches installed plugins under `~/.codex/plugins/cache/`, so a running Codex session may not see edits until Codex is restarted or the plugin is reinstalled from the Plugin Directory.
 
