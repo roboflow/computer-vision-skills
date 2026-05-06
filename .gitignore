@@ -1,2 +1,5 @@
 # IDE files
 .idea/
+
+# Local Claude Code settings — may contain API keys
+.claude/settings.local.json
