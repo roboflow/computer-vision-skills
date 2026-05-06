@@ -1,9 +1,17 @@
+#!/usr/bin/env python3
 """Poll a Roboflow Batch Processing job until it reaches a terminal state.
 
-Usage:
+The script is directly executable (shebang + exec bit set in git). Invoke as:
+
+    ./poll_batch_job.py <job_id> [--interval SECONDS] [--max-wait SECONDS]
+
+Or with an explicit interpreter:
+
+    python poll_batch_job.py <job_id> [--interval SECONDS] [--max-wait SECONDS]
+
+Requires:
     export ROBOFLOW_API_KEY=...
     pip install inference-cli
-    python poll_batch_job.py <job_id> [--interval SECONDS] [--max-wait SECONDS]
 
 Prints stage transitions and the latest notification message as the job
 progresses. Exits 0 on success, 1 on terminal error, 2 on timeout / missing
@@ -17,6 +25,7 @@ import os
 import sys
 import time
 from datetime import datetime
+from typing import Any
 
 from inference_cli.lib.roboflow_cloud.batch_processing.api_operations import (
     get_batch_job_metadata,
@@ -24,19 +33,51 @@ from inference_cli.lib.roboflow_cloud.batch_processing.api_operations import (
 from inference_cli.lib.roboflow_cloud.common import get_workspace
 
 
-def _summarize_notification(notification) -> str:
+def _summarize_notification(notification: Any) -> str:
+    """Extract a human-readable string from a notification dict or object.
+
+    Args:
+        notification: Notification payload from job metadata; expected to be a
+            dict with ``message`` / ``type`` keys, or any object coercible to
+            ``str``. ``None`` and falsy values yield an empty string.
+
+    Returns:
+        Notification message, type, or stringified form; empty string when
+        nothing usable is available.
+    """
     if isinstance(notification, dict):
         return notification.get("message") or notification.get("type") or ""
     return str(notification) if notification else ""
 
 
-def _output_batches(notification) -> list:
+def _output_batches(notification: Any) -> list[Any]:
+    """Extract the ``resultsBatches`` list from a notification dict.
+
+    Args:
+        notification: Notification payload from job metadata; only ``dict``
+            inputs are inspected, anything else returns an empty list.
+
+    Returns:
+        List of result-batch identifiers, or an empty list when the field is
+        absent or the input is not a dict.
+    """
     if isinstance(notification, dict):
         return notification.get("resultsBatches", []) or []
     return []
 
 
 def main() -> int:
+    """CLI entry point: parse args, poll job until terminal, return exit code.
+
+    Args:
+        None. Reads ``sys.argv`` via ``argparse`` and ``ROBOFLOW_API_KEY`` from
+        the environment.
+
+    Returns:
+        Process exit code: ``0`` on successful terminal state, ``1`` on
+        terminal error reported by the job, ``2`` on timeout or missing
+        ``ROBOFLOW_API_KEY``.
+    """
     parser = argparse.ArgumentParser(
         description="Poll a Roboflow Batch Processing job until terminal."
     )
