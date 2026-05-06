@@ -202,3 +202,7 @@ project.version(1).download("yolov8")
 | `versions_generate` | Generate a dataset version with preprocessing/augmentation |
 | `versions_get` | Inspect a version |
 | `versions_export` | Export a version in a given format |
+
+## Related Pages
+
+- `roboflow://skills/roboflow-labeling/SKILL` — annotation tools, AI labeling, Label Assist, Smart Polygon, Auto Label, annotation jobs

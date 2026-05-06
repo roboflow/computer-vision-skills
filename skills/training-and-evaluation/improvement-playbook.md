@@ -1,3 +1,8 @@
+---
+name: roboflow-model-improvement
+description: Diagnostic playbook for improving trained model accuracy — confusion matrix analysis, per-class metrics, common failure modes, architecture switching, and iterative improvement checklist.
+---
+
 # Model Improvement Playbook
 
 ## Diagnostic Decision Tree
