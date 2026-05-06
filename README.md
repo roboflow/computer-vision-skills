@@ -49,30 +49,43 @@ claude --plugin-dir .
 
 ### Codex
 
-Install from a local clone:
+Codex installs plugins through marketplaces. Current Codex builds do not have `codex plugin install .`, and `codex --plugin-dir .` is not a supported throwaway plugin flow.
+
+Install from GitHub:
+
+```bash
+codex plugin marketplace add roboflow/computer-vision-skills
+```
+
+Or install from a local clone while developing:
 
 ```bash
 git clone https://github.com/roboflow/computer-vision-skills
 cd computer-vision-skills
-codex plugin install .
+codex plugin marketplace add .
 ```
 
-For a throwaway test without touching the installed-plugins list:
+Restart Codex. Open the Plugin Directory, choose the **Roboflow** marketplace source, then install and enable the **Roboflow** plugin.
+
+When editing a local clone, Codex's marketplace entry already points at this directory. Restart Codex after edits. If the Plugin Directory still shows stale metadata, remove and re-add the local marketplace:
 
 ```bash
-codex --plugin-dir .
+codex plugin marketplace remove roboflow
+codex plugin marketplace add .
 ```
+
+If you registered the GitHub marketplace source instead, refresh that source with `codex plugin marketplace upgrade roboflow`.
 
 <details>
-<summary>Marketplace install (once published)</summary>
+<summary>What the Codex marketplace file does</summary>
 
-```bash
-codex plugin install roboflow
-```
+Codex reads [`.agents/plugins/marketplace.json`](.agents/plugins/marketplace.json), which exposes the repo root as the local plugin source. The plugin itself is described by [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json), loads skills from [`skills/`](skills/), and bundles the Roboflow MCP server config from [`.mcp.json`](.mcp.json).
+
+Codex caches installed plugins under `~/.codex/plugins/cache/`, so a running Codex session may not see edits until Codex is restarted or the plugin is reinstalled from the Plugin Directory.
 
 </details>
 
-Codex picks up `ROBOFLOW_API_KEY` from the same shell environment that launches the `codex` binary. Use a project-scoped `.env` if you need different keys per project.
+Codex CLI picks up `ROBOFLOW_API_KEY` from the shell environment that launches the `codex` binary. In Codex desktop, set the key in the local environment used by the workspace. Use a project-scoped `.env` if you need different keys per project.
 
 ## Install standalone skills
 
