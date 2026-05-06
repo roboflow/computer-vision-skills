@@ -128,7 +128,7 @@ Step names: derive from block type, strip `roboflow_core/` and `@vX`, lowercase 
 | **Serverless API** | `workflows_run` MCP tool or `client.run_workflow()` SDK |
 | **Dedicated** | Point at `<name>.roboflow.cloud` endpoint |
 | **Self-hosted** | `inference server start`, use `api_url="http://localhost:9001"` |
-| **Video/Stream** | `InferencePipeline.init_with_workflow()` with RTSP/webcam/file |
+| **Video/Stream (webcam, RTSP, file)** | WebRTC via `inference_sdk.webrtc` — runs on serverless GPU or your local inference server (see "Video Stream" below). Prefer this over `InferencePipeline`, which is a lower-level in-process alternative that requires installing the full `inference` package (torch/opencv/etc.) locally. |
 
 ### SDK Code
 
@@ -146,21 +146,126 @@ result = client.run_workflow(
 )
 ```
 
-### Video Stream
+### Video Stream (Webcam / RTSP / File) — WebRTC
+
+For real-time video — webcam, RTSP, or file — use the **WebRTC API** in `inference_sdk.webrtc`. It opens a peer connection to either the serverless GPU fleet or a local `inference server`, streams frames up, and returns annotated frames + workflow data over the data channel.
+
+> **Always ask the user: serverless or local?** before generating the script. The two variants differ only in `api_url` and a few `StreamConfig` fields, but the choice has cost/latency implications.
+
+#### Variant A — Serverless GPU (hosted)
+
+Best for: zero infra setup, bursty/occasional use, getting started.
 
 ```python
-from inference import InferencePipeline
+import cv2
+from inference_sdk import InferenceHTTPClient
+from inference_sdk.webrtc import WebcamSource, StreamConfig, VideoMetadata
 
-pipeline = InferencePipeline.init_with_workflow(
-    api_key="API_KEY",
-    workspace_name="workspace-name",
-    workflow_id="workflow-id",
-    video_reference=0,  # webcam, RTSP URL, or file path
-    on_prediction=lambda result, frame: print(result)
+client = InferenceHTTPClient.init(
+    api_url="https://serverless.roboflow.com",
+    api_key="YOUR_API_KEY",
 )
-pipeline.start()
-pipeline.join()
+
+source = WebcamSource(resolution=(1280, 720))  # or RTSPSource / FileSource
+
+config = StreamConfig(
+    stream_output=["annotated_image"],          # frames returned to client
+    data_output=["active_count", "new_instances", "event_log", "complete_events"],  # workflow outputs over datachannel
+    processing_timeout=3600,                    # seconds; session ends after this
+    requested_plan="webrtc-gpu-medium",         # webrtc-gpu-small | webrtc-gpu-medium | webrtc-gpu-large
+    requested_region="us",                      # us | eu | ap
+)
+
+session = client.webrtc.stream(
+    source=source,
+    workflow="my-workflow-id",
+    workspace="my-workspace",
+    image_input="image",                        # name of the image input on the workflow
+    config=config,
+)
+
+@session.on_frame
+def show_frame(frame, metadata: VideoMetadata):
+    cv2.imshow("Workflow Output", frame)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        session.close()
+
+@session.on_data()
+def on_data(data: dict, metadata: VideoMetadata):
+    print(f"Frame {metadata.frame_id}: {data}")
+
+session.run()  # blocks until the session closes
 ```
+
+Pick `data_output` to match the **workflow output names** the user's workflow exposes (e.g. counts, event logs, tracking ids). Look these up via `workflows_get` if unsure.
+
+#### Variant B — Local inference server
+
+Best for: predictable latency on local GPU/CPU, no per-inference cost, air-gapped or edge.
+
+Prereqs — start the inference server first:
+
+```bash
+pip install inference                # or: pip install inference-gpu
+inference server start               # serves on http://localhost:9001
+```
+
+Then the same script with two changes: `api_url` points at localhost, and `StreamConfig` drops `requested_plan` / `requested_region` (those are serverless-only).
+
+```python
+import cv2
+from inference_sdk import InferenceHTTPClient
+from inference_sdk.webrtc import WebcamSource, StreamConfig, VideoMetadata
+
+client = InferenceHTTPClient.init(
+    api_url="http://localhost:9001",
+    api_key="YOUR_API_KEY",
+)
+
+source = WebcamSource(resolution=(1280, 720))
+
+config = StreamConfig(
+    stream_output=["annotated_image"],
+    data_output=["active_count", "new_instances", "event_log", "complete_events"],
+    processing_timeout=3600,
+)
+
+session = client.webrtc.stream(
+    source=source,
+    workflow="my-workflow-id",
+    workspace="my-workspace",
+    image_input="image",
+    config=config,
+)
+
+@session.on_frame
+def show_frame(frame, metadata: VideoMetadata):
+    cv2.imshow("Workflow Output", frame)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        session.close()
+
+@session.on_data()
+def on_data(data: dict, metadata: VideoMetadata):
+    print(f"Frame {metadata.frame_id}: {data}")
+
+session.run()
+```
+
+#### Choosing serverless vs local
+
+| | Serverless WebRTC | Local WebRTC |
+|---|---|---|
+| Setup | None — just an API key | `pip install inference` + `inference server start` |
+| Cost | Per-minute credits (plan-tiered) | Your hardware |
+| Latency | Network + GPU; depends on `requested_region` | Local — usually lowest |
+| GPU | `webrtc-gpu-small/medium/large` | Whatever you have (CPU works for light models) |
+| Best for | Demos, bursty workloads, no local GPU | Edge, on-prem, sustained workloads |
+
+#### What about `InferencePipeline`?
+
+`inference.InferencePipeline.init_with_workflow(...)` is the **lower-level** alternative: it runs the workflow loop inline in the user's Python process instead of brokering through an inference server. Only reach for it when the user has a clear reason to need in-process execution — e.g. they want to interleave workflow output with their own per-frame Python code, embed in a custom app, or run somewhere they can't expose an HTTP/WebRTC port.
+
+The trade-off: `InferencePipeline` requires installing the full `inference` package locally (torch, opencv, model deps), which is significantly harder to get right across environments than running the inference server via Docker or `inference server start`. For default webcam/RTSP/file cases, WebRTC is the right answer.
 
 ## When to Use Workflows vs Direct Inference
 

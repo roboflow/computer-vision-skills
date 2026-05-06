@@ -24,6 +24,7 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 - **Dedicated** -- need consistent latency, large models (Florence 2), or high throughput. Development and production tiers available. Subdomain: `<name>.roboflow.cloud`.
 - **Self-hosted** -- deploy Roboflow Inference via Docker on your own hardware (Jetson, cloud VMs, RPi). Same API surface as serverless -- just change `api_url`.
 - **Batch Processing** -- runs a Workflow on uploaded images/videos asynchronously. No real-time requirement. Results delivered as JSON.
+- **Real-time video (webcam/RTSP/file)** -- prefer the **WebRTC API** (`inference_sdk.webrtc`) against either serverless GPU or a local `inference server`. Ask the user which they want before generating code. `InferencePipeline.init_with_workflow()` is a lower-level alternative that runs the pipeline inside the user's Python process — only reach for it if they explicitly need that (e.g. tight in-process integration with their own code). For most cases WebRTC is easier: the inference server (Docker or `inference server start`) handles the heavy CV/model deps for you, whereas `InferencePipeline` requires installing the full `inference` package locally (torch, opencv, etc., which is fragile across environments). See `roboflow://skills/inference/workflows` ("Video Stream" section) for the recommended pattern.
 
 ## MCP Tools for Inference
 

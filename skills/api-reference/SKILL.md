@@ -76,6 +76,7 @@ result = model.predict("image.jpg", confidence=40).json()
 | Start training | `api.roboflow.com` |
 | High-throughput / SLA inference | Dedicated deployment URL |
 | Air-gapped / on-prem inference | Self-hosted `localhost:9001` |
+| Real-time video / webcam / RTSP | WebRTC via `inference_sdk.webrtc` against serverless or local — see `roboflow://skills/inference/workflows` ("Video Stream" section). Not a plain HTTP call. |
 
 ## Rate Limits
 
