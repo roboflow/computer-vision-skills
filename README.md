@@ -63,11 +63,14 @@ For a throwaway test without touching the installed-plugins list:
 codex --plugin-dir .
 ```
 
-Marketplace install (once published):
+<details>
+<summary>Marketplace install (once published)</summary>
 
 ```bash
 codex plugin install roboflow
 ```
+
+</details>
 
 Codex picks up `ROBOFLOW_API_KEY` from the same shell environment that launches the `codex` binary. Use a project-scoped `.env` if you need different keys per project.
 
