@@ -208,8 +208,8 @@ Best for: predictable latency on local GPU/CPU, no per-inference cost, air-gappe
 Prereqs — start the inference server first:
 
 ```bash
-pip install inference                # or: pip install inference-gpu
-inference server start               # serves on http://localhost:9001
+pip install inference-cli
+inference server start     # serves inference server on http://localhost:9001
 ```
 
 Then the same script with two changes: `api_url` points at localhost, and `StreamConfig` drops `requested_plan` / `requested_region` (those are serverless-only).
@@ -257,7 +257,7 @@ session.run()
 
 | | Serverless WebRTC | Local WebRTC |
 |---|---|---|
-| Setup | None — just an API key | `pip install inference` + `inference server start` |
+| Setup | None — just an API key | `pip install inference-cli && inference server start` |
 | Cost | Per-minute credits (plan-tiered) | Your hardware |
 | Latency | Network + GPU; depends on `requested_region` | Local — usually lowest |
 | GPU | `webrtc-gpu-small/medium/large` | Whatever you have (CPU works for light models) |

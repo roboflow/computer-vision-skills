@@ -17,7 +17,7 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 |--------|----------|---------|---------|------------|-----|
 | **Serverless** | Getting started, variable traffic | Low | Auto | Per-inference credit | Yes |
 | **Dedicated** | Predictable workloads, low latency | Very low | Manual/autoscale | Per-hour credits | Optional |
-| **Self-hosted** | Full control, edge, air-gapped | Hardware-dependent | Manual | Your infra cost | Optional |
+| **Self-hosted** | Full control, edge | Hardware-dependent | Manual | Metered + infra cost | Optional |
 | **Batch Processing** | Large offline datasets, videos | Async (minutes-hours) | Auto-provisioned | Per-job | Optional |
 
 ### When to Use Which
