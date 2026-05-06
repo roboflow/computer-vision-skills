@@ -53,7 +53,9 @@ Use `AskUserQuestion` with these options:
 Question: "Where should the API key be configured?"
 Options:
   (a) Global — available in all projects on this machine (shell profile)
-  (b) Local — this project only (.claude/settings.local.json, gitignored)
+  (b) Local — Claude Code only (.claude/settings.local.json, gitignored)
+  (c) Local — Codex only (.codex/config.toml, gitignored)
+  (d) Local — both Claude Code and Codex
 ```
 
 ### Step 3 — Apply Configuration
@@ -74,20 +76,17 @@ source ~/.zshrc   # or source ~/.bashrc
 
 Instruct them to open a new Claude Code session after sourcing.
 
-**If user chose (b) Local:**
+**If user chose (b) Local — Claude Code or (d) both:**
 
 Before writing, handle gitignore based on project state:
 
 ```bash
-# 1. Is this a git repo?
 git rev-parse --is-inside-work-tree 2>/dev/null && IS_GIT=true || IS_GIT=false
 
 if [ "$IS_GIT" = "true" ]; then
   if [ -f .gitignore ]; then
-    # .gitignore exists — add entry if missing
     grep -qxF '.claude/settings.local.json' .gitignore || echo '.claude/settings.local.json' >> .gitignore
   else
-    # git repo but no .gitignore — create it
     echo '.claude/settings.local.json' > .gitignore
   fi
 fi
@@ -105,15 +104,48 @@ Write `.claude/settings.local.json` at the project root:
 
 Confirm the file was written and the gitignore entry is in place.
 
+**If user chose (c) Local — Codex or (d) both:**
+
+Before writing, handle gitignore based on project state:
+
+```bash
+git rev-parse --is-inside-work-tree 2>/dev/null && IS_GIT=true || IS_GIT=false
+
+if [ "$IS_GIT" = "true" ]; then
+  if [ -f .gitignore ]; then
+    grep -qxF '.codex/config.toml' .gitignore || echo '.codex/config.toml' >> .gitignore
+  else
+    echo '.codex/config.toml' > .gitignore
+  fi
+fi
+```
+
+Create the `.codex/` directory if it does not exist, then write `.codex/config.toml`:
+
+```toml
+[shell_environment_policy]
+set = { ROBOFLOW_API_KEY = "<key>" }
+
+[mcp_servers.roboflow.env]
+ROBOFLOW_API_KEY = "<key>"
+```
+
+`[shell_environment_policy]` makes the key available to all subprocesses Codex spawns.
+`[mcp_servers.roboflow.env]` scopes it directly to the Roboflow MCP server.
+
+Confirm the file was written and the gitignore entry is in place.
+
 ### Step 4 — Verify
 
-Run:
+**Claude Code path (options b or d):** Run:
 
 ```bash
 claude mcp list
 ```
 
 `roboflow` must appear with status connected. If not, see Troubleshooting.
+
+**Codex-only path (option c):** No automated verification available — confirm `.codex/config.toml` was written and instruct the user to launch Codex and run a Roboflow tool call to verify.
 
 Then ask Claude Code:
 
