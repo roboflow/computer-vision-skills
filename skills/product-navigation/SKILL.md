@@ -118,3 +118,7 @@ When creating a project, choose one (cannot be changed later):
 | Keypoint Detection | Object pose/skeleton |
 | Single-Label Classification | One label per image |
 | Multi-Label Classification | Multiple labels per image |
+
+## Related Pages
+
+- `roboflow://skills/product-navigation/features-by-page` — intent-to-URL lookup table ("I want to do X → go here")
