@@ -4,24 +4,6 @@ Agent-ready Roboflow skills plus MCP configuration for computer vision workflows
 
 This repository is a plugin-shaped source of truth for AI agents (Claude Code, Codex, Cursor, OpenCode, and others). The canonical skill content lives in [`skills/`](skills/); plugin manifests point at those files instead of copying them elsewhere.
 
-## Get your API key
-
-Grab your Roboflow API key from the workspace settings page:
-
-```text
-https://app.roboflow.com/{workspace}/settings/api
-```
-
-Replace `{workspace}` with your workspace slug. The key authenticates the bundled MCP server against `https://mcp.roboflow.com/mcp` via the `x-api-key` header.
-
-Export it in the shell that launches your agent:
-
-```bash
-export ROBOFLOW_API_KEY=YOUR_ROBOFLOW_API_KEY
-```
-
-For persistence, add the `export` to your shell profile (`~/.zshrc`, `~/.bashrc`) or to a project-local `.env` file loaded by your agent's environment. Per-project isolation is the safer default — keeps separate workspaces and billing accounts from leaking across projects.
-
 ## Install as a plugin
 
 The repo ships both plugin manifests pointing at the same skill content and MCP config:
@@ -33,21 +15,16 @@ Both manifests load skills from [`skills/`](skills/) and bundle the Roboflow MCP
 
 ### Claude Code
 
-Local development test (from a clone of this repo):
+Install from GitHub — no clone required:
 
 ```bash
-claude --plugin-dir .
-```
-
-This loads the plugin from the working tree without installing it — the right path for iterating on skill content or verifying a fork.
-
-Marketplace install (once published):
-
-```bash
+claude plugin marketplace add roboflow/computer-vision-skills
 claude plugin install roboflow
 ```
 
-By default plugins install at user scope (available across all projects). For per-project isolation — for example, when different projects need different `ROBOFLOW_API_KEY` values for different workspaces — install at local scope:
+The first command registers this repo as a marketplace source (run once per machine). The second installs the plugin.
+
+For per-project isolation — for example, when different projects need different `ROBOFLOW_API_KEY` values for different workspaces:
 
 ```bash
 claude plugin install roboflow --scope local
@@ -55,9 +32,32 @@ claude plugin install roboflow --scope local
 
 Local scope writes the plugin into the current project only and reads the API key from that project's environment.
 
+**Alternative** — install from a local clone:
+
+```bash
+git clone https://github.com/roboflow/computer-vision-skills
+claude plugin marketplace add ./computer-vision-skills
+claude plugin install roboflow
+```
+
+For a throwaway test without touching the installed-plugins list:
+
+```bash
+cd computer-vision-skills
+claude --plugin-dir .
+```
+
 ### Codex
 
-Local development test:
+Install from a local clone:
+
+```bash
+git clone https://github.com/roboflow/computer-vision-skills
+cd computer-vision-skills
+codex plugin install .
+```
+
+For a throwaway test without touching the installed-plugins list:
 
 ```bash
 codex --plugin-dir .
@@ -101,13 +101,34 @@ The `npx skills` CLI works with any agent that reads `SKILL.md` files from `.cla
 
 ## MCP and skills
 
-The [Roboflow MCP server](https://mcp.roboflow.com/) should expose live tools for projects, images, annotations, versions, models, Workflows, Universe, and feedback. This plugin should own the expert guidance in skills.
+The [Roboflow MCP server](https://mcp.roboflow.com/) exposes live tools for projects, images, annotations, versions, models, Workflows, Universe, and feedback. Skills own the expert guidance and workflow playbooks.
 
 That separation keeps the install model simple:
 
 - MCP server: live Roboflow tools and authenticated API access
 - Plugin skills: durable product guidance and workflow playbooks
 - This repo: canonical source for skill updates and plugin distribution
+
+<details>
+<summary>Get your API key</summary>
+
+Grab your Roboflow API key from the workspace settings page:
+
+```text
+https://app.roboflow.com/{workspace}/settings/api
+```
+
+Replace `{workspace}` with your workspace slug. The key authenticates the bundled MCP server against `https://mcp.roboflow.com/mcp` via the `x-api-key` header.
+
+Export it in the shell that launches your agent:
+
+```bash
+export ROBOFLOW_API_KEY=YOUR_ROBOFLOW_API_KEY
+```
+
+For persistence, add the `export` to your shell profile (`~/.zshrc`, `~/.bashrc`) or to a project-local `.env` file loaded by your agent's environment. Per-project isolation is the safer default — keeps separate workspaces and billing accounts from leaking across projects.
+
+</details>
 
 ## Contributing
 
