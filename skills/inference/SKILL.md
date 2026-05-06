@@ -31,7 +31,9 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 - **Real-time video (webcam/RTSP/file)** -- three deployment options; ask the user which one before writing code:
   - **(A) Serverless GPU + WebRTC** — zero setup, just an API key; per-minute credits, plan-tiered (`webrtc-gpu-small/medium/large`).
   - **(B) Local inference server + WebRTC** — `pip install inference-cli && inference server start` (Docker recommended); lowest latency, isolates the heavy CV/model deps inside the server.
-  - **(C) `InferencePipeline` in-process** — `pip install inference` in a venv (prefer `uv`); runs the workflow loop directly in the user's Python process, no separate server. Heavy deps (torch, opencv, onnxruntime) install locally; **first run is slow** (model download + ONNX warmup, typically 30–60s); subsequent runs are fast.
+  - **(C) `InferencePipeline` in-process** — `pip install inference` in a venv (prefer `uv`); runs the workflow loop directly in the user's Python process, no separate server. Heavy deps (torch, opencv, onnxruntime) install locally.
+
+  All three have a slower first run (model download / warmup) before subsequent runs hit cached state — tell the user this so they don't think the script is hung.
   - See `roboflow://skills/inference/workflows` ("Video Stream" section) for full code and a comparison table.
 
 ## MCP Tools for Inference

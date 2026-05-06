@@ -156,6 +156,8 @@ For real-time video — webcam, RTSP, or file — use the **WebRTC API** in `inf
 
 > **Always ask the user which variant** before generating the script. There are three: **(A)** serverless WebRTC, **(B)** local-server WebRTC, **(C)** in-process `InferencePipeline`. Surface a brief 1-line summary of each from the comparison table below — don't silently pick one. Variants A and B differ only in `api_url` and a few `StreamConfig` fields; Variant C is structurally different (in-process Python, no network).
 
+> **Tell the user: first run is slower than subsequent runs** for any of these — there's a model load / warmup step before the first frame is processed. Subsequent runs reuse cached state. Useful to mention so they don't think the script is hung when nothing happens for a few seconds.
+
 #### Variant A — Serverless GPU (hosted)
 
 Best for: zero infra setup, bursty/occasional use, getting started.
@@ -274,7 +276,7 @@ uv pip install inference                  # CPU; or `inference-gpu` for CUDA
 # python3.12 -m venv .venv && .venv/bin/pip install inference
 ```
 
-> **Heads-up to give the user before running:** the **first invocation is slow** — `inference` downloads model weights and warms up the ONNX runtime backend on first frame, typically 30–60 seconds before the webcam window opens. Subsequent runs reuse cached weights and start in a few seconds. Tell the user this so they don't think the script is hung. If they kill it during the first warmup, the next run starts over.
+> **First run is slower than subsequent runs** — `inference` downloads model weights and warms up the ONNX runtime on first invocation. Tell the user this so they don't think the script is hung. Subsequent runs reuse cached weights.
 
 ```python
 import cv2
@@ -313,7 +315,7 @@ pipeline.join()                       # blocks until video source ends or pipeli
 | GPU | `webrtc-gpu-small/medium/large` | Whatever you have (CPU works for light models) | Whatever you have |
 | Process model | Separate session, frames over WebRTC | Separate server, frames over WebRTC | In-process: workflow runs in your Python script |
 | Best for | Demos, bursty workloads, no local GPU | Edge, on-prem, sustained workloads | Single-host scripts, embedding in your own Python app, no HTTP/WebRTC port available |
-| First-run cost | Network handshake (~seconds) | Server start + model load (~10–30s if Docker image needs pulling) | Slow — model download + ONNX warmup, often 30–60s before first frame |
+| First run | Slower than subsequent — session handshake + model load on the assigned worker | Slower than subsequent — Docker image pull (if cold) and model load on first call | Slower than subsequent — model download + ONNX warmup |
 
 **How to present this to the user:** surface all three with a one-line summary of each (use the "Best for" row), then let the user pick. Don't default-pick; the right answer depends on whether they have Docker, want zero local install, or want the script to be self-contained.
 
