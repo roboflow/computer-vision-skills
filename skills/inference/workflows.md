@@ -154,7 +154,7 @@ For real-time video — webcam, RTSP, or file — use the **WebRTC API** in `inf
 
 > **Reasoning trap to avoid:** the MCP `workflows_run` tool only handles single static images. That's expected — it does not mean you should fall back to `InferencePipeline` as the default for live video. **WebRTC (Variants A or B below) is the default** because it isolates the heavy CV/model deps inside an inference server. `InferencePipeline` (Variant C) is a lower-level option for in-process Python embedding — pick it only when in-process execution is a specific requirement.
 
-> **Always ask the user: serverless or local?** before generating the script. The two variants differ only in `api_url` and a few `StreamConfig` fields, but the choice has cost/latency implications.
+> **Always ask the user which variant** before generating the script. There are three: **(A)** serverless WebRTC, **(B)** local-server WebRTC, **(C)** in-process `InferencePipeline`. Surface a brief 1-line summary of each from the comparison table below — don't silently pick one. Variants A and B differ only in `api_url` and a few `StreamConfig` fields; Variant C is structurally different (in-process Python, no network).
 
 #### Variant A — Serverless GPU (hosted)
 
@@ -259,11 +259,22 @@ session.run()
 
 Best for: embedding the workflow loop directly in your own Python application, single-host setups where standing up a separate inference server (Variant B) is overkill, or environments where you can't expose an HTTP/WebRTC port. The pipeline runs **in-process** — predictions are delivered to a callback in your script, not over a network channel.
 
-Trade-off: requires installing the full `inference` Python package locally, which pulls in heavy CV/model dependencies (torch, opencv, model files, etc.). On GPU especially, this is the most fragile install of the three options. If you can run the inference server (Variant B), prefer that — same model deps, but isolated. Reach for `InferencePipeline` only when in-process execution is a hard requirement and the user has confirmed they're OK installing the `inference` package locally.
+Trade-off: requires installing the full `inference` Python package locally, which pulls in heavy CV/model dependencies (torch, opencv, onnxruntime, model files, etc.). On GPU especially, this is the most fragile install of the three options. If you can run the inference server (Variant B), prefer that — same model deps, but isolated. Reach for `InferencePipeline` only when in-process execution is a hard requirement and the user has confirmed they're OK installing the `inference` package locally.
+
+**Setup — prefer `uv` for the venv, and pin Python to 3.12:**
 
 ```bash
-pip install inference                # CPU; or `inference-gpu` for CUDA
+# Preferred: uv is much faster and keeps deps in an isolated venv.
+# Pin Python to 3.12 — newer versions (3.13+) often lack onnxruntime wheels,
+# so `uv pip install inference` will fail on a default-Python (3.13+) venv.
+uv venv --python 3.12
+uv pip install inference                  # CPU; or `inference-gpu` for CUDA
+
+# Without uv, fall back to stdlib venv (slower, but works):
+# python3.12 -m venv .venv && .venv/bin/pip install inference
 ```
+
+> **Heads-up to give the user before running:** the **first invocation is slow** — `inference` downloads model weights and warms up the ONNX runtime backend on first frame, typically 30–60 seconds before the webcam window opens. Subsequent runs reuse cached weights and start in a few seconds. Tell the user this so they don't think the script is hung. If they kill it during the first warmup, the next run starts over.
 
 ```python
 import cv2
@@ -301,9 +312,10 @@ pipeline.join()                       # blocks until video source ends or pipeli
 | Latency | Network + GPU; depends on `requested_region` | Local — usually lowest | Local — equivalent to Variant B |
 | GPU | `webrtc-gpu-small/medium/large` | Whatever you have (CPU works for light models) | Whatever you have |
 | Process model | Separate session, frames over WebRTC | Separate server, frames over WebRTC | In-process: workflow runs in your Python script |
-| Best for | Demos, bursty workloads, no local GPU | Edge, on-prem, sustained workloads | Embedding in your own app; no HTTP/WebRTC port available |
+| Best for | Demos, bursty workloads, no local GPU | Edge, on-prem, sustained workloads | Single-host scripts, embedding in your own Python app, no HTTP/WebRTC port available |
+| First-run cost | Network handshake (~seconds) | Server start + model load (~10–30s if Docker image needs pulling) | Slow — model download + ONNX warmup, often 30–60s before first frame |
 
-**Default order to recommend:** A (serverless) → B (local server) → C (in-process). Only suggest C when the user explicitly wants in-process execution or rules out the server-based options.
+**How to present this to the user:** surface all three with a one-line summary of each (use the "Best for" row), then let the user pick. Don't default-pick; the right answer depends on whether they have Docker, want zero local install, or want the script to be self-contained.
 
 ## When to Use Workflows vs Direct Inference
 
