@@ -1,5 +1,7 @@
 # Roboflow Inference API Reference
 
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:api-reference`) over fetching `roboflow://skills/api-reference/inference` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+
 > **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer `models_infer` (single-model) or `workflow_specs_run` / `workflows_run` (chained pipelines with annotated images) over raw HTTP calls — same operations, but auth is handled and responses are typed. The REST patterns below stay relevant if you're not using MCP.
 
 ## Serverless Inference (Hosted API v2)

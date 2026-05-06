@@ -1,5 +1,7 @@
 # Workflows
 
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:inference`) over fetching `roboflow://skills/inference/workflows` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+
 > **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), use `workflow_specs_run` (run a spec ad-hoc) or `workflows_run` (run a saved workflow) instead of raw HTTP — they return annotated images alongside JSON. The HTTP patterns stay relevant if you're not using MCP.
 
 ## What Are Workflows
