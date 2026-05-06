@@ -127,23 +127,39 @@ Mitigation strategies:
 
 ## Batch Processing
 
-Runs a Workflow on large datasets (images or video) asynchronously with auto-provisioned infrastructure.
+**What it is.** A Roboflow-managed cloud service that runs a Workflow over a batch of images or videos asynchronously, provisioning the infrastructure for you. *"Ideal for asynchronously processing large amounts of data."* — [Roboflow docs](https://docs.roboflow.com/deploy/batch-processing).
 
-**Flow:** Upload data -> Select workflow -> Choose CPU/GPU -> Start job -> Poll or webhook -> Download JSON results
+**Problem it solves.** Bulk inference over thousands to millions of files without standing up your own GPUs, queues, or autoscaler. You hand Roboflow a Workflow plus a batch of inputs, pay per job, and get JSON results back when the job finishes.
 
-**When to use:** Processing stored data offline, no real-time requirement, cost-sensitive bulk inference.
+**Pick it when** the data is stored (not live), per-file cost matters more than per-file latency, and minutes-to-hours per job is acceptable. **Pick something else when** you need real-time per-request results (use Serverless or Dedicated) or air-gapped/on-prem processing (use Self-hosted).
 
-**API flow (CLI):**
+Surfaces: Roboflow web UI, `inference rf-cloud` CLI, and REST API.
+
+### Flow
+
+1. Have a saved Workflow in your workspace.
+2. Stage inputs as a Data Staging batch (local directory, JSONL of signed URLs, or cloud-storage path on S3 / GCS / Azure).
+3. Submit a job referencing the Workflow + input batch; choose CPU or GPU.
+4. Monitor — poll job status or register a webhook.
+5. Export the output batch as JSON.
+
+### CLI
+
+The `inference rf-cloud` CLI exposes two subcommand groups: `data-staging` (manage input/output batches) and `batch-processing` (submit and monitor jobs). Run any command with `--help` for the full option list.
+
+**Minimal end-to-end:**
+
 ```bash
-# Ingest images
+# Stage images
 inference rf-cloud data-staging create-batch-of-images \
   --images-dir ./my-images --batch-id my-batch
 
-# Start processing
+# Submit
 inference rf-cloud batch-processing process-images-with-workflow \
   --workflow-id my-workflow --batch-id my-batch
+# -> prints JOB_ID
 
-# Check progress
+# Monitor
 inference rf-cloud batch-processing show-job-details --job-id JOB_ID
 
 # Export results
@@ -151,4 +167,35 @@ inference rf-cloud data-staging export-batch \
   --target-dir ./results --batch-id OUTPUT_BATCH_ID
 ```
 
-Batch Processing also available via REST API and Roboflow web UI.
+**Data Staging commands** — see [`batch-staging`](batch-staging.md) for nuances (data sources, JSONL reference format, multipart batches, webhook notifications):
+
+| Command | Purpose |
+|---|---|
+| `data-staging list-batches` | List staging batches in the workspace |
+| `data-staging create-batch-of-images` | Create an input batch from a local directory, signed-URL JSONL, or cloud-storage path |
+| `data-staging create-batch-of-videos` | Same as above, but for video files |
+| `data-staging show-batch-details` | Show metadata for a single batch |
+| `data-staging list-batch-content` | List file URLs in a batch (filter by part, write JSONL) |
+| `data-staging list-ingest-details` | Per-shard ingest status for debugging URL ingests |
+| `data-staging export-batch` | Download all files from a batch (e.g. job outputs) to a local directory |
+
+**Batch Processing (job) commands** — see [`batch-jobs`](batch-jobs.md) for nuances (compute configuration, workflow parameters, image-output persistence, aggregation format, video FPS, restarts, TRT compilation):
+
+| Command | Purpose |
+|---|---|
+| `batch-processing list-jobs` | List jobs in the workspace |
+| `batch-processing show-job-details` | Show stages and current status of a single job |
+| `batch-processing process-images-with-workflow` | Submit an image-batch job |
+| `batch-processing process-videos-with-workflow` | Submit a video-batch job |
+| `batch-processing fetch-logs` | Fetch job logs (filter by severity, write JSONL) |
+| `batch-processing abort-job` | Terminate a running job |
+| `batch-processing restart-job` | Restart a failed job (optionally with new compute settings) |
+| `batch-processing trt-compile` | Compile a model to TensorRT for one or more NVIDIA devices |
+
+### Notes and constraints
+
+- **Async only** — minutes-to-hours latency depending on volume and hardware. Not for real-time.
+- **Pricing** — per job; GPU jobs cost more than CPU. See [`plans-and-pricing`](../plans-and-pricing/SKILL.md).
+- **Image-references ingest** requires signed URLs from trusted sources; arbitrary public URLs are rejected — stage to a local directory or cloud-storage path instead.
+
+Full reference: [Roboflow Batch Processing docs](https://docs.roboflow.com/deploy/batch-processing).
