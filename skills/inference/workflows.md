@@ -203,7 +203,7 @@ Pick `data_output` to match the **workflow output names** the user's workflow ex
 
 #### Variant B — Local inference server
 
-Best for: predictable latency on local GPU/CPU, no per-inference cost, air-gapped or edge.
+Best for: predictable latency on local GPU/CPU.
 
 Prereqs — start the inference server first:
 
@@ -258,7 +258,7 @@ session.run()
 | | Serverless WebRTC | Local WebRTC |
 |---|---|---|
 | Setup | None — just an API key | `pip install inference-cli && inference server start` |
-| Cost | Per-minute credits (plan-tiered) | Your hardware |
+| Cost | Per-minute credits (plan-tiered) | Metered credits + your hardware |
 | Latency | Network + GPU; depends on `requested_region` | Local — usually lowest |
 | GPU | `webrtc-gpu-small/medium/large` | Whatever you have (CPU works for light models) |
 | Best for | Demos, bursty workloads, no local GPU | Edge, on-prem, sustained workloads |
