@@ -24,7 +24,7 @@ Upload/Annotate Images
 
 | Architecture | Sizes | Default Resolution | Notes |
 |---|---|---|---|
-| **RF-DETR** | Nano, Small, Medium, Large, XL, 2XL | 384-880 (varies by size) | Best accuracy, recommended default |
+| **RF-DETR** | Pico, Nano, Small, Base, Medium, Large, XL, 2XL | 384-880 (varies by size) | Best accuracy, recommended default |
 | Roboflow 3.0 | Fast, Accurate, Medium, Large, XL | 640x640 | YOLOv8-based. Medium+ require paid plan |
 | YOLO26 | n/s/m/l/x | 640x640 | Also supports seg + pose |
 | YOLOv12 | n/s/m/l/x | 640x640 | OD only |
@@ -39,7 +39,7 @@ Upload/Annotate Images
 
 | Architecture | Sizes | Default Resolution |
 |---|---|---|
-| **RF-DETR Seg** | Nano, Small, Medium, Large, XL, 2XL | 312-768 (varies) |
+| **RF-DETR Seg** | Nano, Small, Medium, Large, XL, 2XL | 312-768 (varies) | Pico and Base not available for seg |
 | Roboflow 3.0 Seg | Fast, Accurate, Medium, Large, XL | 640x640 |
 | YOLO-seg | v8/v11/v26 (n/s/m/l/x each) | 640x640 |
 | SAM 3 (Segment Anything 3) | Large | 1008x1008 |
@@ -85,14 +85,14 @@ Follow this flowchart to pick the right model. Start at Step 1.
 4. **Non-real-time, COCO** — Pick model family by task, default Medium size (Small for constrained HW, XL for accuracy-first): OD → RF-DETR, Inst Seg → RF-DETR Seg, Keypoint → YOLO26 pose. **Done.**
 5. **Real-time, COCO** — Same families, pick Nano–Small, prioritize latency. **Done.**
 6. **Non-COCO, which sub-task?** OD → Step 7. Inst Seg → Step 8. Keypoint → Step 9.
-7. **OD, non-COCO** — Check Rapid exclusions (see below). If excluded → recommend custom training (Step 17). Otherwise → recommend **Roboflow Rapid** (default) or SAM3 zero-shot as secondary option → Step 11.
-8. **Inst Seg, non-COCO** — SAM3 zero-shot (`sam3/sam3_final`, set `class_names`). Rapid does not support segmentation → Step 11.
+7. **OD, non-COCO** — Check Rapid exclusions (see below). If excluded → Step 13. Otherwise → recommend **Roboflow Rapid** (default) or SAM3 zero-shot as secondary option → Step 10.
+8. **Inst Seg, non-COCO** — SAM3 zero-shot (`sam3/sam3_final`, set `class_names`). Rapid does not support segmentation → Step 10.
 9. **Keypoint, non-COCO** — Not real-time → YOLO26 pose Medium–XL. Real-time → YOLO26 pose Nano–Small. **Done.**
-10. *(reserved)*
-11. **Real-time?** No → let user try model (Step 12). Yes → warn about latency, let user try (Step 13).
-12–13. User confirms works → **Done.** Poor results → Step 15.
-15. **Universe Model Search** — search community models on Roboflow Universe. Good match → **Done.** No match → Step 17.
-17. **Custom Training** — Fine-tune RF-DETR on user data. Size by HW constraints. **Done.**
+10. **Real-time?** No → try model (Step 11). Yes → warn about latency, try model (Step 12).
+11. **Non-real-time trial** — User confirms works → **Done.** Poor results → Step 13.
+12. **Real-time trial** — User confirms works → **Done.** Poor results → Step 13.
+13. **Universe Model Search** — search community models on Roboflow Universe. Good match → **Done.** No match → Step 14.
+14. **Custom Training** — Fine-tune RF-DETR on user data. Size by HW constraints. **Done.**
 
 ## Model ID Reference
 
@@ -258,3 +258,7 @@ Auto-runs after training. Access: Models > click model version > View Evaluation
 | Check training status | `models_get_training_status` |
 | Get model info | `models_get` |
 | List models | `models_list` |
+
+## Related Pages
+
+- `roboflow://skills/roboflow-model-improvement/SKILL` — diagnostic decision tree, confusion matrix guide, per-class metrics, architecture switching, iterative improvement checklist

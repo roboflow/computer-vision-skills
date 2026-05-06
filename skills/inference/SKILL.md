@@ -1,9 +1,9 @@
 ---
 name: roboflow-inference
-description: Use when running Roboflow model inference or choosing deployment (serverless, dedicated, self-hosted, batch); prefer Workflows over direct model calls.
+description: Deployment option comparison (serverless, dedicated, self-hosted, batch) and Workflow execution patterns. For raw API URL patterns, auth, and request/response formats, see roboflow-api-reference.
 ---
 
-> **Tip:** If you're connected to the [Roboflow MCP server](https://github.com/roboflow/roboflow-mcp), use its inference tools (`models_infer`, `workflow_specs_run`, `workflows_run`) directly — they cover the same operations as the HTTP endpoints below with auth handled. The HTTP patterns stay relevant if you're not using MCP.
+> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), use its inference tools (`models_infer`, `workflow_specs_run`, `workflows_run`) directly — they cover the same operations as the HTTP endpoints below with auth handled. The HTTP patterns stay relevant if you're not using MCP.
 
 # Inference & Deployment
 
@@ -45,79 +45,7 @@ See [`local-tooling`](local-tooling.md) for what to install for which use case, 
 
 ## Response Shapes by Task
 
-### Object Detection
-
-```json
-{
-  "predictions": [
-    {
-      "x": 320.5, "y": 240.0,
-      "width": 100, "height": 80,
-      "confidence": 0.92,
-      "class": "car",
-      "class_confidence": 0.92,
-      "class_id": 0,
-      "detection_id": "uuid"
-    }
-  ],
-  "image": { "width": 640, "height": 480 }
-}
-```
-
-`x`, `y` = center of bounding box. `width`, `height` = box dimensions.
-
-### Classification
-
-```json
-{
-  "predictions": [
-    { "class": "cat", "class_id": 0, "confidence": 0.95 },
-    { "class": "dog", "class_id": 1, "confidence": 0.05 }
-  ],
-  "top": "cat",
-  "confidence": 0.95
-}
-```
-
-### Instance Segmentation
-
-```json
-{
-  "predictions": [
-    {
-      "x": 320.5, "y": 240.0,
-      "width": 100, "height": 80,
-      "confidence": 0.88,
-      "class": "person",
-      "class_confidence": 0.88,
-      "class_id": 0,
-      "detection_id": "uuid",
-      "points": [
-        { "x": 280.0, "y": 200.0 },
-        { "x": 285.0, "y": 202.0 }
-      ]
-    }
-  ]
-}
-```
-
-### Keypoint Detection
-
-```json
-{
-  "predictions": [
-    {
-      "x": 320.5, "y": 240.0,
-      "width": 100, "height": 200,
-      "confidence": 0.91,
-      "class": "person",
-      "keypoints": [
-        { "x": 330.0, "y": 210.0, "confidence": 0.95, "class_id": 0, "class": "nose" }
-      ]
-    }
-  ]
-}
-```
+For canonical response shapes (object detection, classification, segmentation, keypoint) with all fields including `class_id`, `detection_id`, `class_confidence`, see `roboflow://skills/api-reference/inference`.
 
 ## Large Response Handling
 

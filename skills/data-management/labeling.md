@@ -1,3 +1,8 @@
+---
+name: roboflow-labeling
+description: Annotation tools, AI labeling features (Label Assist, Smart Polygon, Auto Label), annotation jobs, and labeling workflows in Roboflow.
+---
+
 # Labeling & Annotation on Roboflow
 
 ## Annotation Tools
