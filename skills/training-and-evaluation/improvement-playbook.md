@@ -5,6 +5,8 @@ description: Diagnostic playbook for improving trained model accuracy — confus
 
 # Model Improvement Playbook
 
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:training-and-evaluation`) over fetching `roboflow://skills/training-and-evaluation/improvement-playbook` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+
 ## Diagnostic Decision Tree
 
 ```

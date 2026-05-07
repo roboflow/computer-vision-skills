@@ -1,5 +1,7 @@
 # Workflows
 
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:inference`) over fetching `roboflow://skills/inference/workflows` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+
 > **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), use `workflow_specs_run` (run a spec ad-hoc) or `workflows_run` (run a saved workflow) instead of raw HTTP — they return annotated images alongside JSON. The HTTP patterns stay relevant if you're not using MCP.
 
 ## What Are Workflows
@@ -128,7 +130,7 @@ Step names: derive from block type, strip `roboflow_core/` and `@vX`, lowercase 
 | **Serverless API** | `workflows_run` MCP tool or `client.run_workflow()` SDK |
 | **Dedicated** | Point at `<name>.roboflow.cloud` endpoint |
 | **Self-hosted** | `inference server start`, use `api_url="http://localhost:9001"` |
-| **Video/Stream** | `InferencePipeline.init_with_workflow()` with RTSP/webcam/file |
+| **Video/Stream (webcam, RTSP, file)** | WebRTC via `inference_sdk.webrtc` — runs on serverless GPU or your local inference server (see "Video Stream" below). Prefer this over `InferencePipeline`, which is a lower-level in-process alternative that requires installing the full `inference` package (torch/opencv/etc.) locally. |
 
 ### SDK Code
 
@@ -146,21 +148,176 @@ result = client.run_workflow(
 )
 ```
 
-### Video Stream
+### Video Stream (Webcam / RTSP / File) — WebRTC
+
+For real-time video — webcam, RTSP, or file — use the **WebRTC API** in `inference_sdk.webrtc`. It opens a peer connection to either the serverless GPU fleet or a local `inference server`, streams frames up, and returns annotated frames + workflow data over the data channel.
+
+> **Reasoning trap to avoid:** the MCP `workflows_run` tool only handles single static images. That's expected — it does not mean you should fall back to `InferencePipeline` as the default for live video. **WebRTC (Variants A or B below) is the default** because it isolates the heavy CV/model deps inside an inference server. `InferencePipeline` (Variant C) is a lower-level option for in-process Python embedding — pick it only when in-process execution is a specific requirement.
+
+> **Always ask the user which variant** before generating the script. There are three: **(A)** serverless WebRTC, **(B)** local-server WebRTC, **(C)** in-process `InferencePipeline`. Surface a brief 1-line summary of each from the comparison table below — don't silently pick one. Variants A and B differ only in `api_url` and a few `StreamConfig` fields; Variant C is structurally different (in-process Python, no network).
+
+> **Tell the user: first run is slower than subsequent runs** for any of these — there's a model load / warmup step before the first frame is processed. Subsequent runs reuse cached state. Useful to mention so they don't think the script is hung when nothing happens for a few seconds.
+
+#### Variant A — Serverless GPU (hosted)
+
+Best for: zero infra setup, bursty/occasional use, getting started.
 
 ```python
+import cv2
+from inference_sdk import InferenceHTTPClient
+from inference_sdk.webrtc import WebcamSource, StreamConfig, VideoMetadata
+
+client = InferenceHTTPClient.init(
+    api_url="https://serverless.roboflow.com",
+    api_key="YOUR_API_KEY",
+)
+
+source = WebcamSource(resolution=(1280, 720))  # or RTSPSource / FileSource
+
+config = StreamConfig(
+    stream_output=["annotated_image"],          # frames returned to client
+    data_output=["active_count", "new_instances", "event_log", "complete_events"],  # workflow outputs over datachannel
+    processing_timeout=3600,                    # seconds; session ends after this
+    requested_plan="webrtc-gpu-medium",         # webrtc-gpu-small | webrtc-gpu-medium | webrtc-gpu-large
+    requested_region="us",                      # us | eu | ap
+)
+
+session = client.webrtc.stream(
+    source=source,
+    workflow="my-workflow-id",
+    workspace="my-workspace",
+    image_input="image",                        # name of the image input on the workflow
+    config=config,
+)
+
+@session.on_frame
+def show_frame(frame, metadata: VideoMetadata):
+    cv2.imshow("Workflow Output", frame)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        session.close()
+
+@session.on_data()
+def on_data(data: dict, metadata: VideoMetadata):
+    print(f"Frame {metadata.frame_id}: {data}")
+
+session.run()  # blocks until the session closes
+```
+
+Pick `data_output` to match the **workflow output names** the user's workflow exposes (e.g. counts, event logs, tracking ids). Look these up via `workflows_get` if unsure.
+
+#### Variant B — Local inference server
+
+Best for: predictable latency on local GPU/CPU.
+
+Prereqs — start the inference server first:
+
+```bash
+pip install inference-cli
+inference server start     # serves inference server on http://localhost:9001
+```
+
+Then the same script with two changes: `api_url` points at localhost, and `StreamConfig` drops `requested_plan` / `requested_region` (those are serverless-only).
+
+```python
+import cv2
+from inference_sdk import InferenceHTTPClient
+from inference_sdk.webrtc import WebcamSource, StreamConfig, VideoMetadata
+
+client = InferenceHTTPClient.init(
+    api_url="http://localhost:9001",
+    api_key="YOUR_API_KEY",
+)
+
+source = WebcamSource(resolution=(1280, 720))
+
+config = StreamConfig(
+    stream_output=["annotated_image"],
+    data_output=["active_count", "new_instances", "event_log", "complete_events"],
+    processing_timeout=3600,
+)
+
+session = client.webrtc.stream(
+    source=source,
+    workflow="my-workflow-id",
+    workspace="my-workspace",
+    image_input="image",
+    config=config,
+)
+
+@session.on_frame
+def show_frame(frame, metadata: VideoMetadata):
+    cv2.imshow("Workflow Output", frame)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        session.close()
+
+@session.on_data()
+def on_data(data: dict, metadata: VideoMetadata):
+    print(f"Frame {metadata.frame_id}: {data}")
+
+session.run()
+```
+
+#### Variant C — `InferencePipeline` (in-process Python)
+
+Best for: embedding the workflow loop directly in your own Python application, single-host setups where standing up a separate inference server (Variant B) is overkill, or environments where you can't expose an HTTP/WebRTC port. The pipeline runs **in-process** — predictions are delivered to a callback in your script, not over a network channel.
+
+Trade-off: requires installing the full `inference` Python package locally, which pulls in heavy CV/model dependencies (torch, opencv, onnxruntime, model files, etc.). On GPU especially, this is the most fragile install of the three options. If you can run the inference server (Variant B), prefer that — same model deps, but isolated. Reach for `InferencePipeline` only when in-process execution is a hard requirement and the user has confirmed they're OK installing the `inference` package locally.
+
+**Setup — prefer `uv` for the venv, and pin Python to 3.12:**
+
+```bash
+# Preferred: uv is much faster and keeps deps in an isolated venv.
+# Pin Python to 3.12 — newer versions (3.13+) often lack onnxruntime wheels,
+# so `uv pip install inference` will fail on a default-Python (3.13+) venv.
+uv venv --python 3.12
+uv pip install inference                  # CPU; or `inference-gpu` for CUDA
+
+# Without uv, fall back to stdlib venv (slower, but works):
+# python3.12 -m venv .venv && .venv/bin/pip install inference
+```
+
+> **First run is slower than subsequent runs** — `inference` downloads model weights and warms up the ONNX runtime on first invocation. Tell the user this so they don't think the script is hung. Subsequent runs reuse cached weights.
+
+```python
+import cv2
 from inference import InferencePipeline
 
+
+def on_prediction(result, video_frame):
+    # `result` is a dict of workflow outputs — pull whatever your workflow exposes.
+    if (annotated := result.get("annotated_image")) is not None:
+        cv2.imshow("Workflow Output", annotated.numpy_image)
+        cv2.waitKey(1)
+    if (count := result.get("active_count")) is not None:
+        print(f"active_count = {count}")
+
+
 pipeline = InferencePipeline.init_with_workflow(
-    api_key="API_KEY",
-    workspace_name="workspace-name",
-    workflow_id="workflow-id",
-    video_reference=0,  # webcam, RTSP URL, or file path
-    on_prediction=lambda result, frame: print(result)
+    api_key="YOUR_API_KEY",
+    workspace_name="my-workspace",
+    workflow_id="my-workflow-id",
+    video_reference=0,                # 0 = default webcam; can be RTSP URL or file path
+    image_input_name="image",         # name of the workflow's image input (default "image")
+    on_prediction=on_prediction,
 )
+
 pipeline.start()
-pipeline.join()
+pipeline.join()                       # blocks until video source ends or pipeline terminates
 ```
+
+#### Choosing among the three
+
+| | Serverless WebRTC (A) | Local WebRTC (B) | InferencePipeline (C) |
+|---|---|---|---|
+| Setup | None — just an API key | `pip install inference-cli && inference server start` | `pip install inference` (heavy deps: torch, opencv, …) |
+| Cost | Per-minute credits (plan-tiered) | Metered credits + your hardware | Metered credits + your hardware |
+| Latency | Network + GPU; depends on `requested_region` | Local — usually lowest | Local — equivalent to Variant B |
+| GPU | `webrtc-gpu-small/medium/large` | Whatever you have (CPU works for light models) | Whatever you have |
+| Process model | Separate session, frames over WebRTC | Separate server, frames over WebRTC | In-process: workflow runs in your Python script |
+| Best for | Demos, bursty workloads, no local GPU | Edge, on-prem, sustained workloads | Single-host scripts, embedding in your own Python app, no HTTP/WebRTC port available |
+| First run | Slower than subsequent — session handshake + model load on the assigned worker | Slower than subsequent — Docker image pull (if cold) and model load on first call | Slower than subsequent — model download + ONNX warmup |
+
+**How to present this to the user:** surface all three with a one-line summary of each (use the "Best for" row), then let the user pick. Don't default-pick; the right answer depends on whether they have Docker, want zero local install, or want the script to be self-contained.
 
 ## When to Use Workflows vs Direct Inference
 

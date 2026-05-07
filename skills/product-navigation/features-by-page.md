@@ -1,5 +1,7 @@
 # Roboflow: Feature Lookup by Intent
 
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:product-navigation`) over fetching `roboflow://skills/product-navigation/features-by-page` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+
 "I want to do X" -> go here / use this tool.
 
 Base URL: `https://app.roboflow.com`
