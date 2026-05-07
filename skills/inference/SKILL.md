@@ -5,7 +5,7 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 
 > **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
 
-> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its inference tools over raw HTTP — auth is handled. For workflows the headline tool is **`workflows_run`** (run a saved workflow by `workspace_id` + `workflow_id`). For single-model calls use `models_infer`. `workflow_specs_run` and `workflow_specs_validate` exist for narrow inline-spec exceptions described under "Authoring Workflows" below.
+> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its inference tools over raw HTTP — auth is handled. For workflows the headline tool is **`workflows_run`** (run a saved workflow by `workflow_id` — the workflow URL slug; workspace is inferred from the API key — see [Finding your workspace slug](./workflows.md#finding-your-workspace-slug)). For single-model calls use `models_infer`. `workflow_specs_run` and `workflow_specs_validate` exist for narrow inline-spec exceptions described under "Authoring Workflows" below.
 
 # Inference & Deployment
 
@@ -14,7 +14,7 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 > **Authoring Workflows — don't paste JSON into chat or scripts.** Workflows are authored on the Roboflow platform (storage, versioning, and retrieval go through the platform) and run from code by **identifier**. Two authoring modes — propose / infer the right one from session context, never silently pick:
 >
 > - **Mode A — Agent-driven (MCP, in-session)** — for demos, previews, or when the user is committed to in-session "vibe coding". Agent designs the blocks, uses MCP authoring tools to create+save the workflow on the platform during the session (ground the design with `workflow_blocks_list` / `workflow_blocks_get_schema`; validate with `workflow_specs_validate`), then runs it.
-> - **Mode B — Platform-driven (Roboflow app + in-app agent)** — better default for non-trivial / sophisticated cases, when the user prefers visual iteration, when they aren't committed to agent-driven authoring this session, or as the fallback when Mode A hits an issue. Agent proposes the block design and hands the user a link to the [Workflows builder](https://app.roboflow.com/); the user builds (manually or with the more context-grounded in-app agent), tests in the preview, saves, and shares `workspace_id` + `workflow_id` back.
+> - **Mode B — Platform-driven (Roboflow app + in-app agent)** — better default for non-trivial / sophisticated cases, when the user prefers visual iteration, when they aren't committed to agent-driven authoring this session, or as the fallback when Mode A hits an issue. Agent proposes the block design and hands the user a link to the [Workflows builder](https://app.roboflow.com/); the user builds (manually or with the more context-grounded in-app agent), tests in the preview, saves, and shares the workspace + workflow URL slugs back (both visible in the builder URL: `app.roboflow.com/<workspace-slug>/workflows/<workflow-slug>`).
 >
 > Either mode lands at the same run path: `workflows_run` (MCP) or `client.run_workflow(workspace_name=..., workflow_id=...)` (SDK). Inline specs (`workflow_specs_run`) are an exception, not a default — only when the user explicitly asks for a throwaway run, and validate the spec first with `workflow_specs_validate`. See [workflows](./workflows.md) "Authoring & Deployment" for the full flow.
 
@@ -52,7 +52,7 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 | `models_infer` | Run single-model inference on one image via serverless API |
 | `models_train` | Start training a model on a dataset version |
 | `models_get_training_status` | Check training progress and metrics |
-| **`workflows_run`** | **Preferred.** Run a saved workflow by `workspace_id` + `workflow_id` (with optional `parameters`). |
+| **`workflows_run`** | **Preferred.** Run a saved workflow by `workflow_id` (the workflow URL slug; workspace is inferred from the API key — see [Finding your workspace slug](./workflows.md#finding-your-workspace-slug)). Optional `parameters`. |
 | `workflow_specs_validate` | Validate an inline workflow spec without running it — use before any inline run. |
 | `workflow_specs_run` | *Exception only.* Run an inline workflow spec — for explicit throwaway runs the user asked for. |
 
@@ -77,6 +77,8 @@ Mitigation strategies:
 3. **Raise confidence threshold** -- fewer detections = smaller response
 4. **Post-process** -- if consuming raw responses, drop or simplify the `points` array when you only need bounding boxes
 5. **Avoid returning raw segmentation results through LLM context** -- extract only the fields you need (class counts, bounding boxes) and discard polygon data
+
+**Workflow image outputs are a second culprit.** Visualization blocks (bounding box, polygon, mask, label, halo, …) emit rendered images as base64-encoded blobs inside the response — a 720p annotated frame is hundreds of KB of JSON-escaped string. When you call `workflows_run` / `workflow_specs_run` via MCP, this routinely overflows the tool-result token budget. Decode every image-shaped output (`{"type": "base64", "value": "..."}`) and write it to disk instead of carrying it through agent context. Don't hard-code field names — the output keys are whatever the workflow author declared via `JsonField`; iterate `output.keys()` and shape-check.
 
 ## Batch Processing
 
