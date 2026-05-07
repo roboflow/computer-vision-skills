@@ -1,6 +1,6 @@
 ---
 name: roboflow-setup
-description: Use when user asks how to configure the Roboflow MCP server, get or set their API key, wire the key into their environment globally or per project, or troubleshoot a missing key or unreachable MCP server.
+description: Use when user asks how to configure the Roboflow MCP server, get or set their API key, wire the key into their Claude Code or Codex environment, or troubleshoot a missing key or unreachable MCP server.
 ---
 
 # Roboflow MCP Configuration
@@ -52,31 +52,14 @@ Use `AskUserQuestion` with these options:
 ```
 Question: "Where should the API key be configured?"
 Options:
-  (a) Global — available in all projects on this machine (shell profile)
-  (b) Local — Claude Code only (.claude/settings.local.json, gitignored)
-  (c) Local — Codex only (.codex/config.toml, gitignored)
-  (d) Local — both Claude Code and Codex
+  (a) Local — Claude Code only (.claude/settings.local.json, gitignored)
+  (b) Local — Codex only (.codex/config.toml, gitignored)
+  (c) Local — both Claude Code and Codex
 ```
 
 ### Step 3 — Apply Configuration
 
-**If user chose (a) Global:**
-
-Show the user the exact line to add to their shell profile (`~/.zshrc` or `~/.bashrc`):
-
-```bash
-export ROBOFLOW_API_KEY="<key>"
-```
-
-Then show the reload command:
-
-```bash
-source ~/.zshrc   # or source ~/.bashrc
-```
-
-Instruct them to open a new Claude Code session after sourcing.
-
-**If user chose (b) Local — Claude Code or (d) both:**
+**If user chose (a) Local — Claude Code or (c) both:**
 
 Before writing, handle gitignore based on project state:
 
@@ -104,7 +87,7 @@ Write `.claude/settings.local.json` at the project root:
 
 Confirm the file was written and the gitignore entry is in place.
 
-**If user chose (c) Local — Codex or (d) both:**
+**If user chose (b) Local — Codex or (c) both:**
 
 Before writing, handle gitignore based on project state:
 
@@ -137,7 +120,7 @@ Confirm the file was written and the gitignore entry is in place.
 
 ### Step 4 — Verify
 
-**Claude Code path (options b or d):** Run:
+**Claude Code path (options a or c):** Run:
 
 ```bash
 claude mcp list
@@ -145,7 +128,7 @@ claude mcp list
 
 `roboflow` must appear with status connected. If not, see Troubleshooting.
 
-**Codex-only path (option c):** No automated verification available — confirm `.codex/config.toml` was written and instruct the user to launch Codex and run a Roboflow tool call to verify.
+**Codex-only path (option b):** No automated verification available — confirm `.codex/config.toml` was written and instruct the user to launch Codex and run a Roboflow tool call to verify.
 
 Then ask Claude Code:
 
@@ -157,7 +140,7 @@ Result list = auth working. Error = proceed to Troubleshooting.
 
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
-| `ROBOFLOW_API_KEY not set` | Env var not exported or stale session | `echo $ROBOFLOW_API_KEY`; source profile; open fresh Claude Code session |
+| `ROBOFLOW_API_KEY not set` | Key missing from `.claude/settings.local.json` or stale session | Check file exists and contains `env.ROBOFLOW_API_KEY`; open fresh Claude Code session |
 | `401 Unauthorized` | Wrong workspace key or key regenerated | Re-copy from `app.roboflow.com/{workspace}/settings/api`; update config |
 | `roboflow` not in `claude mcp list` | Plugin not installed | `claude plugin list`; if missing, see README install instructions |
 | MCP server unreachable | Network or firewall | `curl -I https://mcp.roboflow.com/mcp` |
