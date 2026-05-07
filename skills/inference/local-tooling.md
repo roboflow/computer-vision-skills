@@ -6,12 +6,12 @@
 
 Reach for local Python packages only when an operation has no MCP equivalent.
 
-| Need | Install | Surface |
-|---|---|---|
-| Inference inside your **own application** (server, script, notebook) | `inference-sdk` | `InferenceHTTPClient` |
+| Need                                                                                                             | Install | Surface |
+|------------------------------------------------------------------------------------------------------------------|---|---|
+| Inference inside your **own application** (server, script, notebook)                                             | `inference-sdk` | `InferenceHTTPClient` |
 | **Batch Processing** / **Data Staging** (see [`batch-staging`](batch-staging.md), [`batch-jobs`](batch-jobs.md)) | `inference-cli` | `inference rf-cloud …` |
-| **Self-hosted inference server** (Docker, on-prem, edge) | `inference-cli` | `inference server start` |
-| Asset scripts that need typed Python objects (e.g. [`assets/poll_batch_job.py`](assets/poll_batch_job.py)) | `inference-cli` | `from inference_cli.lib.roboflow_cloud…` |
+| **Self-hosted inference server** (Docker, on-prem, edge)                                                         | `inference-cli` | `inference server start` |
+| Asset scripts that need typed Python objects (e.g. [`bin/poll_batch_job.py`](bin/poll_batch_job.py))             | `inference-cli` | `from inference_cli.lib.roboflow_cloud…` |
 
 ## Confirm the target env with the user first
 
