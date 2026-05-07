@@ -5,11 +5,18 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 
 > **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
 
-> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), use its inference tools (`models_infer`, `workflow_specs_run`, `workflows_run`) directly — they cover the same operations as the HTTP endpoints below with auth handled. The HTTP patterns stay relevant if you're not using MCP.
+> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its inference tools over raw HTTP — auth is handled. For workflows the headline tool is **`workflows_run`** (run a saved workflow by `workspace_id` + `workflow_id`). For single-model calls use `models_infer`. `workflow_specs_run` and `workflow_specs_validate` exist for narrow inline-spec exceptions described under "Authoring Workflows" below.
 
 # Inference & Deployment
 
-> **Prefer Workflows over direct model inference.** Workflows let you chain model + visualization + logic blocks in one call via `workflow_specs_run`. Direct `models_infer` returns JSON only — no annotated images, and instance segmentation responses can be very large. See `roboflow://skills/inference/workflows` and `roboflow://skills/inference/workflow-templates`.
+> **Prefer Workflows over direct model inference.** Workflows let you chain model + visualization + logic blocks in one call. Direct `models_infer` returns JSON only — no annotated images, and instance segmentation responses can be very large. See [workflows](./workflows.md) and [workflow-templates](./workflow-templates.md).
+
+> **Authoring Workflows — don't paste JSON into chat or scripts.** Workflows are authored on the Roboflow platform (storage, versioning, and retrieval go through the platform) and run from code by **identifier**. Two authoring modes — propose / infer the right one from session context, never silently pick:
+>
+> - **Mode A — Agent-driven (MCP, in-session)** — for demos, previews, or when the user is committed to in-session "vibe coding". Agent designs the blocks, uses MCP authoring tools to create+save the workflow on the platform during the session (ground the design with `workflow_blocks_list` / `workflow_blocks_get_schema`; validate with `workflow_specs_validate`), then runs it.
+> - **Mode B — Platform-driven (Roboflow app + in-app agent)** — better default for non-trivial / sophisticated cases, when the user prefers visual iteration, when they aren't committed to agent-driven authoring this session, or as the fallback when Mode A hits an issue. Agent proposes the block design and hands the user a link to the [Workflows builder](https://app.roboflow.com/); the user builds (manually or with the more context-grounded in-app agent), tests in the preview, saves, and shares `workspace_id` + `workflow_id` back.
+>
+> Either mode lands at the same run path: `workflows_run` (MCP) or `client.run_workflow(workspace_name=..., workflow_id=...)` (SDK). Inline specs (`workflow_specs_run`) are an exception, not a default — only when the user explicitly asks for a throwaway run, and validate the spec first with `workflow_specs_validate`. See [workflows](./workflows.md) "Authoring & Deployment" for the full flow.
 
 > **For live video (webcam, RTSP, file):** the MCP `workflows_run` tool only handles single static images. For live video, present the user with **three options** (don't pick one silently): **(A)** WebRTC → serverless GPU, **(B)** WebRTC → local `inference server`, or **(C)** in-process `InferencePipeline`. They have different setup costs, dep sizes, and latency characteristics — surface a brief 1-line summary of each and let the user choose. See `roboflow://skills/inference/workflows` ("Video Stream" section) for full code and the comparison table.
 
@@ -45,8 +52,9 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 | `models_infer` | Run single-model inference on one image via serverless API |
 | `models_train` | Start training a model on a dataset version |
 | `models_get_training_status` | Check training progress and metrics |
-| `workflows_run` | Run a saved workflow on images |
-| `workflow_specs_run` | Run an inline workflow definition (no save needed) |
+| **`workflows_run`** | **Preferred.** Run a saved workflow by `workspace_id` + `workflow_id` (with optional `parameters`). |
+| `workflow_specs_validate` | Validate an inline workflow spec without running it — use before any inline run. |
+| `workflow_specs_run` | *Exception only.* Run an inline workflow spec — for explicit throwaway runs the user asked for. |
 
 ## Local tooling: when MCP isn't enough
 
