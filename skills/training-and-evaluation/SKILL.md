@@ -173,10 +173,26 @@ person, bicycle, car, motorcycle, airplane, bus, train, truck, boat, traffic lig
 |---|---|
 | Best accuracy, object detection | RF-DETR (Large or XL) |
 | Fast inference, object detection | RF-DETR Nano or YOLOv11n |
+| Best speed/accuracy tradeoff for a specific hardware | RF-DETR NAS (see section below) |
 | Best accuracy, instance segmentation | RF-DETR Seg |
 | Quick proof-of-concept (<1000 images) | Roboflow Instant |
 | Classification | ViT or DINOv3 |
 | Multimodal / text prompts | Qwen3.5 or SmolVLM |
+
+## RF-DETR NAS (Neural Architecture Search)
+
+Instead of picking a single RF-DETR size manually, NAS trains many variants and reports the speed/accuracy frontier so you can pick the one that fits your hardware budget.
+
+- **What:** A NAS run explores the RF-DETR architecture search space, then trains the surviving candidates and reports each one's mAP and measured latency on a target hardware (e.g., Jetson, T4 GPU). The output is a set of models on a Pareto frontier, plus an auto-selected "recommended" model that maximizes `20 * mAP - latency_ms`.
+- **Tasks:** Object Detection (`rfdetr-nas`) and Instance Segmentation (`rfdetr-nas-seg`).
+- **When to use:** When you want the best speed/accuracy tradeoff for a specific deployment target and don't want to A/B-test sizes manually. Especially valuable for edge hardware where latency budgets are tight.
+- **Phases:**
+  1. **Mining** — explores architectures and builds a Pareto frontier (latency vs mAP). Live updates while running.
+  2. **Training** — trains each frontier candidate end-to-end. Each becomes a regular model you can deploy.
+- **Plan gating:** Requires the `canTrainNas` workspace feature flag. Self-serve plans (basic/starter/sandbox/research/trial) need to upgrade; enterprise/legacy plans need to contact sales.
+- **Start a run:** Train page with `?engine=nas` (UI: pick **Neural Architecture Search** as the training engine). Results land at `/{workspace}/{project}/nas-runs/{versionId}`.
+- **Deploy:** Each NAS-produced model deploys like any other — pick one (typically the recommended) and use it as a normal Roboflow model. Inference type is `rfdetr-nas` / `rfdetr-nas-seg`, but it's served through the standard inference paths.
+- **References:** [RF-DETR paper (arxiv)](https://arxiv.org/html/2511.09554v2), [ICLR 2026](https://openreview.net/forum?id=qHm5GePxTh), [What is NAS? (blog)](https://blog.roboflow.com/neural-architecture-search/).
 
 ## Roboflow Instant / Rapid
 
@@ -219,7 +235,7 @@ When Rapid is excluded → recommend custom training with RF-DETR fine-tuning.
 
 - **Cancel Training:** Stops job, no weights saved. Refund if early in training.
 - **Early Stopping:** Stops job, saves weights. Use when graphs show convergence with many epochs remaining. Charges for used credits.
-- **NAS Training:** Shows paired charts (progress band + Pareto curve). May auto-stop on convergence.
+- **NAS Training:** Shows paired charts (mining progress + Pareto curve, then per-model training curves). May auto-stop on convergence. See **RF-DETR NAS** section below.
 
 ## Post-Training Metrics
 
