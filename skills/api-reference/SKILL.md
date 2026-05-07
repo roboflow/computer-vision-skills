@@ -1,9 +1,11 @@
 ---
 name: roboflow-api-reference
-description: Use when looking up Roboflow REST or Inference API hosts, authentication patterns, SDK choice, or request/response formats; covers api.roboflow.com, serverless.roboflow.com, dedicated, and self-hosted localhost endpoints.
+description: Protocol-level facts for Roboflow REST and Inference APIs — URL patterns, auth, parameters, error codes, and SDK quick-start. For deployment strategy and Workflow execution patterns, see roboflow-inference.
 ---
 
-> **Tip:** If you're connected to the [Roboflow MCP server](https://github.com/roboflow/roboflow-mcp), prefer its tools (`projects_*`, `versions_*`, `models_*`, `workflows_*`, `images_*`, …) over raw REST calls — they handle auth, pagination, and typed responses for you. The REST patterns below stay relevant if you're not using MCP.
+> **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
+
+> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its tools (`projects_*`, `versions_*`, `models_*`, `workflows_*`, `images_*`, …) over raw REST calls — they handle auth, pagination, and typed responses for you. The REST patterns below stay relevant if you're not using MCP.
 
 # Roboflow API Reference — Overview
 
@@ -23,10 +25,10 @@ Use the `inference-sdk` Python package as the preferred client for all inference
 | Method | Where | Format |
 |--------|-------|--------|
 | Query parameter | All hosts | `?api_key=YOUR_KEY` |
-| Request body | Platform API | `"api_key": "YOUR_KEY"` in JSON body |
-| Header | Inference hosts | `Authorization: Bearer YOUR_KEY` (Python SDK handles this) |
+| Request body | Platform API + Workflow inference | `"api_key": "YOUR_KEY"` in JSON body |
+| Header | MCP server (`mcp.roboflow.com`) | `x-api-key: YOUR_KEY` (handled automatically by MCP) |
 
-API keys are workspace-scoped. Get yours from **Workspace Settings > API Keys** in the Roboflow dashboard.
+API keys are workspace-scoped. Get yours from **Workspace Settings > API Keys** in the Roboflow dashboard (`app.roboflow.com/{workspace}/settings/api`). Personal API keys are at `/settings/account` → API Keys tab.
 
 ## SDKs
 
@@ -69,13 +71,14 @@ result = model.predict("image.jpg", confidence=40).json()
 
 | Task | Host to Use |
 |------|-------------|
-| Run model inference (new projects) | `serverless.roboflow.com` |
+| Run model inference | `serverless.roboflow.com` |
 | Run Workflows | `serverless.roboflow.com` |
 | Upload images | `api.roboflow.com` |
 | Manage projects/versions | `api.roboflow.com` |
 | Start training | `api.roboflow.com` |
 | High-throughput / SLA inference | Dedicated deployment URL |
 | Air-gapped / on-prem inference | Self-hosted `localhost:9001` |
+| Real-time video / webcam / RTSP | WebRTC via `inference_sdk.webrtc` against serverless or local — see `roboflow://skills/inference/workflows` ("Video Stream" section). Not a plain HTTP call. |
 
 ## Rate Limits
 

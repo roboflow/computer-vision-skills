@@ -3,6 +3,8 @@ name: roboflow-data-management
 description: Use when uploading images, labeling, organizing datasets, creating Roboflow projects (detection/segmentation/keypoint/classification), tags, splits, versions, or RoboQL search.
 ---
 
+> **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
+
 # Data Management on Roboflow
 
 ## Project Types
@@ -202,3 +204,7 @@ project.version(1).download("yolov8")
 | `versions_generate` | Generate a dataset version with preprocessing/augmentation |
 | `versions_get` | Inspect a version |
 | `versions_export` | Export a version in a given format |
+
+## Related Pages
+
+- `roboflow://skills/roboflow-labeling/SKILL` — annotation tools, AI labeling, Label Assist, Smart Polygon, Auto Label, annotation jobs

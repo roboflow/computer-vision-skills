@@ -1,5 +1,7 @@
 # Roboflow: Feature Lookup by Intent
 
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:product-navigation`) over fetching `roboflow://skills/product-navigation/features-by-page` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+
 "I want to do X" -> go here / use this tool.
 
 Base URL: `https://app.roboflow.com`
@@ -108,9 +110,9 @@ Base URL: `https://app.roboflow.com`
 | Check credit usage | `/{ws}/settings/usage` | -- |
 | Purchase credits | `/{ws}/settings/plan` -> Buy Credits | -- |
 | Update payment method | `/{ws}/settings/plan` -> Payment tab | -- |
-
-For plans, credits, and cost estimation, see `roboflow://skills/plans-and-pricing/index`.
 | Get workspace API key | `/{ws}/settings/api` | -- |
 | Get personal API key | `/settings/account` -> API Keys | -- |
 | Configure SSO | `/{ws}/settings/plan` (Enterprise) | -- |
 | View audit logs | `/{ws}/settings/audit-logs` (Enterprise) | -- |
+
+For plans, credits, and cost estimation, see `roboflow://skills/plans-and-pricing/SKILL`.

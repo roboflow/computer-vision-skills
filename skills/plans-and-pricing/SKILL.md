@@ -3,6 +3,8 @@ name: roboflow-plans-and-pricing
 description: Use when answering questions about Roboflow plans, credit usage, or cost estimation; directs users to roboflow.com/pricing for current dollar amounts.
 ---
 
+> **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
+
 # Plans & Pricing
 
 For current dollar pricing, always direct the user to `roboflow.com/pricing`. Never guess at prices.
@@ -38,7 +40,6 @@ Extra credits: prepaid packs ($130–$630/mo) or flex at $6/credit overage. Deta
 
 | Action | 1 Credit = |
 |--------|-----------|
-| Hosted API (v1) | 1,000 inferences |
 | Hosted API (v2) | 500 seconds execution |
 | Video streams (CPU) | 10 hours |
 | Video streams (GPU — small) | 80 minutes |
@@ -75,15 +76,8 @@ When helping users estimate costs:
 2. Direct the user to `roboflow.com/pricing` for current credit pricing per plan
 3. Recommend the right deployment option:
    - **Low volume / getting started** → Serverless (simplest, pay-per-use)
-   - **High volume / continuous** → Self-hosted via `pip install inference` (same API, no per-inference cost, just hardware)
+   - **High volume / continuous** → Self-hosted via inference server/inference-sdk (same API)
    - **Predictable production load** → Dedicated deployment (consistent latency, per-hour)
-
-### Example: Continuous Video (1 fps × 12h/day)
-
-- 43,200 frames/day → ~1.3M frames/month
-- Serverless: ~1,300 credits/month
-- Self-hosted: same model + API, runs on any box with `pip install inference`. Cost = hardware only.
-- For always-on use cases, self-hosted almost always wins.
 
 ## Where to Check
 

@@ -1,10 +1,12 @@
 # Roboflow Inference API Reference
 
-> **Tip:** If you're connected to the [Roboflow MCP server](https://github.com/roboflow/roboflow-mcp), prefer `models_infer` (single-model) or `workflow_specs_run` / `workflows_run` (chained pipelines with annotated images) over raw HTTP calls — same operations, but auth is handled and responses are typed. The REST patterns below stay relevant if you're not using MCP.
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:api-reference`) over fetching `roboflow://skills/api-reference/inference` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
-## Serverless v2 (Recommended)
+> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer `models_infer` (single-model) or `workflow_specs_run` / `workflows_run` (chained pipelines with annotated images) over raw HTTP calls — same operations, but auth is handled and responses are typed. The REST patterns below stay relevant if you're not using MCP.
 
-Single endpoint for all model types and Workflows.
+## Serverless Inference (Hosted API v2)
+
+Single endpoint for all model types and Workflows. V2 is credit-billed by execution time (seconds); the older v1 hosted API was billed per inference count — v2 is the current default for all new projects.
 
 ```
 POST https://serverless.roboflow.com/{dataset_id}/{version_id}
@@ -75,7 +77,10 @@ The recommended approach for visualization is **Workflows** — use `workflow_sp
       "x": 189.5, "y": 100,
       "width": 163, "height": 186,
       "class": "helmet",
-      "confidence": 0.544
+      "class_id": 0,
+      "confidence": 0.544,
+      "class_confidence": 0.544,
+      "detection_id": "uuid"
     }
   ],
   "image": { "width": 2048, "height": 1371 }
@@ -144,8 +149,8 @@ Same as object detection, plus a `keypoints` array per prediction:
       "width": 163, "height": 186,
       "class": "helmet", "confidence": 0.544,
       "keypoints": [
-        { "x": 189, "y": 20, "class_name": "top", "class_id": 0, "confidence": 0.91 },
-        { "x": 188, "y": 180, "class_name": "bottom", "class_id": 1, "confidence": 0.93 }
+        { "x": 189, "y": 20, "class": "top", "class_name": "top", "class_id": 0, "confidence": 0.91 },
+        { "x": 188, "y": 180, "class": "bottom", "class_name": "bottom", "class_id": 1, "confidence": 0.93 }
       ]
     }
   ],
