@@ -2,7 +2,7 @@
 
 > **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:inference`) over fetching `roboflow://skills/inference/workflows` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
-> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), use `workflow_specs_run` (run a spec ad-hoc) or `workflows_run` (run a saved workflow) instead of raw HTTP — they return annotated images alongside JSON. The HTTP patterns stay relevant if you're not using MCP.
+> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer **`workflows_run`** (saved workflow by `workspace_id` + `workflow_id`) over raw HTTP — auth is handled and outputs include annotated images. `workflow_specs_run` is an inline-spec escape hatch for explicit one-offs only; see "Authoring & Deployment" below.
 
 ## What Are Workflows
 
@@ -116,12 +116,34 @@ No explicit edges. Connections are selector strings in step input properties:
 
 Step names: derive from block type, strip `roboflow_core/` and `@vX`, lowercase with underscores.
 
-## Create and Deploy
+## Authoring & Deployment
 
-### Build in Dashboard
-1. Workflows tab -> "Create a Workflow" (blank or template)
-2. Add blocks, configure inputs (reference previous block outputs via selectors)
-3. Test with built-in preview, inspect per-block outputs
+### Two ways to author — both end with a saved workflow on the platform
+
+Workflows can be authored two ways. The agent should **propose** the right one (or **infer** from prior session signals) — never silently pick. Both paths land at the same place: a workflow saved on the Roboflow platform, identified by `workspace_id` + `workflow_id`. Storage, versioning, and retrieval always go through the platform; the run path is the same regardless of how the workflow was authored.
+
+#### Mode A — Agent-driven (MCP, in-session)
+
+**Use when:** the session is for a demo or preview, or the user is committed to in-session "vibe coding" and wants the agent to drive the whole authoring loop end-to-end.
+
+**How:** agent designs the block list, calls Roboflow MCP workflow-authoring tools to create and save the workflow on the platform during the session, and runs it. Ground the design in real types: use `workflow_blocks_list` / `workflow_blocks_get_schema` for manifest types and required props, and `workflow_specs_validate` to catch shape errors before saving.
+
+#### Mode B — Platform-driven (Roboflow app + in-app agent)
+
+**Use when:** the workflow is non-trivial, the user prefers to see and adjust it visually, the user isn't committed to agent-driven authoring this session, or Mode A has hit an issue and a fallback is needed. **This is also the better default for sophisticated cases** — the builder's in-app agent is more tightly context-grounded than a generic external agent.
+
+**How:** agent proposes the block design (block list, how they connect, expected inputs/outputs) and hands the user a direct link to the [Workflows builder](https://app.roboflow.com/) (Workflows tab → "Create a Workflow"). The user builds manually or works with the in-app workflow agent, tests via the built-in preview, saves, and shares `workspace_id` + `workflow_id` back. The agent then runs it from code.
+
+### Running a saved workflow
+
+Whichever mode authored it, run it the same way:
+
+- **MCP:** `workflows_run` with `workspace_id` + `workflow_id` (and optional `parameters`).
+- **SDK:** `client.run_workflow(workspace_name=..., workflow_id=..., images=..., parameters=...)`.
+
+### Inline specs — exception only
+
+`workflow_specs_run` (MCP) and `client.run_workflow(specification=...)` (SDK) accept an inline spec without ever touching the platform. Reserve for narrow cases the user has explicitly authorised: throwaway one-offs or programmatic generation where saving is genuinely impractical. **Validate first** with `workflow_specs_validate`. Default for everything else: author via Mode A or Mode B, then call `workflows_run`.
 
 ### Deploy
 
@@ -330,8 +352,8 @@ pipeline.join()                       # blocks until video source ends or pipeli
 |------|---------|
 | `workflows_list` | List all workflows in the workspace |
 | `workflows_get` | Get a workflow's definition |
-| `workflows_run` | Run a saved workflow on images |
-| `workflow_blocks_list` | List available block types (filterable by category) |
-| `workflow_blocks_get_schema` | Full schema for a block (properties, required fields) |
-| `workflow_specs_validate` | Validate a workflow definition without running |
-| `workflow_specs_run` | Run an inline workflow spec (no save needed) |
+| **`workflows_run`** | **Preferred run path.** Run a saved workflow by `workspace_id` + `workflow_id` (with optional `parameters`). |
+| `workflow_blocks_list` | List available block types (filterable by category) — use during Mode A design |
+| `workflow_blocks_get_schema` | Full schema for a block (properties, required fields) — use during Mode A design |
+| `workflow_specs_validate` | Validate an inline workflow spec without running it — use before saving in Mode A and before any inline run |
+| `workflow_specs_run` | *Exception only.* Run an inline workflow spec without saving — for explicit throwaway runs the user authorised |
