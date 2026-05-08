@@ -152,6 +152,8 @@ function Invoke-RfMainPs {
     # Discard the child's stdout — we only want to return the exit code.
     # Otherwise PowerShell captures the script's Write-Host output along
     # with the return value and `Should -Be 0` compares against an array.
-    & $Script:RfPwshPath -NoProfile -File $main @Items 2>&1 | Out-Null
+    # `-ExecutionPolicy Bypass` keeps Windows PS 5.1's default Restricted
+    # policy from blocking the spawned script.
+    & $Script:RfPwshPath -NoProfile -ExecutionPolicy Bypass -File $main @Items 2>&1 | Out-Null
     return $LASTEXITCODE
 }

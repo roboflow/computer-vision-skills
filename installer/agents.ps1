@@ -61,7 +61,7 @@ $ref  = $env:ROBOFLOW_AGENTS_REF;  if (-not $ref)  { $ref  = 'main' }
 if ($PSCommandPath) {
     $localMain = Join-Path (Split-Path -Parent $PSCommandPath) 'main.ps1'
     if (Test-Path -LiteralPath $localMain) {
-        & $Script:RfPwshExe -NoProfile -File $localMain @RemainingArgs
+        & $Script:RfPwshExe -NoProfile -ExecutionPolicy Bypass -File $localMain @RemainingArgs
         Invoke-RfFinish -Code $LASTEXITCODE
         return
     }
@@ -97,7 +97,7 @@ try {
         Invoke-RfFinish -Code 1
         return
     }
-    & $Script:RfPwshExe -NoProfile -File $main @RemainingArgs
+    & $Script:RfPwshExe -NoProfile -ExecutionPolicy Bypass -File $main @RemainingArgs
     Invoke-RfFinish -Code $LASTEXITCODE
 }
 catch {

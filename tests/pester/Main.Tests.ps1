@@ -10,7 +10,7 @@ Describe 'main.ps1 — usage / version' {
 
     It '--help exits 0 with usage text' {
         $main = Join-Path $Script:RfRepoRoot 'installer/main.ps1'
-        $output = & $Script:RfPwshPath -NoProfile -File $main --help 2>&1 | Out-String
+        $output = & $Script:RfPwshPath -NoProfile -ExecutionPolicy Bypass -File $main --help 2>&1 | Out-String
         $LASTEXITCODE | Should -Be 0
         $output | Should -Match 'agents.ps1'
         $output | Should -Match '--host='
@@ -19,14 +19,14 @@ Describe 'main.ps1 — usage / version' {
 
     It '--version prints installer version' {
         $main = Join-Path $Script:RfRepoRoot 'installer/main.ps1'
-        $output = & $Script:RfPwshPath -NoProfile -File $main --version 2>&1 | Out-String
+        $output = & $Script:RfPwshPath -NoProfile -ExecutionPolicy Bypass -File $main --version 2>&1 | Out-String
         $LASTEXITCODE | Should -Be 0
         $output | Should -Match 'installer'
     }
 
     It 'unknown flag exits 2' {
         $main = Join-Path $Script:RfRepoRoot 'installer/main.ps1'
-        $null = & $Script:RfPwshPath -NoProfile -File $main --bogus-flag 2>&1
+        $null = & $Script:RfPwshPath -NoProfile -ExecutionPolicy Bypass -File $main --bogus-flag 2>&1
         $LASTEXITCODE | Should -Be 2
     }
 
@@ -34,7 +34,7 @@ Describe 'main.ps1 — usage / version' {
         $env:ROBOFLOW_API_KEY = 'rf_warn_test'
         try {
             $main = Join-Path $Script:RfRepoRoot 'installer/main.ps1'
-            $output = & $Script:RfPwshPath -NoProfile -File $main --yes --project --inline-key --host=cursor-desktop --dry-run 2>&1 | Out-String
+            $output = & $Script:RfPwshPath -NoProfile -ExecutionPolicy Bypass -File $main --yes --project --inline-key --host=cursor-desktop --dry-run 2>&1 | Out-String
             $LASTEXITCODE | Should -Be 0
             $output | Should -Match '--inline-key \+ --project'
         } finally {
@@ -44,13 +44,13 @@ Describe 'main.ps1 — usage / version' {
 
     It 'with no detected hosts exits 3' {
         $main = Join-Path $Script:RfRepoRoot 'installer/main.ps1'
-        $null = & $Script:RfPwshPath -NoProfile -File $main --yes --auth-skip 2>&1
+        $null = & $Script:RfPwshPath -NoProfile -ExecutionPolicy Bypass -File $main --yes --auth-skip 2>&1
         $LASTEXITCODE | Should -Be 3
     }
 
     It '--host with unknown id exits 2' {
         $main = Join-Path $Script:RfRepoRoot 'installer/main.ps1'
-        $null = & $Script:RfPwshPath -NoProfile -File $main --yes --host=nonexistent-cli --auth-skip 2>&1
+        $null = & $Script:RfPwshPath -NoProfile -ExecutionPolicy Bypass -File $main --yes --host=nonexistent-cli --auth-skip 2>&1
         $LASTEXITCODE | Should -Be 2
     }
 }
