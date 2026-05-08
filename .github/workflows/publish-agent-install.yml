@@ -1,10 +1,22 @@
 name: Publish agent-install
 
+# Publishes the user-facing install bootstraps to
+# https://repo.roboflow.com/agent-install/{agent.sh,agent.ps1}
+#
+# Source of truth in this repo:
+#   installer/agents.sh   -> published as agent.sh   (singular, per bucket convention)
+#   installer/agents.ps1  -> published as agent.ps1
+#
+# The renamed copies are staged in ./staged/ so the upload action's parent: false
+# semantics drop them under their published names. We keep the plural agents.{sh,ps1}
+# names internally because every doc, test, and per-agent guide already uses them.
+
 on:
   push:
     branches: [main]
     paths:
-      - "agent-install/**"
+      - "installer/agents.sh"
+      - "installer/agents.ps1"
       - ".github/workflows/publish-agent-install.yml"
   workflow_dispatch: {}
 
@@ -37,6 +49,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Stage installer scripts under their published names
+        run: |
+          mkdir -p staged
+          cp installer/agents.sh  staged/agent.sh
+          cp installer/agents.ps1 staged/agent.ps1
+          ls -la staged/
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
@@ -47,7 +66,7 @@ jobs:
         uses: google-github-actions/upload-cloud-storage@v3
         with:
           parent: false
-          path: agent-install/agent.sh
+          path: staged/agent.sh
           destination: ${{ env.BUCKET_NAME }}/
           process_gcloudignore: false
           headers: |-
@@ -58,7 +77,7 @@ jobs:
         uses: google-github-actions/upload-cloud-storage@v3
         with:
           parent: false
-          path: agent-install/agent.ps1
+          path: staged/agent.ps1
           destination: ${{ env.BUCKET_NAME }}/
           process_gcloudignore: false
           headers: |-

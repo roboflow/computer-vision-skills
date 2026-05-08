@@ -3,6 +3,18 @@ common.ps1 — logging, prompts, atomic writes, backups.
 Imported by main.ps1 and host adapters via dot-source.
 #>
 
+# Native programs (claude, codex, npx, etc.) emit UTF-8 to stdout/stderr.
+# PowerShell on Windows captures their output through [Console]::OutputEncoding,
+# which defaults to the legacy console code page (cp1252 in en-US, cp437 in
+# some cmd.exe contexts). Without this, claude's "✓ Plugin installed" comes
+# back as "ΓêÜ Plugin installed" and "Adding marketplace…" as
+# "Adding marketplaceΓÇª". Force UTF-8 in both directions before any
+# `& <native_program>` invocation runs in this session.
+try {
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    $OutputEncoding = [System.Text.Encoding]::UTF8
+} catch { }
+
 # Cross-edition platform predicates.
 #
 # PowerShell 6+ ships $IsWindows / $IsLinux / $IsMacOS as automatic read-only
