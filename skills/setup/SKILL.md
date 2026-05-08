@@ -84,10 +84,10 @@ Create the `.claude` directory and write `.claude/settings.local.json` at the pr
 
 ```bash
 mkdir -p .claude
-cat > .claude/settings.local.json <<'EOF'
+cat > .claude/settings.local.json <<EOF
 {
   "env": {
-    "ROBOFLOW_API_KEY": "<key>"
+    "ROBOFLOW_API_KEY": "$RF_KEY"
   }
 }
 EOF
@@ -113,12 +113,15 @@ fi
 
 Create the `.codex/` directory if it does not exist, then write `.codex/config.toml`:
 
-```toml
+```bash
+mkdir -p .codex
+cat > .codex/config.toml <<EOF
 [shell_environment_policy]
-set = { ROBOFLOW_API_KEY = "<key>" }
+set = { ROBOFLOW_API_KEY = "$RF_KEY" }
 
 [mcp_servers.roboflow.env]
-ROBOFLOW_API_KEY = "<key>"
+ROBOFLOW_API_KEY = "$RF_KEY"
+EOF
 ```
 
 `[shell_environment_policy]` makes the key available to all subprocesses Codex spawns.

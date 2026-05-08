@@ -13,8 +13,8 @@ The plugin cache is a read-only install artifact — changes there are overwritt
 
 ## Gate Rule — Secret Files Must Be Gitignored
 
-**Before any operation that creates `.claude/settings.local.json` in a project with git initialized:**
+**Before any operation that creates `.claude/settings.local.json` or `.codex/config.toml` in a project with git initialized:**
 
-1. Verify `.claude/settings.local.json` is present in `.gitignore` — if not, add it immediately before writing the file.
-2. Never commit `.claude/settings.local.json` under any circumstances.
+1. Verify the file path is present in `.gitignore` — if not, add it immediately before writing the file.
+2. Never commit `.claude/settings.local.json` or `.codex/config.toml` under any circumstances.
 3. This rule is unconditional — no exceptions, no user override.
