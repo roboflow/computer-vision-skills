@@ -1,0 +1,145 @@
+# `agents.sh` Installer Reference
+
+`agents.sh` configures your installed coding agents (Claude Code, Codex, and others as later phases land) to use Roboflow Skills, MCP, and rules.
+
+For the user-facing one-liner, see the repo README. This document is the flag and host reference.
+
+## Quick reference
+
+```bash
+# Interactive
+curl -fsSL https://roboflow.com/agents.sh | bash
+
+# Non-interactive
+curl -fsSL https://roboflow.com/agents.sh | bash -s -- \
+    --yes --host=claude-code-cli,codex-cli --api-key=$ROBOFLOW_API_KEY
+
+# Dry run
+curl -fsSL https://roboflow.com/agents.sh | bash -s -- --dry-run --host=claude-code-cli
+
+# Uninstall
+curl -fsSL https://roboflow.com/agents.sh | bash -s -- --uninstall
+
+# Pin to a branch / tag while testing
+ROBOFLOW_AGENTS_REF=installer curl -fsSL https://roboflow.com/agents.sh | bash
+```
+
+## Flags
+
+| Flag | Effect |
+|---|---|
+| `--yes`, `-y` | No prompts; use defaults for any unspecified decision. |
+| `--host=<id,...>` | Restrict to specific agent IDs. Comma-separated, repeatable. |
+| `--all` | All detected agents. Implied with `--yes` if no `--host` is given. |
+| `--skills-only`, `--mcp-only`, `--rules-only` | Component scope (Phase 2+ for non-plugin hosts). |
+| `--no-skills`, `--no-mcp`, `--no-rules` | Negative scope. |
+| `--global` | Default scope (per-user). |
+| `--project` | Project-scoped install. Inline secrets blocked. |
+| `--api-key=<key>` | Override key resolution. |
+| `--workspace=<url>` | Pick a workspace from the Python SDK config. |
+| `--inline-key` | Write the key literally. Global scope only. |
+| `--auth-skip` | Skip auth wiring; install everything else. |
+| `--update` | Reconcile-only mode. (A bare re-run also reconciles.) |
+| `--uninstall` | Remove Roboflow-managed components. |
+| `--dry-run` | Print plan without making changes. |
+| `--force` | Override safety checks. |
+| `--force-skill=<name>` | Overwrite a specific user-edited skill (Phase 2+). |
+| `--version` | Print installer version + repo SHA. |
+| `--help`, `-h` | Show usage. |
+
+## Hosts
+
+The installer dispatches to per-host adapters in `installer/hosts/`. Each adapter knows how to install, update, and uninstall the Roboflow integration for one host.
+
+### Phase 1 (shipped)
+
+| ID | Kind | Path | What the installer does |
+|---|---|---|---|
+| `claude-code-cli` | CLI | `claude` on PATH | `claude plugin marketplace add roboflow/computer-vision-skills` + `claude plugin install roboflow` |
+| `codex-cli` | CLI | `codex` on PATH | `codex plugin marketplace add roboflow/computer-vision-skills`, then prints next steps for `/plugins` |
+
+Both use Roboflow's published plugin manifests in this repo (`.claude-plugin/`, `.codex-plugin/`), which bundle the skills (`skills/`) and the MCP server config (`.mcp.json`). The installer's job is to spare users from typing two commands per host and to record the install in the central manifest.
+
+### Future phases (planned)
+
+| ID | Kind | Notes |
+|---|---|---|
+| `cursor-desktop` | Desktop | Phase 2. Writes `~/.cursor/mcp.json`, installs skills via `npx skills add` (with `-g` for global), optional `.cursor/rules/roboflow.mdc`. |
+| `claude-desktop` | Desktop | Phase 2. Writes the platform-specific `claude_desktop_config.json` MCP entry. Skills not applicable. |
+| `copilot-cli` | CLI | Phase 2. Writes `~/.copilot/mcp-config.json`. |
+| `gemini-cli` | CLI | Phase 4. Writes `~/.gemini/settings.json`. |
+| `windsurf-desktop` | Desktop | Phase 4. Writes `~/.codeium/windsurf/mcp_config.json`. |
+| `vscode-copilot` | Desktop | Phase 4. Writes project `.vscode/mcp.json`; global path varies across builds. |
+| `opencode-cli` | CLI | Phase 4. Writes `~/.config/opencode/opencode.json`. |
+
+## Authentication
+
+Resolution precedence:
+
+1. `--api-key=<key>` flag.
+2. `$ROBOFLOW_API_KEY` env var.
+3. Roboflow Python SDK config:
+   - macOS / Linux: `~/.config/roboflow/config.json`
+   - Windows: `~/roboflow/config.json` (== `%USERPROFILE%\roboflow\config.json`)
+   - Override: `$ROBOFLOW_CONFIG_DIR`
+   - Single-workspace configs are used directly. Multi-workspace prompts unless `--workspace=<url>` or `--yes` (which falls back to `RF_WORKSPACE`).
+4. Interactive prompt (silent `read -s`). Skipped under `--yes` or `--auth-skip`.
+
+The Roboflow MCP server reads `ROBOFLOW_API_KEY` from the environment of whatever shell launches your agent. If your shell doesn't already have it exported, the installer prints a reminder.
+
+## Manifest
+
+Installs are recorded at `~/.config/roboflow/installations.json` (or `$ROBOFLOW_CONFIG_DIR/installations.json`):
+
+```json
+{
+  "schema_version": 1,
+  "installer_version": "0.1.0",
+  "installations": [
+    {
+      "host_id": "claude-code-cli",
+      "component": "plugin",
+      "scope": "global",
+      "marketplace": "roboflow/computer-vision-skills",
+      "plugin_name": "roboflow",
+      "installed_at": "2026-05-07T20:00:00Z",
+      "updated_at": "2026-05-07T20:00:00Z"
+    }
+  ]
+}
+```
+
+This is what `--update` and `--uninstall` consult to know what to reconcile or remove. File mode is `0600` on Unix.
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | OK |
+| 1 | Install failure (one or more host adapters failed) |
+| 2 | Invalid usage (unknown flag, unknown host id) |
+| 3 | No supported coding agents detected or selected |
+| 4 | Unsafe operation blocked (e.g. `--project --inline-key`) |
+
+## Environment variables
+
+| Var | Default | Purpose |
+|---|---|---|
+| `ROBOFLOW_API_KEY` | — | Read by adapters (priority 2) and by the MCP server at runtime. |
+| `ROBOFLOW_CONFIG_DIR` | `~/.config/roboflow` | Override the Roboflow config directory (matches the Python SDK). |
+| `ROBOFLOW_AGENTS_REF` | `main` | Branch/tag the bootstrap fetches the tarball from. |
+| `ROBOFLOW_AGENTS_REPO` | `roboflow/computer-vision-skills` | Source repo for the bootstrap tarball and the Claude/Codex marketplace registration. |
+| `XDG_CACHE_HOME` | `~/.cache` | Bootstrap-extracted installer caches under this dir. |
+| `NO_COLOR` | unset | If set, the installer suppresses ANSI colors. |
+
+## Testing
+
+The installer has bats tests under `tests/bats/`:
+
+```bash
+brew install bats-core         # macOS
+sudo apt-get install bats      # Ubuntu/Debian
+bats tests/bats/
+```
+
+CI runs the suite on `ubuntu-latest` and `macos-latest`; see [`.github/workflows/installer.yml`](../.github/workflows/installer.yml).
