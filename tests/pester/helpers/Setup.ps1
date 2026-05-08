@@ -37,6 +37,15 @@ if (-not $Script:RfOriginalPath) {
     $Script:RfOriginalPath = $env:PATH
 }
 
+# Windows PowerShell 5.1 doesn't define the $IsWindows / $IsMacOS / $IsLinux
+# auto-vars. Use $PSVersionTable.PSEdition for cross-edition platform checks
+# inside the test helpers. (Production code uses Test-RfWindows/Macos/Linux
+# from common.ps1; tests duplicate the logic locally so they don't have to
+# dot-source the lib just for this.)
+$Script:RfIsWindows = ($PSVersionTable.PSEdition -eq 'Desktop') -or [bool]$IsWindows
+$Script:RfIsMacOS   = (-not $Script:RfIsWindows) -and [bool]$IsMacOS
+$Script:RfIsLinux   = (-not $Script:RfIsWindows) -and [bool]$IsLinux
+
 function New-RfIsolatedHome {
     # Note: $HOME is a PowerShell automatic read-only variable. We override
     # the env-var ($env:HOME), which child processes inherit. Use $rfHome
@@ -46,7 +55,7 @@ function New-RfIsolatedHome {
     # On Windows PS 5.1, $HOME is derived from $env:USERPROFILE rather than
     # $env:HOME. Set both so child processes (including powershell.exe)
     # see the isolated home regardless of edition.
-    if ($IsWindows) { $env:USERPROFILE = $rfHome.FullName }
+    if ($Script:RfIsWindows) { $env:USERPROFILE = $rfHome.FullName }
     $env:XDG_CACHE_HOME = Join-Path $rfHome.FullName '.cache'
     Remove-Item Env:ROBOFLOW_API_KEY -ErrorAction SilentlyContinue
     Remove-Item Env:ROBOFLOW_CONFIG_DIR -ErrorAction SilentlyContinue
@@ -55,7 +64,7 @@ function New-RfIsolatedHome {
     New-Item -ItemType Directory -Path (Join-Path $rfHome '.config') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $rfHome 'bin') -Force | Out-Null
 
-    if ($IsWindows) {
+    if ($Script:RfIsWindows) {
         # Narrow PATH to the test stub dir + minimum system bins so the user's
         # actual claude / codex / npx don't leak into "missing binary" tests.
         $sysRoot = if ($env:SystemRoot) { $env:SystemRoot } else { 'C:\Windows' }
@@ -91,7 +100,7 @@ function New-RfStubCommand {
         New-Item -ItemType Directory -Path $binDir -Force | Out-Null
     }
 
-    if ($IsWindows) {
+    if ($Script:RfIsWindows) {
         # .cmd is in PATHEXT by default; tests invoke `claude` and PATHEXT
         # resolution finds claude.cmd. Each invocation logs argv to a unique
         # file so Get-RfStubCalls can replay them.

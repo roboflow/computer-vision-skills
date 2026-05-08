@@ -18,7 +18,7 @@ function Initialize-RfManifest {
         installations     = @()
     }
     Write-RfJsonFile -Path $path -Object $obj
-    if ($IsLinux -or $IsMacOS) {
+    if ((Test-RfLinux) -or (Test-RfMacOS)) {
         try { & chmod 600 $path 2>$null } catch { }
     }
 }

@@ -3,16 +3,17 @@ common.ps1 — logging, prompts, atomic writes, backups.
 Imported by main.ps1 and host adapters via dot-source.
 #>
 
+# Cross-edition platform predicates.
+#
 # PowerShell 6+ ships $IsWindows / $IsLinux / $IsMacOS as automatic read-only
-# globals. Windows PowerShell 5.1 doesn't have them — fill them in so the
-# rest of the lib can use them uniformly. Skip if already defined (PS 7+) to
-# avoid trying to overwrite a read-only auto-variable.
-if (-not (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
-    # Windows PowerShell 5.1 only runs on Windows.
-    Set-Variable -Name IsWindows -Value $true  -Scope Global -Option ReadOnly -Force
-    Set-Variable -Name IsLinux   -Value $false -Scope Global -Option ReadOnly -Force
-    Set-Variable -Name IsMacOS   -Value $false -Scope Global -Option ReadOnly -Force
-}
+# globals. Windows PowerShell 5.1 (`Desktop`) doesn't define them — they
+# resolve to $null, which is falsy, which silently kills any `if ($IsWindows)`
+# branch. The previous attempt at a Set-Variable polyfill was unreliable;
+# checking $PSVersionTable.PSEdition is the durable fix.
+#
+# `Desktop` (Windows PowerShell 5.x) only runs on Windows, so we can hard-
+# code the answer on that edition and consult the real auto-vars on `Core`
+# (PowerShell 7+).
 
 # Color suppression — honor $env:NO_COLOR and non-tty stdout.
 $Script:RfColorEnabled = -not $env:NO_COLOR -and [Console]::IsOutputRedirected -eq $false
@@ -75,7 +76,7 @@ function Set-RfFileContent {
     $tmp = Join-Path $dir (".atomic.{0:N}.tmp" -f [Guid]::NewGuid())
     [System.IO.File]::WriteAllText($tmp, $Content, [System.Text.UTF8Encoding]::new($false))
     Move-Item -LiteralPath $tmp -Destination $Path -Force
-    if ($Mode -ne 0 -and ($IsLinux -or $IsMacOS)) {
+    if ($Mode -ne 0 -and ((Test-RfLinux) -or (Test-RfMacOS))) {
         try { & chmod ([Convert]::ToString($Mode, 8)) $Path 2>$null } catch { }
     }
 }
@@ -89,6 +90,15 @@ function Get-RfHomeDir {
     return $HOME
 }
 
-function Test-RfMacOS   { return $IsMacOS }
-function Test-RfLinux   { return $IsLinux }
-function Test-RfWindows { return $IsWindows }
+function Test-RfWindows {
+    if ($PSVersionTable.PSEdition -eq 'Desktop') { return $true }
+    return [bool]$IsWindows
+}
+function Test-RfMacOS {
+    if ($PSVersionTable.PSEdition -eq 'Desktop') { return $false }
+    return [bool]$IsMacOS
+}
+function Test-RfLinux {
+    if ($PSVersionTable.PSEdition -eq 'Desktop') { return $false }
+    return [bool]$IsLinux
+}
