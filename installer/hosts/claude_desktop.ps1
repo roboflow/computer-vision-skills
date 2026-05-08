@@ -1,10 +1,21 @@
 <#
-claude_desktop.ps1 — install Roboflow MCP into Claude Desktop.
-MCP only; Claude Desktop does not consume SKILL.md files.
+claude_desktop.ps1 — install Roboflow MCP into Claude Desktop's chat tab.
+
+Claude Desktop's claude_desktop_config.json schema only accepts stdio MCPs
+({command, args, env, extensionId} per its bundled validator). To run an HTTP
+MCP from the chat tab we bridge through the npm package `mcp-remote`, which
+requires Node + npx on PATH and inlines the literal API key.
+
+Note: this only configures the chat tab. The Code tab (Claude Code in Claude
+Desktop) reads the Claude Code plugin system, which is covered by the
+claude-code-cli host without any bridge or Node dependency.
 #>
 
 $Script:RfHostId    = 'claude-desktop'
 $Script:RfHostLabel = 'Claude Desktop'
+
+# Pinned version of the bridge so behavior is reproducible across installs.
+$Script:RfMcpRemoteVersion = '0.1.27'
 
 function Get-RfClaudeDesktopConfigPath {
     if (Test-RfMacOS) {
@@ -17,32 +28,71 @@ function Get-RfClaudeDesktopConfigPath {
     }
 }
 
+function Get-RfClaudeDesktopBridgeServer {
+    param([Parameter(Mandatory)] [string]$Key)
+    return [pscustomobject]@{
+        command = 'npx'
+        args    = @(
+            '-y',
+            ("mcp-remote@" + $Script:RfMcpRemoteVersion),
+            'https://mcp.roboflow.com/mcp',
+            '--header',
+            ("x-api-key:" + $Key)
+        )
+    }
+}
+
 function Install-RfHostClaudeDesktop {
-    Write-RfHeader "Configuring Roboflow MCP for $Script:RfHostLabel"
+    Write-RfHeader "Configuring Roboflow MCP for $Script:RfHostLabel (chat tab)"
     if (-not $Script:RfDoMcp) {
-        Write-RfDim "  MCP disabled by --no-mcp; nothing to do (Claude Desktop has no skills support)"
+        Write-RfDim '  MCP disabled by --no-mcp; nothing to do (Claude Desktop has no skills support)'
         return $true
     }
+
+    if (-not (Test-RfOnPath 'npx')) {
+        Write-RfErr "npx (Node.js) is required for Claude Desktop's chat tab MCP bridge"
+        Write-RfDim 'Install Node.js: https://nodejs.org — then re-run agents.ps1.'
+        Write-RfDim 'If you only need Roboflow in Claude Code (CLI / Claude Desktop''s Code tab),'
+        Write-RfDim 'use --host=claude-code-cli — that path doesn''t need Node.'
+        return $false
+    }
+
+    if (-not $Script:RfApiKey) {
+        Write-RfErr "Claude Desktop's chat tab needs a literal API key (it doesn't expand env vars in MCP args)."
+        Write-RfDim 'Re-run with --api-key=<key>, set ROBOFLOW_API_KEY, or skip with --auth-skip / --no-mcp.'
+        return $false
+    }
+
     $configPath = Get-RfClaudeDesktopConfigPath
+
+    if ($Script:RfOptDryRun) {
+        Write-RfInfo "[dry-run] would write Roboflow MCP (mcp-remote stdio bridge) to $configPath"
+        return $true
+    }
+
     Write-RfStep "MCP → $configPath"
-    Install-RfMcp -ConfigPath $configPath
-    if (-not $Script:RfOptDryRun) {
-        $now = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
-        Add-RfManifestEntry -Entry ([pscustomobject]@{
-            host_id           = $Script:RfHostId
-            component         = 'mcp'
-            scope             = $Script:RfOptScope
-            config_path       = $configPath
-            server_name       = 'roboflow'
-            installer_version = $Script:RfInstallerVersion
-            installed_at      = $now
-        })
+    if (Test-Path -LiteralPath $configPath) {
+        $bak = Backup-RfFile -Path $configPath
+        if ($bak) { Write-RfDim "  backup: $bak" }
     }
-    Write-RfOk "Roboflow MCP configured for $Script:RfHostLabel"
-    Write-RfDim "Restart Claude Desktop for the change to take effect."
-    if (-not $env:ROBOFLOW_API_KEY -and -not $Script:RfOptInlineKey) {
-        Write-RfDim "Reminder: ROBOFLOW_API_KEY must be exported in the launchd / shell environment Claude Desktop inherits."
-    }
+    $server = Get-RfClaudeDesktopBridgeServer -Key $Script:RfApiKey
+    Set-RfMcpServer -ConfigPath $configPath -ServerName 'roboflow' -ServerObject $server
+    Write-RfOk "wrote Roboflow MCP entry (mcp-remote@$Script:RfMcpRemoteVersion bridge) to $configPath"
+    Write-RfDim 'Restart Claude Desktop for the change to take effect.'
+
+    $now = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+    Add-RfManifestEntry -Entry ([pscustomobject]@{
+        host_id           = $Script:RfHostId
+        component         = 'mcp'
+        scope             = $Script:RfOptScope
+        config_path       = $configPath
+        server_name       = 'roboflow'
+        transport         = 'stdio-bridge'
+        bridge            = "mcp-remote@$Script:RfMcpRemoteVersion"
+        api_key_mode      = 'inlined'
+        installer_version = $Script:RfInstallerVersion
+        installed_at      = $now
+    })
     return $true
 }
 

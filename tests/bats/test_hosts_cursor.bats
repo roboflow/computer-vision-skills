@@ -15,18 +15,29 @@ teardown() {
     rf_test::cleanup_home
 }
 
-@test "cursor install: writes ~/.cursor/mcp.json with Roboflow entry" {
+@test "cursor install: writes ~/.cursor/mcp.json with Roboflow entry (literal key at global scope)" {
     run bash "$RF_REPO_ROOT/installer/main.sh" --yes --host=cursor-desktop
     [ "$status" -eq 0 ]
     [ -f "$HOME/.cursor/mcp.json" ]
     grep -q '"roboflow"' "$HOME/.cursor/mcp.json"
     grep -q '"https://mcp.roboflow.com/mcp"' "$HOME/.cursor/mcp.json"
-    # Default uses placeholder, not the literal key
-    grep -q '${ROBOFLOW_API_KEY}' "$HOME/.cursor/mcp.json"
+    # Global scope embeds the resolved literal key by default — placeholder is gone.
+    grep -q "rf_test_key" "$HOME/.cursor/mcp.json"
+    if grep -q '${ROBOFLOW_API_KEY}' "$HOME/.cursor/mcp.json"; then return 1; fi
 }
 
-@test "cursor install: --inline-key embeds the literal key" {
-    run bash "$RF_REPO_ROOT/installer/main.sh" --yes --host=cursor-desktop --inline-key
+@test "cursor install: --project keeps the env-var placeholder (committable file)" {
+    cd "$HOME"
+    run bash "$RF_REPO_ROOT/installer/main.sh" --yes --host=cursor-desktop --project
+    [ "$status" -eq 0 ]
+    [ -f "$HOME/.cursor/mcp.json" ]
+    grep -q '${ROBOFLOW_API_KEY}' "$HOME/.cursor/mcp.json"
+    if grep -q "rf_test_key" "$HOME/.cursor/mcp.json"; then return 1; fi
+}
+
+@test "cursor install: --project --inline-key embeds the literal key (with warn)" {
+    cd "$HOME"
+    run bash "$RF_REPO_ROOT/installer/main.sh" --yes --host=cursor-desktop --project --inline-key
     [ "$status" -eq 0 ]
     grep -q "rf_test_key" "$HOME/.cursor/mcp.json"
 }

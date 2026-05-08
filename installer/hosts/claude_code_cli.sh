@@ -1,12 +1,87 @@
 #!/usr/bin/env bash
 # claude_code_cli.sh — install Roboflow into Claude Code via plugin marketplace.
 #
-# Strategy: shell out to `claude plugin marketplace add` + `claude plugin install`.
-# This is the same path documented in this repo's README and gives users
-# auto-updates via Claude Code's plugin system.
+# Strategy: shell out to `claude plugin marketplace add` + `claude plugin install`,
+# then patch the cached plugin's .mcp.json to embed the resolved API key inline
+# so users don't have to manage a ROBOFLOW_API_KEY env var themselves.
+#
+# Same plugin install also feeds Claude Code in Claude Desktop (the Code/CCD
+# tab) — that surface reads ~/.claude/plugins/cache/, which is exactly what
+# the CLI populates.
 
 RF_HOST_ID="claude-code-cli"
-RF_HOST_LABEL="Claude Code CLI"
+RF_HOST_LABEL="Claude Code"
+
+# Path pattern: $HOME/.claude/plugins/cache/<marketplace>/<plugin>/<version>/.mcp.json
+rf::host::claude_code_cli::cache_dir() {
+    printf '%s/.claude/plugins/cache/roboflow/roboflow' "$HOME"
+}
+
+# Find every cached version dir whose .mcp.json still has the placeholder
+# header, replace it with the resolved literal key, drop the now-misleading
+# "set ROBOFLOW_API_KEY" note. No-op (returns 0) if RF_API_KEY is empty so
+# users with --auth-skip can still install the plugin.
+rf::host::claude_code_cli::patch_cache() {
+    local key="${RF_API_KEY:-}"
+    if [[ -z "$key" ]]; then
+        rf::warn "no API key resolved — Roboflow MCP will keep \${ROBOFLOW_API_KEY} placeholder"
+        rf::dim "  set ROBOFLOW_API_KEY in your shell, or re-run with --api-key=<key>"
+        return 0
+    fi
+
+    local cache_dir
+    cache_dir="$(rf::host::claude_code_cli::cache_dir)"
+    [[ -d "$cache_dir" ]] || { rf::warn "plugin cache not found at $cache_dir"; return 1; }
+
+    rf::json::has_tool || rf::die "no JSON tool available (need python3 or jq)"
+
+    local patched=0 dir mcp_file
+    for dir in "$cache_dir"/*/; do
+        mcp_file="${dir}.mcp.json"
+        [[ -f "$mcp_file" ]] || continue
+        if [[ "${RF_OPT_DRY_RUN:-0}" == "1" ]]; then
+            rf::info "[dry-run] would embed API key in $mcp_file"
+            patched=1
+            continue
+        fi
+
+        # Only rewrite if the placeholder is still there. Idempotent re-runs
+        # against an already-patched file detect the literal key and skip.
+        if RF_KEY="$key" FILE="$mcp_file" python3 -c '
+import json, os, sys
+path = os.environ["FILE"]
+with open(path) as fh:
+    data = json.load(fh)
+servers = data.get("mcpServers", {})
+entry = servers.get("roboflow")
+if not entry:
+    sys.exit(2)  # nothing to patch
+hdrs = entry.setdefault("headers", {})
+current = hdrs.get("x-api-key", "")
+if current == os.environ["RF_KEY"]:
+    sys.exit(3)  # already patched with this key
+hdrs["x-api-key"] = os.environ["RF_KEY"]
+entry.pop("note", None)
+with open(path, "w") as fh:
+    json.dump(data, fh, indent=2)
+    fh.write("\n")
+sys.exit(0)
+'; then
+            rf::dim "  embedded API key in $mcp_file"
+            patched=1
+        else
+            local rc=$?
+            case $rc in
+                3) rf::dim "  already up to date: $mcp_file"; patched=1 ;;
+                2) ;;  # no roboflow server in this version, skip silently
+                *) rf::warn "failed to patch $mcp_file (exit $rc)" ;;
+            esac
+        fi
+    done
+
+    [[ $patched -eq 0 ]] && rf::warn "no plugin .mcp.json found to patch under $cache_dir"
+    return 0
+}
 
 rf::host::claude_code_cli::install() {
     rf::header "Installing Roboflow plugin for $RF_HOST_LABEL"
@@ -28,6 +103,7 @@ rf::host::claude_code_cli::install() {
     if [[ "${RF_OPT_DRY_RUN:-0}" == "1" ]]; then
         rf::info "[dry-run] would run: claude plugin marketplace add $marketplace_source"
         rf::info "[dry-run] would run: claude plugin install $plugin_name $scope_flag"
+        rf::host::claude_code_cli::patch_cache
         return 0
     fi
 
@@ -43,21 +119,24 @@ rf::host::claude_code_cli::install() {
         return 1
     fi
 
+    # Bake the resolved API key into the cached plugin's .mcp.json so the
+    # MCP server authenticates without the user needing to export
+    # ROBOFLOW_API_KEY anywhere.
+    rf::host::claude_code_cli::patch_cache
+
     local entry
     entry="$(rf::host::claude_code_cli::manifest_entry "$marketplace_source" "$plugin_name")"
     rf::manifest::record "$entry" || rf::warn "could not update installer manifest (non-fatal)"
 
     rf::ok "Roboflow plugin installed for $RF_HOST_LABEL"
-    if [[ -z "${ROBOFLOW_API_KEY:-}" ]] && [[ -n "${RF_API_KEY:-}" ]]; then
-        rf::dim "Reminder: export ROBOFLOW_API_KEY in the shell that launches \`claude\` so the MCP server authenticates."
-    fi
+    rf::dim "Also enables Roboflow in the Code tab of Claude Desktop (same plugin system)."
     return 0
 }
 
 rf::host::claude_code_cli::uninstall() {
     rf::header "Removing Roboflow plugin from $RF_HOST_LABEL"
     if ! rf::on_path claude; then
-        rf::warn "claude not on PATH; skipping uninstall (you can run \`claude plugin remove roboflow\` manually)"
+        rf::warn "claude not on PATH; skipping uninstall (run \`claude plugin remove roboflow\` manually)"
         return 0
     fi
 
@@ -78,8 +157,13 @@ rf::host::claude_code_cli::uninstall() {
 
 rf::host::claude_code_cli::manifest_entry() {
     local source="$1" plugin_name="$2"
-    local now
+    local now key_marker
     now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    if [[ -n "${RF_API_KEY:-}" ]]; then
+        key_marker='inlined'
+    else
+        key_marker='placeholder'
+    fi
     cat <<EOF
 {
   "host_id": "$RF_HOST_ID",
@@ -87,6 +171,7 @@ rf::host::claude_code_cli::manifest_entry() {
   "scope": "${RF_OPT_SCOPE:-global}",
   "marketplace": "$source",
   "plugin_name": "$plugin_name",
+  "api_key_mode": "$key_marker",
   "installer_version": "$RF_INSTALLER_VERSION",
   "installed_at": "$now",
   "updated_at": "$now"

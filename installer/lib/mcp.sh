@@ -7,22 +7,25 @@
 # `--inline-key` writes the literal key instead — global scope only,
 # enforced in main.sh.
 
-# rf::mcp::server_json [--inline] [--type=<type>] [--key-value=<override>]
+# rf::mcp::server_json [--type=<type>] [--key-value=<override>]
 # Print the JSON object describing the Roboflow MCP server.
 #
+# Key-value resolution:
+#   1. --key-value=<value>  explicit override (e.g. ${input:roboflow_api_key} for
+#      VS Code Copilot's prompt-string mechanism)
+#   2. global scope + RF_API_KEY resolved → embed literal key (default)
+#   3. project scope + --inline-key + RF_API_KEY → embed literal (warn caller)
+#   4. otherwise → ${ROBOFLOW_API_KEY} placeholder + caller should warn user
+#
 # --type defaults to "http" — most hosts. OpenCode uses "remote".
-# --inline embeds $RF_API_KEY literally; default uses ${ROBOFLOW_API_KEY} placeholder.
-# --key-value overrides the api-key value entirely (e.g. "${input:roboflow_key}"
-#   for VS Code Copilot's prompt-string mechanism).
 rf::mcp::server_json() {
-    local inline=0
     local type="http"
     local key_override=""
     while (($#)); do
         case "$1" in
-            --inline) inline=1 ;;
             --type=*) type="${1#*=}" ;;
             --key-value=*) key_override="${1#*=}" ;;
+            --inline) ;;   # no-op (kept for back-compat with old callers)
             *) ;;
         esac
         shift
@@ -31,7 +34,8 @@ rf::mcp::server_json() {
     local key_value
     if [[ -n "$key_override" ]]; then
         key_value="$key_override"
-    elif [[ $inline -eq 1 ]] && [[ -n "${RF_API_KEY:-}" ]]; then
+    elif [[ -n "${RF_API_KEY:-}" ]] && \
+         { [[ "${RF_OPT_SCOPE:-global}" == "global" ]] || [[ "${RF_OPT_INLINE_KEY:-0}" == "1" ]]; }; then
         key_value="$RF_API_KEY"
     else
         key_value='${ROBOFLOW_API_KEY}'
@@ -80,15 +84,10 @@ rf::mcp::install() {
         [[ -n "$bak" ]] && rf::dim "  backup: $bak"
     fi
 
-    local -a server_args=()
-    [[ "${RF_OPT_INLINE_KEY:-0}" == "1" ]] && server_args+=("--inline")
-    if (($#)); then
-        server_args+=("$@")
-    fi
-
+    # Pass any extra args through to server_json (e.g. --type=remote, --key-value=...).
     local server_json
-    if [[ ${#server_args[@]} -gt 0 ]]; then
-        server_json="$(rf::mcp::server_json "${server_args[@]}")"
+    if (($#)); then
+        server_json="$(rf::mcp::server_json "$@")"
     else
         server_json="$(rf::mcp::server_json)"
     fi

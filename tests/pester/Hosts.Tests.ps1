@@ -14,21 +14,37 @@ Describe 'cursor-desktop adapter' {
         Remove-RfIsolatedHome
     }
 
-    It 'writes ~/.cursor/mcp.json with Roboflow entry' {
+    It 'writes ~/.cursor/mcp.json with literal key at global scope' {
         Invoke-RfMainPs -Items @('--yes', '--host=cursor-desktop') | Should -Be 0
         $cfg = Join-Path $script:rfHome '.cursor/mcp.json'
         Test-Path -LiteralPath $cfg | Should -BeTrue
         $content = Get-Content -LiteralPath $cfg -Raw
         $content | Should -Match '"roboflow"'
         $content | Should -Match 'mcp.roboflow.com/mcp'
-        $content | Should -Match '\$\{ROBOFLOW_API_KEY\}'
+        # Global scope embeds the literal key; placeholder gone.
+        $content | Should -Match 'rf_test_key'
+        $content | Should -Not -Match '\$\{ROBOFLOW_API_KEY\}'
     }
 
-    It '--inline-key embeds the literal key' {
-        Invoke-RfMainPs -Items @('--yes', '--host=cursor-desktop', '--inline-key') | Should -Be 0
-        $cfg = Join-Path $script:rfHome '.cursor/mcp.json'
-        $content = Get-Content -LiteralPath $cfg -Raw
-        $content | Should -Match 'rf_test_key'
+    It '--project keeps the placeholder (committable file)' {
+        Push-Location $script:rfHome
+        try {
+            Invoke-RfMainPs -Items @('--yes', '--host=cursor-desktop', '--project') | Should -Be 0
+            $cfg = Join-Path $script:rfHome '.cursor/mcp.json'
+            $content = Get-Content -LiteralPath $cfg -Raw
+            $content | Should -Match '\$\{ROBOFLOW_API_KEY\}'
+            $content | Should -Not -Match 'rf_test_key'
+        } finally { Pop-Location }
+    }
+
+    It '--project --inline-key embeds the literal key (with warn)' {
+        Push-Location $script:rfHome
+        try {
+            Invoke-RfMainPs -Items @('--yes', '--host=cursor-desktop', '--project', '--inline-key') | Should -Be 0
+            $cfg = Join-Path $script:rfHome '.cursor/mcp.json'
+            $content = Get-Content -LiteralPath $cfg -Raw
+            $content | Should -Match 'rf_test_key'
+        } finally { Pop-Location }
     }
 
     It 'copies skills into ~/.claude/skills' {
@@ -87,17 +103,19 @@ Describe 'cursor-desktop adapter' {
     }
 }
 
-Describe 'claude-desktop adapter' {
+Describe 'claude-desktop adapter (mcp-remote stdio bridge)' {
     BeforeEach {
         $script:rfHome = New-RfIsolatedHome
         $env:ROBOFLOW_API_KEY = 'rf_test_key'
+        # Bridge requires npx — stub it.
+        New-RfStubCommand -Name 'npx' -ExitCode 0
     }
     AfterEach {
         Remove-Item Env:ROBOFLOW_API_KEY -ErrorAction SilentlyContinue
         Remove-RfIsolatedHome
     }
 
-    It 'writes platform-specific config path' {
+    It 'writes mcp-remote bridge entry with literal key' {
         Invoke-RfMainPs -Items @('--yes', '--host=claude-desktop') | Should -Be 0
         $cfg = if ($IsMacOS) {
             Join-Path $script:rfHome 'Library/Application Support/Claude/claude_desktop_config.json'
@@ -108,7 +126,11 @@ Describe 'claude-desktop adapter' {
         }
         Test-Path -LiteralPath $cfg | Should -BeTrue
         $content = Get-Content -LiteralPath $cfg -Raw
-        $content | Should -Match '"roboflow"'
+        $content | Should -Match '"command": "npx"'
+        $content | Should -Match 'mcp-remote@'
+        $content | Should -Match 'x-api-key:rf_test_key'
+        $content | Should -Not -Match '"type": "http"'
+        $content | Should -Not -Match '"url":'
     }
 
     It '--no-mcp is a no-op' {
@@ -181,5 +203,34 @@ Describe 'claude-code-cli adapter (plugin path)' {
         # Detect step calls `claude --version`; that's allowed. We check that
         # no `plugin` argument was sent.
         ($calls -match 'arg: plugin') | Should -BeFalse
+    }
+
+    It 'patches cached .mcp.json with literal key after install' {
+        New-RfStubCommand -Name 'claude' -ExitCode 0
+        $cacheDir = Join-Path $script:rfHome '.claude/plugins/cache/roboflow/roboflow/0.1.0'
+        New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
+        $mcpFile = Join-Path $cacheDir '.mcp.json'
+        @'
+{
+  "mcpServers": {
+    "roboflow": {
+      "type": "http",
+      "url": "https://mcp.roboflow.com/mcp",
+      "headers": {
+        "x-api-key": "${ROBOFLOW_API_KEY}",
+        "Accept": "application/json, text/event-stream"
+      },
+      "note": "Set ROBOFLOW_API_KEY in env to authenticate."
+    }
+  }
+}
+'@ | Set-Content -LiteralPath $mcpFile
+
+        Invoke-RfMainPs -Items @('--yes', '--host=claude-code-cli') | Should -Be 0
+
+        $content = Get-Content -LiteralPath $mcpFile -Raw
+        $content | Should -Match '"x-api-key":\s*"rf_test_key"'
+        $content | Should -Not -Match '\$\{ROBOFLOW_API_KEY\}'
+        $content | Should -Not -Match '"note":'
     }
 }

@@ -154,8 +154,11 @@ rf::parse_args() {
         shift
     done
 
+    # --project + --inline-key is allowed but loud — project files are
+    # commit-able, so the user is opting in to a secret in a tracked file.
+    # Host adapters can warn further at write time.
     if [[ "$RF_OPT_SCOPE" == "project" ]] && [[ "$RF_OPT_INLINE_KEY" == "1" ]]; then
-        RF_EXIT_CODE=4 rf::die "--inline-key is only allowed with --global scope"
+        rf::warn "--inline-key + --project: literal API key will be written into project config — make sure that file isn't committed."
     fi
 
     export RF_OPT_API_KEY RF_OPT_WORKSPACE RF_OPT_AUTH_SKIP RF_OPT_INLINE_KEY \

@@ -30,10 +30,16 @@ Describe 'main.ps1 — usage / version' {
         $LASTEXITCODE | Should -Be 2
     }
 
-    It '--project --inline-key conflict exits 4' {
-        $main = Join-Path $Script:RfRepoRoot 'installer/main.ps1'
-        $null = & $Script:RfPwshPath -NoProfile -File $main --project --inline-key 2>&1
-        $LASTEXITCODE | Should -Be 4
+    It '--project --inline-key warns but does not block' {
+        $env:ROBOFLOW_API_KEY = 'rf_warn_test'
+        try {
+            $main = Join-Path $Script:RfRepoRoot 'installer/main.ps1'
+            $output = & $Script:RfPwshPath -NoProfile -File $main --yes --project --inline-key --host=cursor-desktop --dry-run 2>&1 | Out-String
+            $LASTEXITCODE | Should -Be 0
+            $output | Should -Match '--inline-key \+ --project'
+        } finally {
+            Remove-Item Env:ROBOFLOW_API_KEY -ErrorAction SilentlyContinue
+        }
     }
 
     It 'with no detected hosts exits 3' {

@@ -4,16 +4,22 @@ mcp.ps1 — write/remove the Roboflow MCP server entry in a host's config.
 
 function Get-RfMcpServerObject {
     param(
+        # Kept for back-compat with older callers; behavior is now driven by
+        # scope + RF_API_KEY presence.
         [switch]$Inline,
         # Server type — most hosts want "http"; OpenCode wants "remote".
         [string]$Type = 'http',
-        # Override the api-key value entirely (e.g. "${input:roboflow_api_key}"
-        # for VS Code Copilot's prompt-string mechanism). Wins over -Inline.
+        # Explicit override for the api-key value (e.g. "${input:roboflow_api_key}"
+        # for VS Code Copilot's prompt-string mechanism). Wins over scope-based logic.
         [string]$KeyValue = ''
     )
+    # Default behavior: at --global scope (and --project + --inline-key), embed
+    # the resolved literal key. Project scope falls back to the env-var
+    # placeholder so committable config files don't carry secrets.
     if ($KeyValue) {
         $keyToUse = $KeyValue
-    } elseif ($Inline -and $Script:RfApiKey) {
+    } elseif ($Script:RfApiKey -and `
+              (($Script:RfOptScope -eq 'global') -or $Script:RfOptInlineKey)) {
         $keyToUse = $Script:RfApiKey
     } else {
         $keyToUse = '${ROBOFLOW_API_KEY}'
@@ -47,7 +53,7 @@ function Install-RfMcp {
         if ($bak) { Write-RfDim "  backup: $bak" }
     }
 
-    $server = Get-RfMcpServerObject -Inline:($Script:RfOptInlineKey) -Type $Type -KeyValue $KeyValue
+    $server = Get-RfMcpServerObject -Type $Type -KeyValue $KeyValue
     Set-RfMcpServer -ConfigPath $ConfigPath -ServerName 'roboflow' -ServerObject $server -ContainerKey $ContainerKey
     Write-RfOk "wrote Roboflow MCP entry to $ConfigPath"
 }

@@ -32,10 +32,13 @@ teardown() {
     [[ "$output" == *"unknown flag"* ]]
 }
 
-@test "main.sh --project --inline-key conflict exits 4" {
-    run bash "$RF_REPO_ROOT/installer/main.sh" --project --inline-key
-    [ "$status" -eq 4 ]
-    [[ "$output" == *"--inline-key is only allowed with --global"* ]]
+@test "main.sh --project --inline-key warns but does not block" {
+    # Pass --auth-skip + --host=cursor-desktop to keep the run quick (no real install needed).
+    export ROBOFLOW_API_KEY=rf_warn_test
+    run bash "$RF_REPO_ROOT/installer/main.sh" --yes --project --inline-key --host=cursor-desktop --dry-run
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"--inline-key + --project"* ]]
+    [[ "$output" == *"committed"* ]]
 }
 
 @test "main.sh with no detected hosts exits 3" {

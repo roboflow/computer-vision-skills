@@ -128,8 +128,7 @@ function Invoke-RfParseArgs {
     }
 
     if ($Script:RfOptScope -eq 'project' -and $Script:RfOptInlineKey) {
-        Write-RfErr "--inline-key is only allowed with --global scope"
-        exit 4
+        Write-RfWarn "--inline-key + --project: literal API key will be written into project config — make sure that file isn't committed."
     }
 }
 

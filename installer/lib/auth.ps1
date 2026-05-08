@@ -36,24 +36,37 @@ function Resolve-RfAuthFromSdkConfig {
 
     $targetUrl = ''
     if ($Script:RfOptWorkspace) {
+        # Explicit flag wins, no prompt.
         $targetUrl = $Script:RfOptWorkspace
     } elseif ($urls.Count -eq 1) {
+        # Single workspace, no prompt.
         $targetUrl = $urls[0]
-    } elseif ($defaultUrl) {
-        $targetUrl = $defaultUrl
     } elseif ($Script:RfYes) {
-        Write-RfWarn "multiple workspaces in $configPath; pass --workspace=<url> to choose one"
-        return $false
+        # Non-interactive: use RF_WORKSPACE default if set, else fail.
+        if ($defaultUrl) {
+            $targetUrl = $defaultUrl
+        } else {
+            Write-RfWarn "multiple workspaces in $configPath; pass --workspace=<url> to choose one"
+            return $false
+        }
     } else {
+        # Interactive: always prompt with $defaultUrl as the default selection.
         Write-RfInfo "Multiple Roboflow workspaces found:"
         $i = 1
+        $defaultIdx = 1
         foreach ($url in $urls) {
             $ws = $config.workspaces.$url
             $name = if ($ws -and $ws.PSObject.Properties.Name -contains 'name' -and $ws.name) { $ws.name } else { $url }
-            Write-RfInfo ("  [{0}] {1} ({2})" -f $i, $name, $url)
+            $marker = ''
+            if ($url -eq $defaultUrl) {
+                $marker = '  (default)'
+                $defaultIdx = $i
+            }
+            Write-RfInfo ("  [{0}] {1}{2}" -f $i, $name, $marker)
+            Write-RfDim ("      {0}" -f $url)
             $i++
         }
-        $choice = Read-RfPrompt -Prompt "Pick workspace [1-$($urls.Count)]:" -Default '1'
+        $choice = Read-RfPrompt -Prompt "Pick workspace [1-$($urls.Count)]:" -Default "$defaultIdx"
         if ($choice -match '^[0-9]+$' -and [int]$choice -ge 1 -and [int]$choice -le $urls.Count) {
             $targetUrl = $urls[[int]$choice - 1]
         } else {

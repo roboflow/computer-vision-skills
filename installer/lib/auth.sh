@@ -92,25 +92,41 @@ rf::auth::from_sdk_config() {
 
     local target_url=""
     if [[ -n "${RF_OPT_WORKSPACE:-}" ]]; then
+        # Explicit flag wins, no prompt.
         target_url="$RF_OPT_WORKSPACE"
     elif [[ $workspace_count -eq 1 ]]; then
+        # Single workspace, no prompt.
         target_url="${urls[0]}"
-    elif [[ -n "$default_url" ]] && [[ "$default_url" != "null" ]]; then
-        target_url="$default_url"
     elif [[ "${RF_YES:-0}" == "1" ]]; then
-        rf::warn "multiple workspaces in $config_path; pass --workspace=<url> to choose one"
-        return 1
+        # Non-interactive: use $RF_WORKSPACE default if set, else fail with hint.
+        if [[ -n "$default_url" ]] && [[ "$default_url" != "null" ]]; then
+            target_url="$default_url"
+        else
+            rf::warn "multiple workspaces in $config_path; pass --workspace=<url> to choose one"
+            return 1
+        fi
     else
+        # Interactive: always prompt (even when $RF_WORKSPACE is set — the user
+        # may want a different key baked into this install). Use the SDK
+        # config's RF_WORKSPACE as the default selection so a bare Enter
+        # picks the same workspace `roboflow login --workspace` would.
         rf::info "Multiple Roboflow workspaces found:"
         local i=1
+        local default_idx=1
         for url in "${urls[@]}"; do
             local name
             name="$(rf::auth::sdk_workspace_name "$config_path" "$url")"
-            rf::info "  [$i] $name ($url)"
+            local marker=""
+            if [[ "$url" == "$default_url" ]]; then
+                marker="  ${RF_COLOR_DIM}(default)${RF_COLOR_RESET}"
+                default_idx=$i
+            fi
+            rf::info "  [$i] $name${marker}"
+            rf::dim   "      $url"
             i=$((i + 1))
         done
         local choice
-        choice="$(rf::prompt "Pick workspace [1-${#urls[@]}]:" "1")"
+        choice="$(rf::prompt "Pick workspace [1-${#urls[@]}]:" "$default_idx")"
         if [[ "$choice" =~ ^[0-9]+$ ]] && [[ "$choice" -ge 1 ]] && [[ "$choice" -le "${#urls[@]}" ]]; then
             target_url="${urls[$((choice - 1))]}"
         else

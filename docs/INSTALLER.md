@@ -55,17 +55,17 @@ The installer dispatches to per-host adapters in `installer/hosts/`. Each adapte
 
 | ID | Kind | Detection | What the installer does |
 |---|---|---|---|
-| `claude-code-cli` | CLI | `claude` on PATH | `claude plugin marketplace add roboflow/computer-vision-skills` + `claude plugin install roboflow` |
+| `claude-code-cli` | CLI | `claude` on PATH | `claude plugin marketplace add roboflow/computer-vision-skills` + `claude plugin install roboflow` + **patch `~/.claude/plugins/cache/roboflow/roboflow/<version>/.mcp.json` to embed the resolved API key**. Same install also feeds Claude Code in Claude Desktop (the Code tab). |
 | `codex-cli` | CLI | `codex` on PATH | `codex plugin marketplace add roboflow/computer-vision-skills`, then prints next steps for `/plugins` |
 
-Both use Roboflow's published plugin manifests in this repo (`.claude-plugin/`, `.codex-plugin/`), which bundle the skills (`skills/`) and the MCP server config (`.mcp.json`). The installer's job is to spare users from typing two commands per host and to record the install in the central manifest.
+Both use Roboflow's published plugin manifests in this repo (`.claude-plugin/`, `.codex-plugin/`), which bundle the skills (`skills/`) and the MCP server config (`.mcp.json`). The installer's job is to spare users from typing two commands per host, embed the API key into the cached MCP config so authentication works without a `ROBOFLOW_API_KEY` env var, and record the install in the central manifest.
 
 ### Phase 2 (config-file path) — shipped
 
 | ID | Kind | Detection | MCP config path | Skills path |
 |---|---|---|---|---|
 | `cursor-desktop` | Desktop | `/Applications/Cursor.app` (mac), `~/.config/Cursor` (linux), `%LOCALAPPDATA%\Programs\cursor` (win) | `~/.cursor/mcp.json` (or `<project>/.cursor/mcp.json` with `--project`) | `~/.claude/skills/` (or `<project>/.claude/skills/`) |
-| `claude-desktop` | Desktop | `/Applications/Claude.app` (mac), `~/.config/Claude` (linux), `%APPDATA%\Claude` (win) | `~/Library/Application Support/Claude/claude_desktop_config.json` (mac), `~/.config/Claude/claude_desktop_config.json` (linux), `%APPDATA%\Claude\claude_desktop_config.json` (win) | n/a (Claude Desktop has no skills support) |
+| `claude-desktop` | Desktop | `/Applications/Claude.app` (mac), `~/.config/Claude` (linux), `%APPDATA%\Claude` (win) | platform-specific `claude_desktop_config.json` — **stdio bridge via `mcp-remote`**, requires `npx` on PATH | n/a (Claude Desktop chat-tab has no skills; the Code tab is covered by `claude-code-cli`) |
 | `copilot-cli` | CLI | `copilot` on PATH or `gh extension list` includes `gh-copilot` | `~/.copilot/mcp-config.json` | n/a (Copilot CLI has no skills support) |
 
 Phase 2 hosts get the Roboflow MCP entry written into their config files. Skills (where supported) are copied from `skills/<name>/` into the destination dir, with a per-skill `.roboflow-install-manifest.json` sidecar carrying a content hash. Re-running `agents.sh` reconciles upstream changes against pristine local copies and preserves user-edited skills.
@@ -108,10 +108,19 @@ Resolution precedence:
    - macOS / Linux: `~/.config/roboflow/config.json`
    - Windows: `~/roboflow/config.json` (== `%USERPROFILE%\roboflow\config.json`)
    - Override: `$ROBOFLOW_CONFIG_DIR`
-   - Single-workspace configs are used directly. Multi-workspace prompts unless `--workspace=<url>` or `--yes` (which falls back to `RF_WORKSPACE`).
+   - Single-workspace configs are used directly. **Multi-workspace prompts interactively** with `RF_WORKSPACE` as the default selection, or non-interactively uses `RF_WORKSPACE` under `--yes` (with `--workspace=<url>` to override).
 4. Interactive prompt (silent `read -s`). Skipped under `--yes` or `--auth-skip`.
 
-The Roboflow MCP server reads `ROBOFLOW_API_KEY` from the environment of whatever shell launches your agent. If your shell doesn't already have it exported, the installer prints a reminder.
+### Inlining vs placeholder
+
+| Scope | Default | Effect |
+|---|---|---|
+| `--global` (default) | **Literal key** baked into config | Just works, no env var setup needed. Files live in `$HOME` (mode 0644) — not in version control. |
+| `--project` | `${ROBOFLOW_API_KEY}` placeholder | Project config files are commit-able; default avoids leaking secrets. The runtime needs `ROBOFLOW_API_KEY` set. |
+| `--project --inline-key` | Literal key + warning | Explicit opt-in for "yes, write the literal key into the project file." |
+| `vscode-copilot --project` | `${input:roboflow_api_key}` | VS Code prompts you for the key on first MCP use; never written to disk. |
+
+For Claude Desktop's chat tab, the literal key is **always** inlined (its schema doesn't expand env vars in MCP args). The installer refuses to write a config without a resolvable key.
 
 ## Manifest
 
