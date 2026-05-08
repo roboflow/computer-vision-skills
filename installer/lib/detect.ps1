@@ -79,6 +79,54 @@ function Test-RfHostCopilotCli {
     }
 }
 
+function Test-RfHostGeminiCli {
+    if (-not (Test-RfOnPath 'gemini')) { return }
+    $version = ''
+    try { $version = (& gemini --version 2>$null | Select-Object -First 1) } catch { }
+    if (-not $version) { $version = 'detected on PATH' }
+    "gemini-cli|cli|Gemini CLI|$version"
+}
+
+function Test-RfHostWindsurfDesktop {
+    if ($env:RF_TEST_NO_DETECT_APPS -eq '1') { return }
+    $hint = ''
+    if (Test-RfMacOS) {
+        if (Test-Path '/Applications/Windsurf.app') { $hint = '/Applications/Windsurf.app' }
+    } elseif (Test-RfLinux) {
+        $a = Join-Path $HOME '.codeium/windsurf'
+        $b = Join-Path $HOME '.config/Windsurf'
+        if (Test-Path $a) { $hint = $a }
+        elseif (Test-Path $b) { $hint = $b }
+    } elseif (Test-RfWindows) {
+        $local = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { Join-Path $HOME 'AppData/Local' }
+        $candidate = Join-Path $local 'Programs/Windsurf'
+        if (Test-Path $candidate) { $hint = $candidate }
+    }
+    if (-not $hint -and (Test-RfOnPath 'windsurf')) { $hint = 'windsurf on PATH' }
+    if (-not $hint) { return }
+    "windsurf-desktop|desktop|Windsurf|$hint"
+}
+
+function Test-RfHostVscodeCopilot {
+    if ($env:RF_TEST_NO_DETECT_APPS -eq '1') { return }
+    if (Test-RfOnPath 'code') {
+        return 'vscode-copilot|desktop|VS Code Copilot|code on PATH'
+    }
+    if (Test-RfMacOS -and (Test-Path '/Applications/Visual Studio Code.app')) {
+        return 'vscode-copilot|desktop|VS Code Copilot|/Applications/Visual Studio Code.app'
+    } elseif (Test-RfLinux -and (Test-Path (Join-Path $HOME '.vscode'))) {
+        return ("vscode-copilot|desktop|VS Code Copilot|" + (Join-Path $HOME '.vscode'))
+    }
+}
+
+function Test-RfHostOpencodeCli {
+    if (-not (Test-RfOnPath 'opencode')) { return }
+    $version = ''
+    try { $version = (& opencode --version 2>$null | Select-Object -First 1) } catch { }
+    if (-not $version) { $version = 'detected on PATH' }
+    "opencode-cli|cli|OpenCode CLI|$version"
+}
+
 function Get-RfDetectedHosts {
     $lines = @()
     $lines += Test-RfHostClaudeCodeCli
@@ -86,17 +134,25 @@ function Get-RfDetectedHosts {
     $lines += Test-RfHostCursorDesktop
     $lines += Test-RfHostClaudeDesktop
     $lines += Test-RfHostCopilotCli
+    $lines += Test-RfHostGeminiCli
+    $lines += Test-RfHostWindsurfDesktop
+    $lines += Test-RfHostVscodeCopilot
+    $lines += Test-RfHostOpencodeCli
     return $lines | Where-Object { $_ -and $_.Trim() }
 }
 
 function Get-RfHostById {
     param([string]$Id)
     switch ($Id) {
-        'claude-code-cli' { return Test-RfHostClaudeCodeCli }
-        'codex-cli'       { return Test-RfHostCodexCli }
-        'cursor-desktop'  { return Test-RfHostCursorDesktop }
-        'claude-desktop'  { return Test-RfHostClaudeDesktop }
-        'copilot-cli'     { return Test-RfHostCopilotCli }
+        'claude-code-cli'  { return Test-RfHostClaudeCodeCli }
+        'codex-cli'        { return Test-RfHostCodexCli }
+        'cursor-desktop'   { return Test-RfHostCursorDesktop }
+        'claude-desktop'   { return Test-RfHostClaudeDesktop }
+        'copilot-cli'      { return Test-RfHostCopilotCli }
+        'gemini-cli'       { return Test-RfHostGeminiCli }
+        'windsurf-desktop' { return Test-RfHostWindsurfDesktop }
+        'vscode-copilot'   { return Test-RfHostVscodeCopilot }
+        'opencode-cli'     { return Test-RfHostOpencodeCli }
         default { throw "unknown host id: $Id" }
     }
 }
@@ -107,6 +163,10 @@ function Get-RfKnownHostIds {
         'codex-cli',
         'cursor-desktop',
         'claude-desktop',
-        'copilot-cli'
+        'copilot-cli',
+        'gemini-cli',
+        'windsurf-desktop',
+        'vscode-copilot',
+        'opencode-cli'
     )
 }

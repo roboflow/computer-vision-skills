@@ -30,22 +30,24 @@ function Set-RfMcpServer {
     param(
         [Parameter(Mandatory)] [string]$ConfigPath,
         [Parameter(Mandatory)] [string]$ServerName,
-        [Parameter(Mandatory)] $ServerObject
+        [Parameter(Mandatory)] $ServerObject,
+        # ContainerKey: where servers live in the host's config.
+        # Default 'mcpServers' covers most hosts. VS Code Copilot uses
+        # 'servers'; OpenCode uses 'mcp'.
+        [string]$ContainerKey = 'mcpServers'
     )
     $existing = Read-RfJsonFile -Path $ConfigPath
 
-    # Ensure mcpServers exists as an object
-    if (-not ($existing.PSObject.Properties.Name -contains 'mcpServers')) {
-        $existing | Add-Member -NotePropertyName 'mcpServers' -NotePropertyValue ([pscustomobject]@{})
-    } elseif ($null -eq $existing.mcpServers) {
-        $existing.mcpServers = [pscustomobject]@{}
+    if (-not ($existing.PSObject.Properties.Name -contains $ContainerKey)) {
+        $existing | Add-Member -NotePropertyName $ContainerKey -NotePropertyValue ([pscustomobject]@{})
+    } elseif ($null -eq $existing.$ContainerKey) {
+        $existing.$ContainerKey = [pscustomobject]@{}
     }
 
-    # Replace-or-add the server entry without disturbing other servers.
-    if ($existing.mcpServers.PSObject.Properties.Name -contains $ServerName) {
-        $existing.mcpServers.$ServerName = $ServerObject
+    if ($existing.$ContainerKey.PSObject.Properties.Name -contains $ServerName) {
+        $existing.$ContainerKey.$ServerName = $ServerObject
     } else {
-        $existing.mcpServers | Add-Member -NotePropertyName $ServerName -NotePropertyValue $ServerObject
+        $existing.$ContainerKey | Add-Member -NotePropertyName $ServerName -NotePropertyValue $ServerObject
     }
 
     Write-RfJsonFile -Path $ConfigPath -Object $existing
@@ -55,21 +57,19 @@ function Remove-RfMcpServer {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)] [string]$ConfigPath,
-        [Parameter(Mandatory)] [string]$ServerName
+        [Parameter(Mandatory)] [string]$ServerName,
+        [string]$ContainerKey = 'mcpServers'
     )
     if (-not (Test-Path -LiteralPath $ConfigPath)) { return }
     $existing = Read-RfJsonFile -Path $ConfigPath
-    if (-not ($existing.PSObject.Properties.Name -contains 'mcpServers')) { return }
-    if ($null -eq $existing.mcpServers) { return }
-    if ($existing.mcpServers.PSObject.Properties.Name -contains $ServerName) {
-        $existing.mcpServers.PSObject.Properties.Remove($ServerName)
+    if (-not ($existing.PSObject.Properties.Name -contains $ContainerKey)) { return }
+    if ($null -eq $existing.$ContainerKey) { return }
+    if ($existing.$ContainerKey.PSObject.Properties.Name -contains $ServerName) {
+        $existing.$ContainerKey.PSObject.Properties.Remove($ServerName)
     }
-    # If empty, drop the mcpServers key altogether to keep the file tidy.
-    # `.Properties` is an enumerator; force materialization with @(...) and
-    # filter out any null entries that the empty enumeration may surface as.
-    $remaining = @($existing.mcpServers.PSObject.Properties | Where-Object { $_ })
+    $remaining = @($existing.$ContainerKey.PSObject.Properties | Where-Object { $_ })
     if ($remaining.Count -eq 0) {
-        $existing.PSObject.Properties.Remove('mcpServers')
+        $existing.PSObject.Properties.Remove($ContainerKey)
     }
     Write-RfJsonFile -Path $ConfigPath -Object $existing
 }

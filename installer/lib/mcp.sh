@@ -7,25 +7,42 @@
 # `--inline-key` writes the literal key instead — global scope only,
 # enforced in main.sh.
 
-# rf::mcp::server_json [--inline]
+# rf::mcp::server_json [--inline] [--type=<type>] [--key-value=<override>]
 # Print the JSON object describing the Roboflow MCP server.
-# Without --inline: uses ${ROBOFLOW_API_KEY} placeholder.
-# With --inline:    embeds $RF_API_KEY literally.
+#
+# --type defaults to "http" — most hosts. OpenCode uses "remote".
+# --inline embeds $RF_API_KEY literally; default uses ${ROBOFLOW_API_KEY} placeholder.
+# --key-value overrides the api-key value entirely (e.g. "${input:roboflow_key}"
+#   for VS Code Copilot's prompt-string mechanism).
 rf::mcp::server_json() {
     local inline=0
-    [[ "${1:-}" == "--inline" ]] && inline=1
+    local type="http"
+    local key_override=""
+    while (($#)); do
+        case "$1" in
+            --inline) inline=1 ;;
+            --type=*) type="${1#*=}" ;;
+            --key-value=*) key_override="${1#*=}" ;;
+            *) ;;
+        esac
+        shift
+    done
 
-    local key_value='${ROBOFLOW_API_KEY}'
-    if [[ $inline -eq 1 ]] && [[ -n "${RF_API_KEY:-}" ]]; then
+    local key_value
+    if [[ -n "$key_override" ]]; then
+        key_value="$key_override"
+    elif [[ $inline -eq 1 ]] && [[ -n "${RF_API_KEY:-}" ]]; then
         key_value="$RF_API_KEY"
+    else
+        key_value='${ROBOFLOW_API_KEY}'
     fi
 
     rf::json::has_tool || rf::die "no JSON tool available (need python3 or jq)"
     if [[ "$(rf::json::tool)" == "python3" ]]; then
-        KEY_VALUE="$key_value" python3 -c '
+        KEY_VALUE="$key_value" SERVER_TYPE="$type" python3 -c '
 import json, os, sys
 server = {
-    "type": "http",
+    "type": os.environ["SERVER_TYPE"],
     "url": "https://mcp.roboflow.com/mcp",
     "headers": {
         "x-api-key": os.environ["KEY_VALUE"],
@@ -35,19 +52,22 @@ server = {
 json.dump(server, sys.stdout)
 '
     else
-        jq -n --arg k "$key_value" '{
-            type: "http",
+        jq -n --arg k "$key_value" --arg t "$type" '{
+            type: $t,
             url: "https://mcp.roboflow.com/mcp",
             headers: {"x-api-key": $k, "Accept": "application/json, text/event-stream"}
         }'
     fi
 }
 
-# rf::mcp::install <config_path>
+# rf::mcp::install <config_path> [<container_key>] [server_json_args...]
 # Merge the Roboflow server entry into the named MCP config file.
-# Backs up any existing file first.
+# <container_key> defaults to "mcpServers" — pass "servers" for VS Code Copilot,
+# "mcp" for OpenCode. Backs up any existing file first.
 rf::mcp::install() {
     local config_path="$1"
+    local container_key="${2:-mcpServers}"
+    shift 2 || true
 
     if [[ "${RF_OPT_DRY_RUN:-0}" == "1" ]]; then
         rf::info "[dry-run] would write Roboflow MCP entry to $config_path"
@@ -60,20 +80,26 @@ rf::mcp::install() {
         [[ -n "$bak" ]] && rf::dim "  backup: $bak"
     fi
 
+    local -a server_args=()
+    [[ "${RF_OPT_INLINE_KEY:-0}" == "1" ]] && server_args+=("--inline")
+    if (($#)); then
+        server_args+=("$@")
+    fi
+
     local server_json
-    if [[ "${RF_OPT_INLINE_KEY:-0}" == "1" ]]; then
-        server_json="$(rf::mcp::server_json --inline)"
+    if [[ ${#server_args[@]} -gt 0 ]]; then
+        server_json="$(rf::mcp::server_json "${server_args[@]}")"
     else
         server_json="$(rf::mcp::server_json)"
     fi
-    rf::json::merge_mcp "$config_path" "roboflow" "$server_json"
+    rf::json::merge_mcp "$config_path" "roboflow" "$server_json" "$container_key"
     rf::ok "wrote Roboflow MCP entry to $config_path"
 }
 
-# rf::mcp::remove <config_path>
-# Strip the Roboflow MCP entry without touching others.
+# rf::mcp::remove <config_path> [<container_key>]
 rf::mcp::remove() {
     local config_path="$1"
+    local container_key="${2:-mcpServers}"
     [[ -f "$config_path" ]] || { rf::dim "  $config_path: nothing to remove"; return 0; }
 
     if [[ "${RF_OPT_DRY_RUN:-0}" == "1" ]]; then
@@ -85,6 +111,6 @@ rf::mcp::remove() {
     bak="$(rf::backup "$config_path")"
     [[ -n "$bak" ]] && rf::dim "  backup: $bak"
 
-    rf::json::remove_mcp "$config_path" "roboflow"
+    rf::json::remove_mcp "$config_path" "roboflow" "$container_key"
     rf::ok "removed Roboflow MCP entry from $config_path"
 }

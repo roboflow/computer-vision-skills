@@ -34,13 +34,18 @@ rf::json::tool() {
     printf '%s' "$RF_JSON_TOOL"
 }
 
-# rf::json::merge_mcp <config_path> <server_name> <server_json>
+# rf::json::merge_mcp <config_path> <server_name> <server_json> [<container_key>]
 #
 # Read JSON from <config_path> (or {} if missing), set
-# .mcpServers[<server_name>] = <server_json>, write back atomically.
+# .<container_key>[<server_name>] = <server_json>, write back atomically.
 # Other servers and other top-level keys are preserved.
+#
+# <container_key> defaults to "mcpServers" — that's what most hosts use.
+# Override for hosts with different schemas: VS Code Copilot uses "servers",
+# OpenCode uses "mcp".
 rf::json::merge_mcp() {
     local config_path="$1" server_name="$2" server_json="$3"
+    local container_key="${4:-mcpServers}"
     rf::json::detect || rf::die "no JSON tool available (need python3 or jq)"
 
     rf::ensure_dir "$(dirname "$config_path")"
@@ -54,34 +59,37 @@ rf::json::merge_mcp() {
     local merged
     if [[ "$RF_JSON_TOOL" == "python3" ]]; then
         merged="$(
-            EXISTING="$existing" SERVER="$server_json" SERVER_NAME="$server_name" \
+            EXISTING="$existing" SERVER="$server_json" SERVER_NAME="$server_name" CONTAINER="$container_key" \
                 python3 -c '
 import json, os, sys
 existing = json.loads(os.environ["EXISTING"]) if os.environ["EXISTING"].strip() else {}
 server = json.loads(os.environ["SERVER"])
 name = os.environ["SERVER_NAME"]
-existing.setdefault("mcpServers", {})
-existing["mcpServers"][name] = server
+container = os.environ["CONTAINER"]
+existing.setdefault(container, {})
+existing[container][name] = server
 json.dump(existing, sys.stdout, indent=2)
 sys.stdout.write("\n")
 '
         )" || rf::die "failed to merge MCP config into $config_path"
     else
         merged="$(
-            jq --arg name "$server_name" --argjson server "$server_json" \
-                '.mcpServers[$name] = $server' <<<"$existing"
+            jq --arg name "$server_name" --arg container "$container_key" --argjson server "$server_json" \
+                '.[$container][$name] = $server' <<<"$existing"
         )" || rf::die "failed to merge MCP config into $config_path"
     fi
 
     printf '%s' "$merged" | rf::atomic_write "$config_path"
 }
 
-# rf::json::remove_mcp <config_path> <server_name>
+# rf::json::remove_mcp <config_path> <server_name> [<container_key>]
 #
-# Delete .mcpServers[<server_name>] from the config, leaving the rest intact.
-# No-op if the file or the entry does not exist.
+# Delete .<container_key>[<server_name>] from the config, leaving the rest
+# intact. <container_key> defaults to "mcpServers". No-op if the file or the
+# entry does not exist.
 rf::json::remove_mcp() {
     local config_path="$1" server_name="$2"
+    local container_key="${3:-mcpServers}"
     [[ -f "$config_path" ]] || return 0
     rf::json::detect || rf::die "no JSON tool available (need python3 or jq)"
 
@@ -92,24 +100,30 @@ rf::json::remove_mcp() {
     local updated
     if [[ "$RF_JSON_TOOL" == "python3" ]]; then
         updated="$(
-            EXISTING="$existing" SERVER_NAME="$server_name" \
+            EXISTING="$existing" SERVER_NAME="$server_name" CONTAINER="$container_key" \
                 python3 -c '
 import json, os, sys
 existing = json.loads(os.environ["EXISTING"])
-servers = existing.get("mcpServers")
+container = os.environ["CONTAINER"]
+servers = existing.get(container)
 if isinstance(servers, dict) and os.environ["SERVER_NAME"] in servers:
     del servers[os.environ["SERVER_NAME"]]
     if not servers:
-        del existing["mcpServers"]
+        del existing[container]
 json.dump(existing, sys.stdout, indent=2)
 sys.stdout.write("\n")
 '
         )"
     else
         updated="$(
-            jq --arg name "$server_name" \
-                'if .mcpServers? then .mcpServers |= (del(.[$name])) | (if (.mcpServers == {}) then del(.mcpServers) else . end) else . end' \
-                <<<"$existing"
+            jq --arg name "$server_name" --arg container "$container_key" '
+                if .[$container]? then
+                    .[$container] |= (del(.[$name]))
+                    | (if (.[$container] == {}) then del(.[$container]) else . end)
+                else
+                    .
+                end
+            ' <<<"$existing"
         )"
     fi
 

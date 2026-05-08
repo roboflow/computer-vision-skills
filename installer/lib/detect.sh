@@ -72,6 +72,53 @@ rf::detect::copilot_cli() {
     fi
 }
 
+rf::detect::gemini_cli() {
+    if rf::on_path gemini; then
+        local v
+        v="$(gemini --version 2>/dev/null | head -n1 || true)"
+        printf 'gemini-cli|cli|Gemini CLI|%s\n' "${v:-detected on PATH}"
+    fi
+}
+
+rf::detect::windsurf_desktop() {
+    [[ "${RF_TEST_NO_DETECT_APPS:-}" == "1" ]] && return 0
+    local hint=""
+    if rf::is_macos && [[ -d "/Applications/Windsurf.app" ]]; then
+        hint="/Applications/Windsurf.app"
+    elif rf::is_linux && { [[ -d "$HOME/.config/Windsurf" ]] || [[ -d "$HOME/.codeium/windsurf" ]]; }; then
+        hint="$HOME/.codeium/windsurf"
+    elif rf::is_windows && [[ -d "${LOCALAPPDATA:-$HOME/AppData/Local}/Programs/Windsurf" ]]; then
+        hint="${LOCALAPPDATA:-$HOME/AppData/Local}/Programs/Windsurf"
+    elif rf::on_path windsurf; then
+        hint="windsurf on PATH"
+    else
+        return 0
+    fi
+    printf 'windsurf-desktop|desktop|Windsurf|%s\n' "$hint"
+}
+
+rf::detect::vscode_copilot() {
+    [[ "${RF_TEST_NO_DETECT_APPS:-}" == "1" ]] && return 0
+    if rf::on_path code; then
+        printf 'vscode-copilot|desktop|VS Code Copilot|code on PATH\n'
+        return 0
+    fi
+    # Common install dirs for VS Code on macOS / Linux.
+    if rf::is_macos && [[ -d "/Applications/Visual Studio Code.app" ]]; then
+        printf 'vscode-copilot|desktop|VS Code Copilot|%s\n' "/Applications/Visual Studio Code.app"
+    elif rf::is_linux && [[ -d "$HOME/.vscode" ]]; then
+        printf 'vscode-copilot|desktop|VS Code Copilot|%s\n' "$HOME/.vscode"
+    fi
+}
+
+rf::detect::opencode_cli() {
+    if rf::on_path opencode; then
+        local v
+        v="$(opencode --version 2>/dev/null | head -n1 || true)"
+        printf 'opencode-cli|cli|OpenCode CLI|%s\n' "${v:-detected on PATH}"
+    fi
+}
+
 # Aggregator: print one line per detected host.
 rf::detect::all() {
     rf::detect::claude_code_cli
@@ -79,25 +126,29 @@ rf::detect::all() {
     rf::detect::cursor_desktop
     rf::detect::claude_desktop
     rf::detect::copilot_cli
+    rf::detect::gemini_cli
+    rf::detect::windsurf_desktop
+    rf::detect::vscode_copilot
+    rf::detect::opencode_cli
 }
 
 # rf::detect::lookup <id>
-# Run the appropriate detect function and emit the matching line if present.
-# Used to validate --host=<id> requests.
 rf::detect::lookup() {
     local id="$1"
     case "$id" in
-        claude-code-cli) rf::detect::claude_code_cli ;;
-        codex-cli) rf::detect::codex_cli ;;
-        cursor-desktop) rf::detect::cursor_desktop ;;
-        claude-desktop) rf::detect::claude_desktop ;;
-        copilot-cli) rf::detect::copilot_cli ;;
+        claude-code-cli)   rf::detect::claude_code_cli ;;
+        codex-cli)         rf::detect::codex_cli ;;
+        cursor-desktop)    rf::detect::cursor_desktop ;;
+        claude-desktop)    rf::detect::claude_desktop ;;
+        copilot-cli)       rf::detect::copilot_cli ;;
+        gemini-cli)        rf::detect::gemini_cli ;;
+        windsurf-desktop)  rf::detect::windsurf_desktop ;;
+        vscode-copilot)    rf::detect::vscode_copilot ;;
+        opencode-cli)      rf::detect::opencode_cli ;;
         *) return 1 ;;
     esac
 }
 
-# rf::detect::known_ids — print the full set of host ids the installer knows
-# about, one per line.
 rf::detect::known_ids() {
     cat <<'EOF'
 claude-code-cli
@@ -105,5 +156,9 @@ codex-cli
 cursor-desktop
 claude-desktop
 copilot-cli
+gemini-cli
+windsurf-desktop
+vscode-copilot
+opencode-cli
 EOF
 }

@@ -70,14 +70,22 @@ Both use Roboflow's published plugin manifests in this repo (`.claude-plugin/`, 
 
 Phase 2 hosts get the Roboflow MCP entry written into their config files. Skills (where supported) are copied from `skills/<name>/` into the destination dir, with a per-skill `.roboflow-install-manifest.json` sidecar carrying a content hash. Re-running `agents.sh` reconciles upstream changes against pristine local copies and preserves user-edited skills.
 
-### Future phases (planned)
+### Phase 4 (config-file path) — shipped
 
-| ID | Kind | Notes |
+| ID | Kind | Detection | MCP config | Schema notes |
+|---|---|---|---|---|
+| `gemini-cli` | CLI | `gemini` on PATH | `~/.gemini/settings.json` | Standard `mcpServers` schema. MCP only. |
+| `windsurf-desktop` | Desktop | `/Applications/Windsurf.app` (mac), `~/.codeium/windsurf` or `~/.config/Windsurf` (linux), `%LOCALAPPDATA%\Programs\Windsurf` (win) | `~/.codeium/windsurf/mcp_config.json` | Standard `mcpServers` schema. MCP only. |
+| `vscode-copilot` | Desktop | `code` on PATH, or `/Applications/Visual Studio Code.app` (mac), `~/.vscode` (linux) | Project: `<project>/.vscode/mcp.json`. Global: `~/Library/Application Support/Code/User/mcp.json` (mac), `~/.config/Code/User/mcp.json` (linux), `%APPDATA%\Code\User\mcp.json` (win). | **Different schema**: `servers` (not `mcpServers`) + `inputs` array. Installer adds an `inputs[]` `promptString` so VS Code prompts for the API key on first use. `--inline-key` warns about committing secrets. |
+| `opencode-cli` | CLI | `opencode` on PATH | `~/.config/opencode/opencode.json` | **Different schema**: `mcp` container + `type: "remote"`. JSONC technically supported; the installer refuses to edit if `//` or `/* */` comments are present unless `--force` (which overwrites). |
+
+### Schema variations summary
+
+| Container key | Server type | Hosts |
 |---|---|---|
-| `gemini-cli` | CLI | Phase 4. Writes `~/.gemini/settings.json`. |
-| `windsurf-desktop` | Desktop | Phase 4. Writes `~/.codeium/windsurf/mcp_config.json`. |
-| `vscode-copilot` | Desktop | Phase 4. Writes project `.vscode/mcp.json`; global path varies across builds. |
-| `opencode-cli` | CLI | Phase 4. Writes `~/.config/opencode/opencode.json`. |
+| `mcpServers` | `http` | Cursor, Claude Desktop, Copilot CLI, Gemini, Windsurf |
+| `servers` (with `inputs[]`) | `http` | VS Code Copilot |
+| `mcp` | `remote` | OpenCode |
 
 ## Authentication
 
