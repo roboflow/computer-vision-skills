@@ -1,0 +1,66 @@
+name: Publish agent-install
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "agent-install/**"
+      - ".github/workflows/publish-agent-install.yml"
+  workflow_dispatch: {}
+
+# Least-privilege at the workflow level. id-token is required for WIF;
+# contents: read is enough for actions/checkout.
+permissions:
+  contents: read
+  id-token: write
+
+# One publish at a time, never cancel an in-flight upload.
+concurrency:
+  group: publish-agent-install
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Requiring an environment lets us add manual approval / restrict to main
+    # via the repo's environment protection rules without touching this file.
+    environment: agent-install-prod
+    env:
+      BUCKET_NAME: roboflow-platform-agent-install
+      PROJECT: roboflow-platform
+      OIDC_PROJECT_ID: "481589474394"
+      SERVICE_ACCOUNT: gha-computer-vision-skills
+      WIF_POOL_ID: github-actions
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: projects/${{ env.OIDC_PROJECT_ID }}/locations/global/workloadIdentityPools/${{ env.WIF_POOL_ID }}/providers/github
+          service_account: ${{ env.SERVICE_ACCOUNT }}@${{ env.PROJECT }}.iam.gserviceaccount.com
+
+      - name: Upload agent.sh
+        uses: google-github-actions/upload-cloud-storage@v3
+        with:
+          parent: false
+          path: agent-install/agent.sh
+          destination: ${{ env.BUCKET_NAME }}/
+          process_gcloudignore: false
+          headers: |-
+            content-type: text/x-shellscript; charset=utf-8
+            cache-control: no-cache, max-age=0
+
+      - name: Upload agent.ps1
+        uses: google-github-actions/upload-cloud-storage@v3
+        with:
+          parent: false
+          path: agent-install/agent.ps1
+          destination: ${{ env.BUCKET_NAME }}/
+          process_gcloudignore: false
+          headers: |-
+            content-type: text/plain; charset=utf-8
+            cache-control: no-cache, max-age=0
