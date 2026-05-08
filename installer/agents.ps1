@@ -22,6 +22,23 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# The installer's main.ps1 uses constructs that need PowerShell 7+ ($IsWindows,
+# `null` propagation patterns, etc.). Detect Windows PowerShell 5.1 up front so
+# users get a clear message instead of a mysterious "pwsh not recognized" later.
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Host ""
+    Write-Host "Roboflow installer needs PowerShell 7 or newer." -ForegroundColor Yellow
+    Write-Host "  Detected: $($PSVersionTable.PSEdition) $($PSVersionTable.PSVersion)"
+    Write-Host ""
+    Write-Host "Install PowerShell 7 (one-time):"
+    Write-Host "  winget install --id Microsoft.PowerShell --source winget" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Then open a new 'PowerShell' window (not 'Windows PowerShell') and re-run:"
+    Write-Host "  `$env:ROBOFLOW_AGENTS_REF = 'installer'" -ForegroundColor Cyan
+    Write-Host "  irm https://roboflow.com/agents.ps1 | iex" -ForegroundColor Cyan
+    exit 2
+}
+
 $repo = $env:ROBOFLOW_AGENTS_REPO; if (-not $repo) { $repo = 'roboflow/computer-vision-skills' }
 $ref  = $env:ROBOFLOW_AGENTS_REF;  if (-not $ref)  { $ref  = 'main' }
 
