@@ -54,9 +54,20 @@ function Test-RfHostClaudeDesktop {
         $candidate = Join-Path $HOME '.config/Claude'
         if (Test-Path $candidate) { $hint = $candidate }
     } elseif (Test-RfWindows) {
-        $appdata = if ($env:APPDATA) { $env:APPDATA } else { Join-Path $HOME 'AppData/Roaming' }
-        $candidate = Join-Path $appdata 'Claude'
-        if (Test-Path $candidate) { $hint = $candidate }
+        # Claude Desktop on Windows is a Squirrel installer-style app. Check
+        # multiple locations because %APPDATA%\Claude\ only exists after the
+        # user has launched the app at least once; the Squirrel install dir
+        # is created at install time and is more reliable.
+        $appdata  = if ($env:APPDATA)      { $env:APPDATA }      else { Join-Path $HOME 'AppData/Roaming' }
+        $localApp = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { Join-Path $HOME 'AppData/Local' }
+        $candidates = @(
+            (Join-Path $appdata  'Claude'),
+            (Join-Path $localApp 'AnthropicClaude'),
+            (Join-Path $localApp 'Programs/claude')
+        )
+        foreach ($c in $candidates) {
+            if (Test-Path $c) { $hint = $c; break }
+        }
     }
     if (-not $hint) { return }
     "claude-desktop|desktop|Claude Desktop|$hint"

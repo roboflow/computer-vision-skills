@@ -34,9 +34,6 @@ EOF
     fi
     rf::ok "Roboflow MCP configured for $RF_HOST_LABEL"
     rf::dim "Restart Windsurf for the change to take effect."
-    if [[ -z "${ROBOFLOW_API_KEY:-}" ]] && [[ "${RF_OPT_INLINE_KEY:-0}" != "1" ]]; then
-        rf::dim "Reminder: ROBOFLOW_API_KEY must be in the environment that launches Windsurf."
-    fi
     return 0
 }
 

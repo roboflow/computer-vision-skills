@@ -74,9 +74,6 @@ function Install-RfHostOpencodeCli {
         })
     }
     Write-RfOk "Roboflow MCP configured for $Script:RfHostLabel"
-    if (-not $env:ROBOFLOW_API_KEY -and -not $Script:RfOptInlineKey) {
-        Write-RfDim "Reminder: export ROBOFLOW_API_KEY in the shell that launches ``opencode``."
-    }
     return $true
 }
 

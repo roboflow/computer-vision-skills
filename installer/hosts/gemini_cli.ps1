@@ -31,9 +31,6 @@ function Install-RfHostGeminiCli {
         })
     }
     Write-RfOk "Roboflow MCP configured for $Script:RfHostLabel"
-    if (-not $env:ROBOFLOW_API_KEY -and -not $Script:RfOptInlineKey) {
-        Write-RfDim "Reminder: export ROBOFLOW_API_KEY in your shell so Gemini CLI can authenticate."
-    }
     return $true
 }
 

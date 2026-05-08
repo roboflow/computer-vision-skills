@@ -349,7 +349,16 @@ rf::main() {
         fi
     done
 
-    if [[ "$RF_OPT_MODE" != "uninstall" ]] && [[ -n "${RF_API_KEY:-}" ]] && [[ "${ROBOFLOW_API_KEY:-}" != "$RF_API_KEY" ]]; then
+    # Only show the "export ROBOFLOW_API_KEY" hint when an adapter actually
+    # wrote a placeholder. At --global scope (the default) every adapter
+    # embeds the resolved literal key, so the hint is misleading. Project
+    # scope without --inline-key keeps the placeholder in committable
+    # config files and the user does need ROBOFLOW_API_KEY in their shell.
+    if [[ "$RF_OPT_MODE" != "uninstall" ]] \
+       && [[ "$RF_OPT_SCOPE" == "project" ]] \
+       && [[ "${RF_OPT_INLINE_KEY:-0}" != "1" ]] \
+       && [[ -n "${RF_API_KEY:-}" ]] \
+       && [[ "${ROBOFLOW_API_KEY:-}" != "$RF_API_KEY" ]]; then
         rf::auth::shell_export_hint
     fi
 

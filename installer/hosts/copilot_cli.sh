@@ -41,9 +41,6 @@ EOF
     fi
 
     rf::ok "Roboflow MCP configured for $RF_HOST_LABEL"
-    if [[ -z "${ROBOFLOW_API_KEY:-}" ]] && [[ "${RF_OPT_INLINE_KEY:-0}" != "1" ]]; then
-        rf::dim "Reminder: export ROBOFLOW_API_KEY in your shell so Copilot CLI can authenticate against the MCP."
-    fi
     return 0
 }
 

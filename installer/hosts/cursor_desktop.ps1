@@ -67,9 +67,6 @@ function Install-RfHostCursorDesktop {
     }
 
     Write-RfOk "Roboflow configured for $Script:RfHostLabel"
-    if (-not $env:ROBOFLOW_API_KEY -and -not $Script:RfOptInlineKey) {
-        Write-RfDim "Reminder: export ROBOFLOW_API_KEY in the shell that launches Cursor so the MCP server authenticates."
-    }
     return $true
 }
 

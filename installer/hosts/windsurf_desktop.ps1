@@ -32,9 +32,6 @@ function Install-RfHostWindsurfDesktop {
     }
     Write-RfOk "Roboflow MCP configured for $Script:RfHostLabel"
     Write-RfDim "Restart Windsurf for the change to take effect."
-    if (-not $env:ROBOFLOW_API_KEY -and -not $Script:RfOptInlineKey) {
-        Write-RfDim "Reminder: ROBOFLOW_API_KEY must be in the environment that launches Windsurf."
-    }
     return $true
 }
 

@@ -279,7 +279,16 @@ function Invoke-RfMain {
         }
     }
 
-    if ($Script:RfOptMode -ne 'uninstall' -and $Script:RfApiKey -and $env:ROBOFLOW_API_KEY -ne $Script:RfApiKey) {
+    # Only show the "export ROBOFLOW_API_KEY" hint when an adapter actually
+    # wrote a placeholder. At --global scope (the default) every adapter
+    # embeds the resolved literal key, so the hint is misleading. Project
+    # scope without --inline-key keeps the placeholder in committable
+    # config files and the user does need ROBOFLOW_API_KEY in their shell.
+    if ($Script:RfOptMode -ne 'uninstall' -and `
+        $Script:RfOptScope -eq 'project' -and `
+        -not $Script:RfOptInlineKey -and `
+        $Script:RfApiKey -and `
+        $env:ROBOFLOW_API_KEY -ne $Script:RfApiKey) {
         Show-RfAuthExportHint
     }
 

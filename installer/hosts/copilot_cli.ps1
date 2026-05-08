@@ -31,9 +31,6 @@ function Install-RfHostCopilotCli {
         })
     }
     Write-RfOk "Roboflow MCP configured for $Script:RfHostLabel"
-    if (-not $env:ROBOFLOW_API_KEY -and -not $Script:RfOptInlineKey) {
-        Write-RfDim "Reminder: export ROBOFLOW_API_KEY in your shell so Copilot CLI can authenticate against the MCP."
-    }
     return $true
 }
 
