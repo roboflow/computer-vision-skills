@@ -1,4 +1,4 @@
-<#
+﻿<#
 rules.ps1 — install / remove a Roboflow managed block in a markdown rules file.
 PowerShell port of installer/lib/rules.sh.
 #>

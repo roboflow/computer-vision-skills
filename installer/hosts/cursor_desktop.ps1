@@ -1,4 +1,4 @@
-<#
+﻿<#
 cursor_desktop.ps1 — install Roboflow into Cursor (config-file path).
 #>
 

@@ -1,4 +1,4 @@
-<#
+﻿<#
 copilot_cli.ps1 — install Roboflow MCP into GitHub Copilot CLI. MCP only.
 #>
 

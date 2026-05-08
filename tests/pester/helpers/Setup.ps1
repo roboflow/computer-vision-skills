@@ -1,4 +1,4 @@
-# Shared Pester setup helpers.
+﻿# Shared Pester setup helpers.
 
 $Script:RfRepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 

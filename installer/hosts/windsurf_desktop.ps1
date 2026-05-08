@@ -1,4 +1,4 @@
-<#
+﻿<#
 windsurf_desktop.ps1 — install Roboflow MCP into Windsurf.
 #>
 

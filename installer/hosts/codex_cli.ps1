@@ -1,4 +1,4 @@
-<#
+﻿<#
 codex_cli.ps1 — register Roboflow as a Codex marketplace source.
 Mirrors installer/hosts/codex_cli.sh.
 #>

@@ -1,4 +1,4 @@
-# Pester tests for installer/lib/rules.ps1.
+﻿# Pester tests for installer/lib/rules.ps1.
 
 BeforeAll {
     . (Join-Path $PSScriptRoot 'helpers/Setup.ps1')

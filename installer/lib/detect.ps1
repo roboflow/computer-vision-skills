@@ -1,4 +1,4 @@
-<#
+﻿<#
 detect.ps1 — locate installed coding agents.
 
 Each Test-RfHost-* function emits a "id|kind|label|hint" string if the host

@@ -1,4 +1,4 @@
-# Pester tests for installer/main.ps1 — argument parsing, help/version, exit codes.
+﻿# Pester tests for installer/main.ps1 — argument parsing, help/version, exit codes.
 
 BeforeAll {
     . (Join-Path $PSScriptRoot 'helpers/Setup.ps1')

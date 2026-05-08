@@ -1,4 +1,4 @@
-<#
+﻿<#
 main.ps1 — Roboflow agents.ps1 installer orchestration.
 
 Mirrors installer/main.sh: argument parsing, host detection/selection, auth

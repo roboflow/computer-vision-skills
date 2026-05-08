@@ -1,4 +1,4 @@
-<#
+﻿<#
 json_io.ps1 — PowerShell-native JSON I/O.
 
 PowerShell 5+ ships ConvertFrom-Json / ConvertTo-Json, so unlike the Bash side

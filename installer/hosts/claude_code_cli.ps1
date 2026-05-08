@@ -1,4 +1,4 @@
-<#
+﻿<#
 claude_code_cli.ps1 — install Roboflow into Claude Code via plugin marketplace.
 
 Mirrors the Bash adapter: shell out to `claude plugin marketplace add` +

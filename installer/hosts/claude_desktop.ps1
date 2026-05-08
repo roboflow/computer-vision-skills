@@ -1,4 +1,4 @@
-<#
+﻿<#
 claude_desktop.ps1 — install Roboflow MCP into Claude Desktop's chat tab.
 
 Claude Desktop's claude_desktop_config.json schema only accepts stdio MCPs

@@ -1,4 +1,4 @@
-<#
+﻿<#
 auth.ps1 — resolve the user's Roboflow API key.
 
 Same precedence as the Bash side:

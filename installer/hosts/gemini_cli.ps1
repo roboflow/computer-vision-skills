@@ -1,4 +1,4 @@
-<#
+﻿<#
 gemini_cli.ps1 — install Roboflow MCP into Gemini CLI.
 #>
 

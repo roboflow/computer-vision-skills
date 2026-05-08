@@ -1,4 +1,4 @@
-<#
+﻿<#
 mcp.ps1 — write/remove the Roboflow MCP server entry in a host's config.
 #>
 

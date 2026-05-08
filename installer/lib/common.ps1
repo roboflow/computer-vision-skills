@@ -1,4 +1,4 @@
-<#
+﻿<#
 common.ps1 — logging, prompts, atomic writes, backups.
 Imported by main.ps1 and host adapters via dot-source.
 #>

@@ -1,4 +1,4 @@
-<#
+﻿<#
 skills.ps1 — install Roboflow skill directories into agent skill paths.
 PowerShell port of installer/lib/skills.sh.
 #>

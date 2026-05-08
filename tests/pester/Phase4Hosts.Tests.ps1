@@ -1,4 +1,4 @@
-# Pester tests for Phase 4 hosts.
+﻿# Pester tests for Phase 4 hosts.
 
 BeforeAll {
     . (Join-Path $PSScriptRoot 'helpers/Setup.ps1')

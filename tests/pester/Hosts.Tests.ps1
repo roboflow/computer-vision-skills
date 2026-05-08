@@ -1,4 +1,4 @@
-# Pester tests for the host adapters.
+﻿# Pester tests for the host adapters.
 
 BeforeAll {
     . (Join-Path $PSScriptRoot 'helpers/Setup.ps1')

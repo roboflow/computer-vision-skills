@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Roboflow coding-agent installer (entry bootstrap).
 

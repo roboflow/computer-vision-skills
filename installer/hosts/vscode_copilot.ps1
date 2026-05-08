@@ -1,4 +1,4 @@
-<#
+﻿<#
 vscode_copilot.ps1 — install Roboflow MCP into VS Code Copilot.
 
 Schema:

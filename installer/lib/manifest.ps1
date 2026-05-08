@@ -1,4 +1,4 @@
-<#
+﻿<#
 manifest.ps1 — read/write the Roboflow installer manifest at
 $ROBOFLOW_CONFIG_DIR/installations.json (mirrors the Bash side).
 #>

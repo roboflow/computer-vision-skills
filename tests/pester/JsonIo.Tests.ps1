@@ -1,4 +1,4 @@
-# Pester tests for installer/lib/json_io.ps1.
+﻿# Pester tests for installer/lib/json_io.ps1.
 
 BeforeAll {
     . (Join-Path $PSScriptRoot 'helpers/Setup.ps1')

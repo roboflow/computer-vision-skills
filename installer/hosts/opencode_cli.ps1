@@ -1,4 +1,4 @@
-<#
+﻿<#
 opencode_cli.ps1 — install Roboflow MCP into OpenCode CLI.
 
 OpenCode's config at ~/.config/opencode/opencode.json uses an `mcp` container
