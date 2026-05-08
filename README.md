@@ -24,7 +24,9 @@ claude plugin install roboflow
 
 The first command registers this repo as a marketplace source (run once per machine). The second installs the plugin.
 
-<details><summary>Per-project installation</summary>
+<details>
+<summary>Per-project installation</summary>
+
 For per-project isolation — for example, when different projects need different `ROBOFLOW_API_KEY` values for different workspaces:
 
 ```bash
