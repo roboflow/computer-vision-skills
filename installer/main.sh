@@ -30,6 +30,8 @@ source "$RF_INSTALLER_DIR/lib/manifest.sh"
 source "$RF_INSTALLER_DIR/lib/mcp.sh"
 # shellcheck source=lib/skills.sh
 source "$RF_INSTALLER_DIR/lib/skills.sh"
+# shellcheck source=lib/rules.sh
+source "$RF_INSTALLER_DIR/lib/rules.sh"
 
 # --- usage ---------------------------------------------------------------
 
@@ -46,12 +48,12 @@ USAGE
 FLAGS
   --host=<id,...>       Restrict to specific agent IDs (repeatable / comma-sep)
   --all                 All detected agents (implied with --yes if no --host)
-  --skills-only         (Phase 2+) Install skills only — no MCP, no plugin
-  --mcp-only            (Phase 2+) Install MCP only — no skills, no plugin
-  --rules-only          (Phase 5)  Install rules / managed-blocks only
-  --no-skills           Negative scope
-  --no-mcp              Negative scope
-  --no-rules            Negative scope
+  --skills-only         Install skills only
+  --mcp-only            Install MCP only
+  --rules-only          Install rules / managed-blocks only
+  --no-skills           Skip skills component
+  --no-mcp              Skip MCP component
+  --no-rules            Skip rules component
   --global              Default scope (per-user installs)
   --project             Project-scoped install (no inline secrets allowed)
   --api-key=<key>       Override API key resolution
@@ -62,16 +64,24 @@ FLAGS
   --uninstall           Remove Roboflow-managed components
   --dry-run             Print plan; no writes
   --force               Override safety checks
-  --force-skill=<name>  Overwrite a specific user-edited skill (Phase 2+)
+  --force-skill=<name>  Overwrite a specific user-edited skill
   --yes, -y             No prompts; use defaults for unspecified decisions
   --version             Print installer version + repo SHA
   --help, -h            This help
 
-KNOWN HOST IDS (Phase 1 supported)
+KNOWN HOST IDS
   claude-code-cli       Claude Code CLI (via `claude plugin install`)
   codex-cli             Codex CLI (registers marketplace; finish via `/plugins`)
+  cursor-desktop        Cursor (~/.cursor/mcp.json + skills)
+  claude-desktop        Claude Desktop (claude_desktop_config.json)
+  copilot-cli           GitHub Copilot CLI
+  gemini-cli            Gemini CLI
+  windsurf-desktop      Windsurf
+  vscode-copilot        VS Code Copilot (servers + inputs schema)
+  opencode-cli          OpenCode CLI (mcp + remote schema)
 
-  Additional hosts ship in later phases — see docs/INSTALLER.md.
+  See docs/INSTALLER.md for full reference and docs/per-agent/<host>.md
+  for manual install instructions.
 
 ENV
   ROBOFLOW_API_KEY      Read by adapters and the MCP server at runtime

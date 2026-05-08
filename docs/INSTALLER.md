@@ -70,6 +70,17 @@ Both use Roboflow's published plugin manifests in this repo (`.claude-plugin/`, 
 
 Phase 2 hosts get the Roboflow MCP entry written into their config files. Skills (where supported) are copied from `skills/<name>/` into the destination dir, with a per-skill `.roboflow-install-manifest.json` sidecar carrying a content hash. Re-running `agents.sh` reconciles upstream changes against pristine local copies and preserves user-edited skills.
 
+### Phase 5 — rules + polish
+
+Phase 5 adds:
+
+- **Managed-block rules** for hosts that consume project-level guidance files (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`). The installer writes content between `<!-- BEGIN ROBOFLOW -->` / `<!-- END ROBOFLOW -->` markers — anything outside is preserved on re-runs and uninstall.
+- **Cursor rule file** at `<project>/.cursor/rules/roboflow.mdc` (Cursor's per-rule format — Roboflow owns the file in full).
+
+Rules install only at `--project` scope (they're inherently project-level). Pass `--rules-only` to install nothing else, or `--no-rules` to skip them.
+
+Templates live in [`templates/rules/`](../templates/rules/).
+
 ### Phase 4 (config-file path) — shipped
 
 | ID | Kind | Detection | MCP config | Schema notes |

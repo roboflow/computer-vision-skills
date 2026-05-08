@@ -2,103 +2,55 @@
 
 Agent-ready Roboflow skills plus MCP configuration for computer vision workflows: data management, training, evaluation, inference, model selection, Workflows, Universe, plans, and Roboflow platform APIs.
 
-This repository is a plugin-shaped source of truth for AI agents (Claude Code, Codex, Cursor, OpenCode, and others). The canonical skill content lives in [`skills/`](skills/); plugin manifests point at those files instead of copying them elsewhere.
+This repository is a plugin-shaped source of truth for AI agents (Claude Code, Codex, Cursor, Windsurf, Gemini, Copilot, OpenCode, and others). The canonical skill content lives in [`skills/`](skills/); plugin manifests point at those files instead of copying them elsewhere.
 
-## Install as a plugin
+## Quick install
 
-The repo ships both plugin manifests pointing at the same skill content and MCP config:
-
-- Claude Code: [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) — plugin name `roboflow`
-- Codex: [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json) — plugin name `roboflow`
-
-Both manifests load skills from [`skills/`](skills/) and bundle the Roboflow MCP server config from [`.mcp.json`](.mcp.json).
-
-### Claude Code
-
-Install from GitHub — no clone required:
+The fastest path: one command configures every coding agent it finds on your machine.
 
 ```bash
-claude plugin marketplace add roboflow/computer-vision-skills
-claude plugin install roboflow
+# macOS / Linux
+curl -fsSL https://roboflow.com/agents.sh | bash
+
+# Windows PowerShell
+irm https://roboflow.com/agents.ps1 | iex
 ```
 
-The first command registers this repo as a marketplace source (run once per machine). The second installs the plugin.
+The script detects which agents you have, asks what to install, and uses each agent's preferred mechanism — plugin install for Claude Code and Codex, config-file writes for everyone else.
 
-For per-project isolation — for example, when different projects need different `ROBOFLOW_API_KEY` values for different workspaces:
+Non-interactive variants:
 
 ```bash
-claude plugin install roboflow --scope local
+# All detected agents, skip every prompt
+curl -fsSL https://roboflow.com/agents.sh | bash -s -- --yes
+
+# Just one agent
+curl -fsSL https://roboflow.com/agents.sh | bash -s -- --yes --host=claude-code-cli
+
+# Preview without writing
+curl -fsSL https://roboflow.com/agents.sh | bash -s -- --dry-run
+
+# Uninstall
+curl -fsSL https://roboflow.com/agents.sh | bash -s -- --uninstall
 ```
 
-Local scope writes the plugin into the current project only and reads the API key from that project's environment.
+Full flag reference: [`docs/INSTALLER.md`](docs/INSTALLER.md).
 
-**Alternative** — install from a local clone:
+## Per-agent install instructions
 
-```bash
-git clone https://github.com/roboflow/computer-vision-skills
-claude plugin marketplace add ./computer-vision-skills
-claude plugin install roboflow
-```
+If you'd rather wire a single agent up by hand (or want to know exactly what `agents.sh` is doing for your host), each one has a dedicated guide:
 
-For a throwaway test without touching the installed-plugins list:
+- [Claude Code](docs/per-agent/claude-code.md) — `claude plugin install`
+- [Claude Desktop](docs/per-agent/claude-desktop.md) — `claude_desktop_config.json`
+- [Codex CLI](docs/per-agent/codex.md) — `codex plugin marketplace add` + `/plugins`
+- [Cursor](docs/per-agent/cursor.md) — `~/.cursor/mcp.json` + `~/.claude/skills/`
+- [GitHub Copilot CLI](docs/per-agent/copilot-cli.md) — `~/.copilot/mcp-config.json`
+- [Gemini CLI](docs/per-agent/gemini-cli.md) — `~/.gemini/settings.json`
+- [Windsurf](docs/per-agent/windsurf.md) — `~/.codeium/windsurf/mcp_config.json`
+- [VS Code Copilot](docs/per-agent/vscode-copilot.md) — `<project>/.vscode/mcp.json` (servers + inputs schema)
+- [OpenCode CLI](docs/per-agent/opencode.md) — `~/.config/opencode/opencode.json` (mcp + remote schema)
 
-```bash
-cd computer-vision-skills
-claude --plugin-dir .
-```
-
-### Codex
-
-The Codex CLI currently exposes `codex plugin marketplace add`, `upgrade`, and `remove`. It does not expose a direct `codex plugin install` command or a `codex --plugin-dir` flow, so add this repo as a marketplace source and install the plugin from the plugin browser.
-
-Install from GitHub:
-
-```bash
-codex plugin marketplace add roboflow/computer-vision-skills
-```
-
-Restart Codex, then open the plugin browser:
-
-```text
-codex /plugins
-```
-
-Choose the **Roboflow** marketplace source, select the **Roboflow** plugin, install it, and press <kbd>Space</kbd> if it is installed but still disabled.
-
-<details>
-<summary>Local clone workflow</summary>
-
-When editing a local clone, register it as a local marketplace source:
-
-```bash
-git clone https://github.com/roboflow/computer-vision-skills
-cd computer-vision-skills
-codex plugin marketplace add .
-```
-
-Restart Codex after edits. If the plugin browser still shows stale metadata, remove and re-add the local marketplace:
-
-```bash
-codex plugin marketplace remove roboflow
-codex plugin marketplace add .
-```
-
-</details>
-
-If you registered the GitHub marketplace source instead, refresh it with `codex plugin marketplace upgrade roboflow`.
-
-<details>
-<summary>What the Codex marketplace file does</summary>
-
-Codex reads [`.agents/plugins/marketplace.json`](.agents/plugins/marketplace.json), which points `source.path` at the repo root via `./`. Codex resolves `source.path` relative to the marketplace root, so the plugin manifest in [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json), the skills in [`skills/`](skills/), and the Roboflow MCP server config in [`.mcp.json`](.mcp.json) are all loaded from this repository.
-
-Codex caches installed plugins under `~/.codex/plugins/cache/`, so a running Codex session may not see edits until Codex is restarted or the plugin is reinstalled from the Plugin Directory.
-
-</details>
-
-Codex CLI picks up `ROBOFLOW_API_KEY` from the shell environment that launches the `codex` binary. In Codex desktop, set the key in the local environment used by the workspace. Use a project-scoped `.env` if you need different keys per project.
-
-## Install standalone skills
+## Standalone skills
 
 If you want the skills without the MCP server bundle — for example, with an agent that doesn't speak the plugin manifest format — install them directly:
 
@@ -160,6 +112,8 @@ For persistence, add the `export` to your shell profile (`~/.zshrc`, `~/.bashrc`
 ## Contributing
 
 Skills are markdown. Open a PR with edits or a new folder under [`skills/`](skills/). Each new skill must have a `SKILL.md` at its root with `name` and `description` frontmatter.
+
+The installer (`agents.sh`, `agents.ps1`, and the modules under [`installer/`](installer/)) is also Apache-2.0 — see [`docs/INSTALLER.md`](docs/INSTALLER.md) for an architecture overview and [`tests/bats/`](tests/bats/) / [`tests/pester/`](tests/pester/) for the test suites.
 
 ## License
 

@@ -49,6 +49,23 @@ function Install-RfHostCursorDesktop {
         Install-RfAllSkills -BaseDir $skillsDir -HostId $Script:RfHostId -Scope $Script:RfOptScope
     }
 
+    if ($Script:RfDoRules -and $Script:RfOptScope -eq 'project') {
+        $project  = if ($Script:RfProjectDir) { $Script:RfProjectDir } else { (Get-Location).Path }
+        $rulePath = Join-Path $project '.cursor/rules/roboflow.mdc'
+        Write-RfStep "Rules → $rulePath"
+        Install-RfCursorMdc -Target $rulePath | Out-Null
+        if (-not $Script:RfOptDryRun) {
+            Add-RfManifestEntry -Entry ([pscustomobject]@{
+                host_id           = $Script:RfHostId
+                component         = 'rules'
+                scope             = $Script:RfOptScope
+                config_path       = $rulePath
+                installer_version = $Script:RfInstallerVersion
+                installed_at      = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+            })
+        }
+    }
+
     Write-RfOk "Roboflow configured for $Script:RfHostLabel"
     if (-not $env:ROBOFLOW_API_KEY -and -not $Script:RfOptInlineKey) {
         Write-RfDim "Reminder: export ROBOFLOW_API_KEY in the shell that launches Cursor so the MCP server authenticates."
@@ -66,6 +83,11 @@ function Uninstall-RfHostCursorDesktop {
     }
     if ($Script:RfDoSkills) {
         Uninstall-RfAllSkills -BaseDir $skillsDir -HostId $Script:RfHostId -Scope $Script:RfOptScope
+    }
+    if ($Script:RfDoRules -and $Script:RfOptScope -eq 'project') {
+        $project  = if ($Script:RfProjectDir) { $Script:RfProjectDir } else { (Get-Location).Path }
+        Uninstall-RfCursorMdc -Target (Join-Path $project '.cursor/rules/roboflow.mdc') | Out-Null
+        Remove-RfManifestEntry -HostId $Script:RfHostId -Component 'rules' -Scope $Script:RfOptScope
     }
     return $true
 }

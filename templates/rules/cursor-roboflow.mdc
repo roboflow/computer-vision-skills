@@ -1,0 +1,25 @@
+---
+description: Roboflow computer vision rules — use Roboflow MCP and Skills for CV work
+globs: ["**/*.py", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.ipynb"]
+alwaysApply: false
+---
+
+# Roboflow
+
+The Roboflow plugin is configured for this workspace. For computer-vision work — datasets, annotation, training, evaluation, deployment, inference, Workflows — use the Roboflow MCP server and the installed skills.
+
+## Skills
+
+Available under `.claude/skills/`: `api-reference`, `data-management`, `inference`, `plans-and-pricing`, `product-navigation`, `training-and-evaluation`, `universe`.
+
+Open the relevant skill before writing code.
+
+## MCP server
+
+`roboflow` is an HTTP MCP at `https://mcp.roboflow.com/mcp`, authenticated by the `ROBOFLOW_API_KEY` environment variable. It exposes live tools for projects, images, annotations, versions, models, Workflows, Universe search, and model evaluation.
+
+## Conventions
+
+- Default to **Workflows** over direct model inference calls. They compose vision blocks (detection, classification, OCR, foundation models, output formatting) and run as REST endpoints.
+- Use **Universe** (`roboflow.com/universe`) to search 1M+ public datasets and 50K+ models before training from scratch.
+- Get the API key from `https://app.roboflow.com/{workspace}/settings/api`. Never commit it — keep it in `ROBOFLOW_API_KEY` (env or gitignored `.env`).

@@ -60,6 +60,28 @@ EOF
         rf::skills::install_all "$skills_dir" "$RF_HOST_ID" "${RF_OPT_SCOPE:-global}"
     fi
 
+    # Cursor's rule system uses per-rule .mdc files under .cursor/rules.
+    # Only meaningful at project scope — skip for --global.
+    if [[ "${RF_DO_RULES:-1}" == "1" ]] && [[ "${RF_OPT_SCOPE:-global}" == "project" ]]; then
+        local project="${RF_PROJECT_DIR:-$PWD}"
+        local rule_path="$project/.cursor/rules/roboflow.mdc"
+        rf::step "Rules → $rule_path"
+        rf::rules::install_cursor_mdc "$rule_path"
+        if [[ "${RF_OPT_DRY_RUN:-0}" != "1" ]]; then
+            rf::manifest::record "$(cat <<EOF
+{
+  "host_id": "$RF_HOST_ID",
+  "component": "rules",
+  "scope": "${RF_OPT_SCOPE:-global}",
+  "config_path": "$rule_path",
+  "installer_version": "$RF_INSTALLER_VERSION",
+  "installed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+)" || true
+        fi
+    fi
+
     rf::ok "Roboflow configured for $RF_HOST_LABEL"
     if [[ -z "${ROBOFLOW_API_KEY:-}" ]] && [[ "${RF_OPT_INLINE_KEY:-0}" != "1" ]]; then
         rf::dim "Reminder: export ROBOFLOW_API_KEY in the shell that launches Cursor so the MCP server authenticates."
@@ -80,6 +102,11 @@ rf::host::cursor_desktop::uninstall() {
     fi
     if [[ "${RF_DO_SKILLS:-1}" == "1" ]]; then
         rf::skills::remove_all "$skills_dir" "$RF_HOST_ID" "${RF_OPT_SCOPE:-global}"
+    fi
+    if [[ "${RF_DO_RULES:-1}" == "1" ]] && [[ "${RF_OPT_SCOPE:-global}" == "project" ]]; then
+        local project="${RF_PROJECT_DIR:-$PWD}"
+        rf::rules::remove_cursor_mdc "$project/.cursor/rules/roboflow.mdc"
+        rf::manifest::remove "$RF_HOST_ID" "rules" "${RF_OPT_SCOPE:-global}" || true
     fi
     return 0
 }

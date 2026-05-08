@@ -34,6 +34,7 @@ if (-not $env:ROBOFLOW_AGENTS_REPO) {
 . (Join-Path $Script:RfInstallerDir 'lib/manifest.ps1')
 . (Join-Path $Script:RfInstallerDir 'lib/mcp.ps1')
 . (Join-Path $Script:RfInstallerDir 'lib/skills.ps1')
+. (Join-Path $Script:RfInstallerDir 'lib/rules.ps1')
 
 function Show-RfUsage {
 @"
