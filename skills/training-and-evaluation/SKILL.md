@@ -173,7 +173,7 @@ person, bicycle, car, motorcycle, airplane, bus, train, truck, boat, traffic lig
 |---|---|
 | Best accuracy, object detection | RF-DETR (Large or XL) |
 | Fast inference, object detection | RF-DETR Nano or YOLOv11n |
-| Best speed/accuracy tradeoff for a specific hardware | RF-DETR NAS (see section below) |
+| Best speed/accuracy tradeoff for specific hardware | RF-DETR NAS (see section below) |
 | Best accuracy, instance segmentation | RF-DETR Seg |
 | Quick proof-of-concept (<1000 images) | Roboflow Instant |
 | Classification | ViT or DINOv3 |
