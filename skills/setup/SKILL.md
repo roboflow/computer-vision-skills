@@ -23,17 +23,17 @@ which roboflow
 roboflow auth login
 ```
 
-After login, extract the key automatically:
+After login, extract the key into a variable:
 
 ```bash
-python3 -c "
+RF_KEY=$(python3 -c "
 import json, os
 cfg = json.load(open(os.path.expanduser('~/.config/roboflow/config.json')))
 print(list(cfg['workspaces'].values())[0]['apiKey'])
-"
+")
 ```
 
-Show the extracted key to the user and proceed to Step 2 with it.
+Confirm the key was extracted (reply "API key found — proceeding to Step 2") without displaying its value. Proceed to Step 2; use `$RF_KEY` wherever the key is needed in Step 3.
 
 **If CLI is not available** — direct the user to the web UI:
 
