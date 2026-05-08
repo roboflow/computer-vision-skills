@@ -49,24 +49,37 @@ function Test-RfHostClaudeDesktop {
     if ($env:RF_TEST_NO_DETECT_APPS -eq '1') { return }
     $hint = ''
     if (Test-RfMacOS) {
-        if (Test-Path '/Applications/Claude.app') { $hint = '/Applications/Claude.app' }
+        if (Test-Path -LiteralPath '/Applications/Claude.app') { $hint = '/Applications/Claude.app' }
     } elseif (Test-RfLinux) {
         $candidate = Join-Path $HOME '.config/Claude'
-        if (Test-Path $candidate) { $hint = $candidate }
+        if (Test-Path -LiteralPath $candidate) { $hint = $candidate }
     } elseif (Test-RfWindows) {
-        # Claude Desktop on Windows is a Squirrel installer-style app. Check
-        # multiple locations because %APPDATA%\Claude\ only exists after the
-        # user has launched the app at least once; the Squirrel install dir
-        # is created at install time and is more reliable.
-        $appdata  = if ($env:APPDATA)      { $env:APPDATA }      else { Join-Path $HOME 'AppData/Roaming' }
-        $localApp = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { Join-Path $HOME 'AppData/Local' }
-        $candidates = @(
-            (Join-Path $appdata  'Claude'),
-            (Join-Path $localApp 'AnthropicClaude'),
-            (Join-Path $localApp 'Programs/claude')
-        )
-        foreach ($c in $candidates) {
-            if (Test-Path $c) { $hint = $c; break }
+        # Windows ships Claude Desktop in two install flavors. Try in order:
+        #   1. MSIX / Microsoft Store package — canonical on Windows 11.
+        #      Lands in C:\Program Files\WindowsApps\Claude_<ver>_<arch>__<hash>\,
+        #      which we can't predict by path; Get-AppxPackage is the right probe.
+        #   2. User-config dir at %APPDATA%\Claude\ — exists once the app has
+        #      been launched at least once, regardless of install flavor.
+        #   3. Squirrel-installer fallbacks.
+        try {
+            $pkg = Get-AppxPackage -Name 'Claude' -ErrorAction SilentlyContinue
+            if ($pkg) {
+                $hint = "MSIX: $($pkg.PackageFullName)"
+            }
+        } catch { }
+
+        if (-not $hint) {
+            $appdata  = if ($env:APPDATA)      { $env:APPDATA }      else { Join-Path $HOME 'AppData/Roaming' }
+            $localApp = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { Join-Path $HOME 'AppData/Local' }
+            $candidates = @(
+                (Join-Path $appdata  'Claude'),
+                (Join-Path $localApp 'AnthropicClaude'),
+                (Join-Path $localApp 'Programs\claude'),
+                (Join-Path $localApp 'Programs\Claude')
+            )
+            foreach ($c in $candidates) {
+                if (Test-Path -LiteralPath $c) { $hint = $c; break }
+            }
         }
     }
     if (-not $hint) { return }
