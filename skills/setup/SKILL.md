@@ -80,14 +80,17 @@ if [ "$IS_GIT" = "true" ]; then
 fi
 ```
 
-Write `.claude/settings.local.json` at the project root:
+Create the `.claude` directory and write `.claude/settings.local.json` at the project root:
 
-```json
+```bash
+mkdir -p .claude
+cat > .claude/settings.local.json <<'EOF'
 {
   "env": {
     "ROBOFLOW_API_KEY": "<key>"
   }
 }
+EOF
 ```
 
 Confirm the file was written and the gitignore entry is in place.
