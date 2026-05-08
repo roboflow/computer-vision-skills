@@ -1,6 +1,6 @@
 # Roboflow Agent Plugin
 
-Agent-ready Roboflow skills plus MCP configuration for computer vision workflows: data management, training, evaluation, inference, model selection, Workflows, Universe, plans, and Roboflow platform APIs.
+Agent-ready Roboflow plugin that contains skills and MCP configuration for computer vision workflows: data management, training, evaluation, inference, model selection, Workflows, Universe, plans, and Roboflow platform APIs.
 
 This repository is a plugin-shaped source of truth for AI agents (Claude Code, Codex, Cursor, OpenCode, and others). The canonical skill content lives in [`skills/`](skills/); plugin manifests point at those files instead of copying them elsewhere.
 
@@ -24,6 +24,9 @@ claude plugin install roboflow
 
 The first command registers this repo as a marketplace source (run once per machine). The second installs the plugin.
 
+<details>
+<summary>Per-project installation</summary>
+
 For per-project isolation — for example, when different projects need different `ROBOFLOW_API_KEY` values for different workspaces:
 
 ```bash
@@ -31,8 +34,10 @@ claude plugin install roboflow --scope local
 ```
 
 Local scope writes the plugin into the current project only and reads the API key from that project's environment.
+</details>
 
-**Alternative** — install from a local clone:
+<details>
+<summary>Install from a local clone</summary>
 
 ```bash
 git clone https://github.com/roboflow/computer-vision-skills
@@ -46,6 +51,8 @@ For a throwaway test without touching the installed-plugins list:
 cd computer-vision-skills
 claude --plugin-dir .
 ```
+
+</details>
 
 ### Codex
 
@@ -139,18 +146,15 @@ That separation keeps the install model simple:
 <details>
 <summary>Get your API key</summary>
 
-Grab your Roboflow API key from the workspace settings page:
+**Grab your Roboflow API key** from the Roboflow settings:
+[app.roboflow.com/settings/api](https://app.roboflow.com/settings/api)
 
-```text
-https://app.roboflow.com/{workspace}/settings/api
-```
-
-Replace `{workspace}` with your workspace slug. The key authenticates the bundled MCP server against `https://mcp.roboflow.com/mcp` via the `x-api-key` header.
+The key authenticates the bundled MCP server against `https://mcp.roboflow.com` via the `x-api-key` header.
 
 Export it in the shell that launches your agent:
 
 ```bash
-export ROBOFLOW_API_KEY=YOUR_ROBOFLOW_API_KEY
+export ROBOFLOW_API_KEY=your_key
 ```
 
 For persistence, add the `export` to your shell profile (`~/.zshrc`, `~/.bashrc`) or to a project-local `.env` file loaded by your agent's environment. Per-project isolation is the safer default — keeps separate workspaces and billing accounts from leaking across projects.
