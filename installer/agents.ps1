@@ -22,22 +22,16 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# The installer's main.ps1 uses constructs that need PowerShell 7+ ($IsWindows,
-# `null` propagation patterns, etc.). Detect Windows PowerShell 5.1 up front so
-# users get a clear message instead of a mysterious "pwsh not recognized" later.
-if ($PSVersionTable.PSVersion.Major -lt 7) {
-    Write-Host ""
-    Write-Host "Roboflow installer needs PowerShell 7 or newer." -ForegroundColor Yellow
-    Write-Host "  Detected: $($PSVersionTable.PSEdition) $($PSVersionTable.PSVersion)"
-    Write-Host ""
-    Write-Host "Install PowerShell 7 (one-time):"
-    Write-Host "  winget install --id Microsoft.PowerShell --source winget" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Then open a new 'PowerShell' window (not 'Windows PowerShell') and re-run:"
-    Write-Host "  `$env:ROBOFLOW_AGENTS_REF = 'installer'" -ForegroundColor Cyan
-    Write-Host "  irm https://roboflow.com/agents.ps1 | iex" -ForegroundColor Cyan
-    exit 2
-}
+# Older Windows PowerShell 5.1 builds default to TLS 1.0, which raw.githubusercontent
+# and codeload.github.com no longer accept. Force TLS 1.2 before any web request.
+try {
+    [Net.ServicePointManager]::SecurityProtocol =
+        [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+} catch { }
+
+# Resolve the running PowerShell host (PS 5.1 → powershell.exe, PS 7+ → pwsh)
+# so the rest of the installer runs in the same edition the user invoked.
+$Script:RfPwshExe = if ($PSVersionTable.PSEdition -eq 'Desktop') { 'powershell.exe' } else { 'pwsh' }
 
 $repo = $env:ROBOFLOW_AGENTS_REPO; if (-not $repo) { $repo = 'roboflow/computer-vision-skills' }
 $ref  = $env:ROBOFLOW_AGENTS_REF;  if (-not $ref)  { $ref  = 'main' }
@@ -46,7 +40,7 @@ $ref  = $env:ROBOFLOW_AGENTS_REF;  if (-not $ref)  { $ref  = 'main' }
 if ($PSCommandPath) {
     $localMain = Join-Path (Split-Path -Parent $PSCommandPath) 'main.ps1'
     if (Test-Path -LiteralPath $localMain) {
-        & pwsh -NoProfile -File $localMain @RemainingArgs
+        & $Script:RfPwshExe -NoProfile -File $localMain @RemainingArgs
         exit $LASTEXITCODE
     }
 }
@@ -78,7 +72,7 @@ try {
     if (-not (Test-Path -LiteralPath $main)) {
         throw "installer/main.ps1 not found in extracted tarball at $main"
     }
-    & pwsh -NoProfile -File $main @RemainingArgs
+    & $Script:RfPwshExe -NoProfile -File $main @RemainingArgs
     exit $LASTEXITCODE
 }
 finally {

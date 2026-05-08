@@ -52,17 +52,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # `pwsh` exercises PowerShell 7+ on every OS (Linux/macOS/Windows).
+        # `powershell` exercises Windows PowerShell 5.1 — that's the default
+        # shell on a stock Windows box, and the one users get when they hit
+        # the Start menu and type "PowerShell". We need both to pass.
+        include:
+          - os: ubuntu-latest
+            shell: pwsh
+          - os: macos-latest
+            shell: pwsh
+          - os: windows-latest
+            shell: pwsh
+          - os: windows-latest
+            shell: powershell
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Install Pester
-        shell: pwsh
+        shell: ${{ matrix.shell }}
         run: |
           Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser -AllowClobber
           Get-Module -ListAvailable Pester | Select-Object -First 1 Name, Version
       - name: Run Pester tests
-        shell: pwsh
+        shell: ${{ matrix.shell }}
         env:
           NO_COLOR: "1"
         run: |

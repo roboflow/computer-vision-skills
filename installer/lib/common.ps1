@@ -3,6 +3,17 @@ common.ps1 — logging, prompts, atomic writes, backups.
 Imported by main.ps1 and host adapters via dot-source.
 #>
 
+# PowerShell 6+ ships $IsWindows / $IsLinux / $IsMacOS as automatic read-only
+# globals. Windows PowerShell 5.1 doesn't have them — fill them in so the
+# rest of the lib can use them uniformly. Skip if already defined (PS 7+) to
+# avoid trying to overwrite a read-only auto-variable.
+if (-not (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
+    # Windows PowerShell 5.1 only runs on Windows.
+    Set-Variable -Name IsWindows -Value $true  -Scope Global -Option ReadOnly -Force
+    Set-Variable -Name IsLinux   -Value $false -Scope Global -Option ReadOnly -Force
+    Set-Variable -Name IsMacOS   -Value $false -Scope Global -Option ReadOnly -Force
+}
+
 # Color suppression — honor $env:NO_COLOR and non-tty stdout.
 $Script:RfColorEnabled = -not $env:NO_COLOR -and [Console]::IsOutputRedirected -eq $false
 

@@ -2,17 +2,22 @@
 
 $Script:RfRepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 
-# Resolve pwsh up front (full path) so child-process invocations work even
-# when we narrow $env:PATH to a controlled subset for isolation tests.
-# Falls back to the well-known Homebrew/system locations if PATH was already
-# narrowed by a previous test file's setup.
+# Resolve the PowerShell executable up front (full path) so child-process
+# invocations work even when we narrow $env:PATH for isolation. Use whichever
+# edition is currently running (PS 5.1 → powershell.exe, PS 7+ → pwsh) so the
+# test suite exercises the same edition that invoked it.
 function Resolve-RfPwsh {
+    if ($PSVersionTable.PSEdition -eq 'Desktop') {
+        # Windows PowerShell 5.1 — $PSHOME holds powershell.exe.
+        return (Join-Path $PSHOME 'powershell.exe')
+    }
     $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
     if ($cmd) { return $cmd.Source }
     $candidates = @(
         '/opt/homebrew/bin/pwsh',
         '/usr/local/bin/pwsh',
-        '/usr/bin/pwsh'
+        '/usr/bin/pwsh',
+        (Join-Path $PSHOME 'pwsh')
     )
     foreach ($c in $candidates) { if (Test-Path -LiteralPath $c) { return $c } }
     throw 'cannot resolve pwsh'
@@ -38,6 +43,10 @@ function New-RfIsolatedHome {
     # locally — never reassign $HOME.
     $rfHome = New-Item -ItemType Directory -Path (Join-Path ([System.IO.Path]::GetTempPath()) ("rf-home." + [Guid]::NewGuid().ToString('N').Substring(0, 8)))
     $env:HOME = $rfHome.FullName
+    # On Windows PS 5.1, $HOME is derived from $env:USERPROFILE rather than
+    # $env:HOME. Set both so child processes (including powershell.exe)
+    # see the isolated home regardless of edition.
+    if ($IsWindows) { $env:USERPROFILE = $rfHome.FullName }
     $env:XDG_CACHE_HOME = Join-Path $rfHome.FullName '.cache'
     Remove-Item Env:ROBOFLOW_API_KEY -ErrorAction SilentlyContinue
     Remove-Item Env:ROBOFLOW_CONFIG_DIR -ErrorAction SilentlyContinue
@@ -46,7 +55,12 @@ function New-RfIsolatedHome {
     New-Item -ItemType Directory -Path (Join-Path $rfHome '.config') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $rfHome 'bin') -Force | Out-Null
 
-    if ($IsMacOS -or $IsLinux) {
+    if ($IsWindows) {
+        # Narrow PATH to the test stub dir + minimum system bins so the user's
+        # actual claude / codex / npx don't leak into "missing binary" tests.
+        $sysRoot = if ($env:SystemRoot) { $env:SystemRoot } else { 'C:\Windows' }
+        $env:PATH = (Join-Path $rfHome.FullName 'bin') + ';' + (Join-Path $sysRoot 'System32') + ';' + $sysRoot
+    } else {
         $env:PATH = "$($rfHome.FullName)/bin:$Script:RfSystemPath"
     }
     return $rfHome.FullName
@@ -72,8 +86,37 @@ function New-RfStubCommand {
     )
     $callsDir = Join-Path $env:HOME ".stubs/$Name.calls"
     New-Item -ItemType Directory -Path $callsDir -Force | Out-Null
-    $stubPath = Join-Path $env:HOME "bin/$Name"
-    $body = @"
+    $binDir = Join-Path $env:HOME 'bin'
+    if (-not (Test-Path -LiteralPath $binDir)) {
+        New-Item -ItemType Directory -Path $binDir -Force | Out-Null
+    }
+
+    if ($IsWindows) {
+        # .cmd is in PATHEXT by default; tests invoke `claude` and PATHEXT
+        # resolution finds claude.cmd. Each invocation logs argv to a unique
+        # file so Get-RfStubCalls can replay them.
+        $stubPath   = Join-Path $binDir "$Name.cmd"
+        $callsDirW  = $callsDir -replace '/', '\'
+        $lines = @(
+            '@echo off',
+            'setlocal enabledelayedexpansion',
+            'set "ts=%RANDOM%-%RANDOM%-%RANDOM%"',
+            "set `"calls_dir=$callsDirW`"",
+            '> "%calls_dir%\%ts%.txt" echo %~nx0 %*',
+            ':loop',
+            'if "%~1"=="" goto :done',
+            '>> "%calls_dir%\%ts%.txt" echo arg: %~1',
+            'shift',
+            'goto :loop',
+            ':done'
+        )
+        if ($Stdout) { $lines += "echo $Stdout" }
+        if ($Stderr) { $lines += "echo $Stderr 1>&2" }
+        $lines += "exit /b $ExitCode"
+        Set-Content -LiteralPath $stubPath -Value ($lines -join "`r`n") -Encoding ASCII
+    } else {
+        $stubPath = Join-Path $binDir $Name
+        $body = @"
 #!/usr/bin/env bash
 ts="`$(date +%s%N)"
 {
@@ -81,11 +124,12 @@ ts="`$(date +%s%N)"
     for a in "`$@"; do printf 'arg: %s\n' "`$a"; done
 } > "$callsDir/`$ts.`$`$"
 "@
-    if ($Stdout) { $body += "`nprintf %q `"$Stdout`"" }
-    if ($Stderr) { $body += "`nprintf %q `"$Stderr`" >&2" }
-    $body += "`nexit $ExitCode"
-    Set-Content -LiteralPath $stubPath -Value $body
-    & chmod +x $stubPath
+        if ($Stdout) { $body += "`nprintf %q `"$Stdout`"" }
+        if ($Stderr) { $body += "`nprintf %q `"$Stderr`" >&2" }
+        $body += "`nexit $ExitCode"
+        Set-Content -LiteralPath $stubPath -Value $body
+        & chmod +x $stubPath
+    }
 }
 
 function Get-RfStubCallCount {
