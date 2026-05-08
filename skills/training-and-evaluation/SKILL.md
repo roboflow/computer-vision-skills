@@ -183,7 +183,7 @@ person, bicycle, car, motorcycle, airplane, bus, train, truck, boat, traffic lig
 
 Instead of picking a single RF-DETR size manually, NAS trains many variants and reports the speed/accuracy frontier so you can pick the one that fits your hardware budget.
 
-- **What:** A NAS run explores the RF-DETR architecture search space, then trains the surviving candidates and reports each one's mAP and measured latency on a target hardware (e.g., Jetson, T4 GPU). The output is a set of models on a Pareto frontier, plus an auto-selected "recommended" model that maximizes `20 * mAP - latency_ms`.
+- **What:** A NAS run explores the RF-DETR architecture search space, then trains the surviving candidates and reports each one's mAP and measured latency on a target hardware (e.g., Jetson, T4 GPU). The output is a set of models on a Pareto frontier, plus an auto-selected "recommended" model chosen using Roboflow's current ranking heuristic to balance validation accuracy and measured latency on the target hardware.
 - **Tasks:** Object Detection (`rfdetr-nas`) and Instance Segmentation (`rfdetr-nas-seg`).
 - **When to use:** When you want the best speed/accuracy tradeoff for a specific deployment target and don't want to A/B-test sizes manually. Especially valuable for edge hardware where latency budgets are tight.
 - **Phases:**
