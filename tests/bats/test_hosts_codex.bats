@@ -13,13 +13,18 @@ teardown() {
     rf_test::cleanup_home
 }
 
-@test "codex install: dry-run does not invoke codex" {
+@test "codex install: dry-run prints plan without invoking plugin commands" {
     rf_test::stub_command "codex" 0
     run bash "$RF_REPO_ROOT/installer/main.sh" --yes --host=codex-cli --dry-run
     [ "$status" -eq 0 ]
-    [ "$(rf_test::stub_call_count codex)" = "0" ]
     [[ "$output" == *"[dry-run]"* ]]
     [[ "$output" == *"plugin marketplace add"* ]]
+    local calls
+    calls="$(rf_test::stub_calls codex || true)"
+    if [[ "$calls" == *"arg: plugin"* ]]; then
+        echo "ERROR: plugin command invoked under --dry-run: $calls" >&2
+        return 1
+    fi
 }
 
 @test "codex install: invokes plugin marketplace add" {

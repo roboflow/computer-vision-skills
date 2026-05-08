@@ -26,6 +26,10 @@ source "$RF_INSTALLER_DIR/lib/detect.sh"
 source "$RF_INSTALLER_DIR/lib/auth.sh"
 # shellcheck source=lib/manifest.sh
 source "$RF_INSTALLER_DIR/lib/manifest.sh"
+# shellcheck source=lib/mcp.sh
+source "$RF_INSTALLER_DIR/lib/mcp.sh"
+# shellcheck source=lib/skills.sh
+source "$RF_INSTALLER_DIR/lib/skills.sh"
 
 # --- usage ---------------------------------------------------------------
 
@@ -161,7 +165,9 @@ rf::select_hosts() {
         # within a process substitution, which only exits the subshell).
         local id
         for id in "${RF_OPT_HOSTS[@]}"; do
-            if ! rf::detect::known_ids | grep -qx "$id"; then
+            # `-Fx` without `-q` so grep reads the whole input — `-q` early
+            # exit + `pipefail` would mark the pipeline failed via SIGPIPE.
+            if ! rf::detect::known_ids | grep -Fx -- "$id" >/dev/null 2>&1; then
                 rf::err "unknown host id: $id"
                 rf::info "Known IDs: $(rf::detect::known_ids | paste -sd, -)"
                 return 2
@@ -241,18 +247,32 @@ rf::run_host() {
 rf::main() {
     rf::parse_args "$@"
 
-    # Sanity-check scope conflicts. (`${arr[@]+...}` keeps `set -u` happy
-    # when the array is empty under bash 3.)
-    local has_skills_only=0 has_mcp_only=0
+    # Compute per-component flags. Default is "all components on" — adapters
+    # that don't apply for a given component just no-op.
+    RF_DO_MCP=1; RF_DO_SKILLS=1; RF_DO_RULES=1
     if [[ ${#RF_OPT_COMPONENTS[@]} -gt 0 ]]; then
+        # --skills-only / --mcp-only / --rules-only narrow to just one.
+        RF_DO_MCP=0; RF_DO_SKILLS=0; RF_DO_RULES=0
+        local c
         for c in "${RF_OPT_COMPONENTS[@]}"; do
-            [[ "$c" == "skills" ]] && has_skills_only=1
-            [[ "$c" == "mcp" ]] && has_mcp_only=1
+            case "$c" in
+                skills) RF_DO_SKILLS=1 ;;
+                mcp) RF_DO_MCP=1 ;;
+                rules) RF_DO_RULES=1 ;;
+            esac
         done
     fi
-    if [[ $has_skills_only -eq 1 ]] || [[ $has_mcp_only -eq 1 ]]; then
-        rf::warn "--skills-only / --mcp-only land in Phase 2; Phase 1 only supports the bundled plugin install"
+    if [[ ${#RF_OPT_NO_COMPONENTS[@]} -gt 0 ]]; then
+        local c
+        for c in "${RF_OPT_NO_COMPONENTS[@]}"; do
+            case "$c" in
+                skills) RF_DO_SKILLS=0 ;;
+                mcp) RF_DO_MCP=0 ;;
+                rules) RF_DO_RULES=0 ;;
+            esac
+        done
     fi
+    export RF_DO_MCP RF_DO_SKILLS RF_DO_RULES
 
     rf::header "Roboflow agents installer"
     rf::dim "  source repo: $ROBOFLOW_AGENTS_REPO"

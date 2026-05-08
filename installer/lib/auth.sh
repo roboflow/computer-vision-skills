@@ -29,6 +29,45 @@ rf::auth::sdk_config_dir() {
 
 # Read api key from SDK config. Sets RF_API_KEY on success; returns 1 if no key resolved.
 # On multiple workspaces with no --workspace, prompts the user (unless --yes, in which case fails).
+# rf::auth::sdk_workspace_key <config_path> <url>
+# Read the apiKey for a specific workspace. Workspace keys are full URLs and
+# can't be addressed via dotted-path expressions, so this uses python3/jq
+# directly with the URL as an argument.
+rf::auth::sdk_workspace_key() {
+    local file="$1" url="$2"
+    rf::json::detect || return 1
+    if [[ "$RF_JSON_TOOL" == "python3" ]]; then
+        FILE="$file" URL="$url" python3 -c '
+import json, os, sys
+with open(os.environ["FILE"]) as fh:
+    data = json.load(fh)
+ws = data.get("workspaces", {}).get(os.environ["URL"], {})
+key = ws.get("apiKey")
+if key:
+    print(key)
+'
+    else
+        jq -r --arg url "$url" '.workspaces[$url].apiKey // empty' "$file"
+    fi
+}
+
+# rf::auth::sdk_workspace_name <config_path> <url> — friendly name or URL.
+rf::auth::sdk_workspace_name() {
+    local file="$1" url="$2"
+    rf::json::detect || return 1
+    if [[ "$RF_JSON_TOOL" == "python3" ]]; then
+        FILE="$file" URL="$url" python3 -c '
+import json, os, sys
+with open(os.environ["FILE"]) as fh:
+    data = json.load(fh)
+ws = data.get("workspaces", {}).get(os.environ["URL"], {})
+print(ws.get("name") or os.environ["URL"])
+'
+    else
+        jq -r --arg url "$url" '.workspaces[$url].name // $url' "$file"
+    fi
+}
+
 rf::auth::from_sdk_config() {
     local config_dir config_path
     config_dir="$(rf::auth::sdk_config_dir)"
@@ -37,19 +76,25 @@ rf::auth::from_sdk_config() {
 
     rf::json::has_tool || return 1
 
-    local workspace_count default_url
-    workspace_count="$(rf::json::keys "$config_path" .workspaces 2>/dev/null | wc -l | tr -d '[:space:]')"
+    # Read all workspace URLs into an array (avoids the head -n1 + pipefail
+    # SIGPIPE pitfall and lets us index without re-reading).
+    local urls=()
+    local url
+    while IFS= read -r url; do
+        [[ -n "$url" ]] && urls+=("$url")
+    done < <(rf::json::keys "$config_path" .workspaces)
+
+    local workspace_count="${#urls[@]}"
+    local default_url
     default_url="$(rf::json::read_field "$config_path" .RF_WORKSPACE 2>/dev/null || true)"
 
-    if [[ "$workspace_count" -eq 0 ]]; then
-        return 1
-    fi
+    [[ $workspace_count -eq 0 ]] && return 1
 
     local target_url=""
     if [[ -n "${RF_OPT_WORKSPACE:-}" ]]; then
         target_url="$RF_OPT_WORKSPACE"
-    elif [[ "$workspace_count" -eq 1 ]]; then
-        target_url="$(rf::json::keys "$config_path" .workspaces | head -n1)"
+    elif [[ $workspace_count -eq 1 ]]; then
+        target_url="${urls[0]}"
     elif [[ -n "$default_url" ]] && [[ "$default_url" != "null" ]]; then
         target_url="$default_url"
     elif [[ "${RF_YES:-0}" == "1" ]]; then
@@ -58,14 +103,12 @@ rf::auth::from_sdk_config() {
     else
         rf::info "Multiple Roboflow workspaces found:"
         local i=1
-        local urls=()
-        while IFS= read -r url; do
+        for url in "${urls[@]}"; do
             local name
-            name="$(rf::json::read_field "$config_path" ".workspaces.${url}.name" 2>/dev/null || echo "$url")"
+            name="$(rf::auth::sdk_workspace_name "$config_path" "$url")"
             rf::info "  [$i] $name ($url)"
-            urls+=("$url")
             i=$((i + 1))
-        done < <(rf::json::keys "$config_path" .workspaces)
+        done
         local choice
         choice="$(rf::prompt "Pick workspace [1-${#urls[@]}]:" "1")"
         if [[ "$choice" =~ ^[0-9]+$ ]] && [[ "$choice" -ge 1 ]] && [[ "$choice" -le "${#urls[@]}" ]]; then
@@ -77,8 +120,8 @@ rf::auth::from_sdk_config() {
 
     [[ -n "$target_url" ]] || return 1
     local key
-    key="$(rf::json::read_field "$config_path" ".workspaces.${target_url}.apiKey" 2>/dev/null || true)"
-    if [[ -n "$key" ]] && [[ "$key" != "null" ]]; then
+    key="$(rf::auth::sdk_workspace_key "$config_path" "$target_url")"
+    if [[ -n "$key" ]]; then
         RF_API_KEY="$key"
         RF_API_KEY_SOURCE="sdk-config:$target_url"
         return 0

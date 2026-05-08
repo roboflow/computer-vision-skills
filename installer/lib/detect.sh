@@ -25,12 +25,60 @@ rf::detect::codex_cli() {
     fi
 }
 
-# Aggregator: print one line per detected host. Phase 1 only includes
-# claude-code-cli and codex-cli; later phases add more rf::detect::<host>
-# functions and call them here.
+rf::detect::cursor_desktop() {
+    [[ "${RF_TEST_NO_DETECT_APPS:-}" == "1" ]] && return 0
+    local hint=""
+    if rf::is_macos && [[ -d "/Applications/Cursor.app" ]]; then
+        hint="/Applications/Cursor.app"
+    elif rf::is_linux && { [[ -d "$HOME/.config/Cursor" ]] || [[ -d "$HOME/.cursor" ]]; }; then
+        hint="${HOME}/.config/Cursor"
+    elif rf::is_windows && [[ -d "${LOCALAPPDATA:-$HOME/AppData/Local}/Programs/cursor" ]]; then
+        hint="${LOCALAPPDATA:-$HOME/AppData/Local}/Programs/cursor"
+    elif rf::on_path cursor; then
+        hint="cursor on PATH"
+    else
+        return 0
+    fi
+    printf 'cursor-desktop|desktop|Cursor|%s\n' "$hint"
+}
+
+rf::detect::claude_desktop() {
+    [[ "${RF_TEST_NO_DETECT_APPS:-}" == "1" ]] && return 0
+    local hint=""
+    if rf::is_macos && [[ -d "/Applications/Claude.app" ]]; then
+        hint="/Applications/Claude.app"
+    elif rf::is_linux && [[ -d "$HOME/.config/Claude" ]]; then
+        hint="${HOME}/.config/Claude"
+    elif rf::is_windows && [[ -d "${APPDATA:-$HOME/AppData/Roaming}/Claude" ]]; then
+        hint="${APPDATA:-$HOME/AppData/Roaming}/Claude"
+    else
+        return 0
+    fi
+    printf 'claude-desktop|desktop|Claude Desktop|%s\n' "$hint"
+}
+
+rf::detect::copilot_cli() {
+    if rf::on_path copilot; then
+        local v
+        v="$(copilot --version 2>/dev/null | head -n1 || true)"
+        printf 'copilot-cli|cli|GitHub Copilot CLI|%s\n' "${v:-detected on PATH}"
+        return 0
+    fi
+    if rf::on_path gh; then
+        # Drain the pipe (no `-q`) so we don't trip `pipefail` via SIGPIPE.
+        if gh extension list 2>/dev/null | grep -F 'github/gh-copilot' >/dev/null 2>&1; then
+            printf 'copilot-cli|cli|GitHub Copilot CLI|gh extension\n'
+        fi
+    fi
+}
+
+# Aggregator: print one line per detected host.
 rf::detect::all() {
     rf::detect::claude_code_cli
     rf::detect::codex_cli
+    rf::detect::cursor_desktop
+    rf::detect::claude_desktop
+    rf::detect::copilot_cli
 }
 
 # rf::detect::lookup <id>
@@ -41,16 +89,21 @@ rf::detect::lookup() {
     case "$id" in
         claude-code-cli) rf::detect::claude_code_cli ;;
         codex-cli) rf::detect::codex_cli ;;
+        cursor-desktop) rf::detect::cursor_desktop ;;
+        claude-desktop) rf::detect::claude_desktop ;;
+        copilot-cli) rf::detect::copilot_cli ;;
         *) return 1 ;;
     esac
 }
 
 # rf::detect::known_ids — print the full set of host ids the installer knows
-# about, one per line. Includes hosts not yet implemented (used by --host
-# validation to tell the user "we know about X but it's not supported yet").
+# about, one per line.
 rf::detect::known_ids() {
     cat <<'EOF'
 claude-code-cli
 codex-cli
+cursor-desktop
+claude-desktop
+copilot-cli
 EOF
 }

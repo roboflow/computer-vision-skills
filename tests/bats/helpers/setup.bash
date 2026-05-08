@@ -21,6 +21,10 @@ rf_test::isolated_home() {
     mkdir -p "$RF_TEST_HOME/.config" "$RF_TEST_HOME/bin"
     # Reset any inherited Roboflow env so fixture state controls behavior.
     unset ROBOFLOW_API_KEY ROBOFLOW_CONFIG_DIR
+    # Suppress desktop-app detection so installed-on-dev-machine apps
+    # (/Applications/Cursor.app, /Applications/Claude.app) don't leak into
+    # the test view of "what's detected".
+    export RF_TEST_NO_DETECT_APPS=1
     # Default PATH: stub bin (test-controlled) + system bin (so bash, rm, etc.
     # remain available). Excludes /usr/local/bin and /opt/homebrew/bin so the
     # user's real `claude` / `codex` don't leak into tests.

@@ -13,14 +13,21 @@ teardown() {
     rf_test::cleanup_home
 }
 
-@test "claude install: dry-run does not invoke claude" {
+@test "claude install: dry-run prints plan without invoking plugin commands" {
     rf_test::stub_command "claude" 0
     run bash "$RF_REPO_ROOT/installer/main.sh" --yes --host=claude-code-cli --dry-run
     [ "$status" -eq 0 ]
-    [ "$(rf_test::stub_call_count claude)" = "0" ]
     [[ "$output" == *"[dry-run]"* ]]
     [[ "$output" == *"plugin marketplace add"* ]]
     [[ "$output" == *"plugin install"* ]]
+    # The detect step invokes `claude --version`; that's allowed. What we
+    # disallow is the actual plugin install/marketplace commands running.
+    local calls
+    calls="$(rf_test::stub_calls claude || true)"
+    if [[ "$calls" == *"arg: plugin"* ]]; then
+        echo "ERROR: plugin command was invoked under --dry-run: $calls" >&2
+        return 1
+    fi
 }
 
 @test "claude install: invokes plugin marketplace add and plugin install" {

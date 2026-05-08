@@ -51,22 +51,29 @@ ROBOFLOW_AGENTS_REF=installer curl -fsSL https://roboflow.com/agents.sh | bash
 
 The installer dispatches to per-host adapters in `installer/hosts/`. Each adapter knows how to install, update, and uninstall the Roboflow integration for one host.
 
-### Phase 1 (shipped)
+### Phase 1 (plugin path) — shipped
 
-| ID | Kind | Path | What the installer does |
+| ID | Kind | Detection | What the installer does |
 |---|---|---|---|
 | `claude-code-cli` | CLI | `claude` on PATH | `claude plugin marketplace add roboflow/computer-vision-skills` + `claude plugin install roboflow` |
 | `codex-cli` | CLI | `codex` on PATH | `codex plugin marketplace add roboflow/computer-vision-skills`, then prints next steps for `/plugins` |
 
 Both use Roboflow's published plugin manifests in this repo (`.claude-plugin/`, `.codex-plugin/`), which bundle the skills (`skills/`) and the MCP server config (`.mcp.json`). The installer's job is to spare users from typing two commands per host and to record the install in the central manifest.
 
+### Phase 2 (config-file path) — shipped
+
+| ID | Kind | Detection | MCP config path | Skills path |
+|---|---|---|---|---|
+| `cursor-desktop` | Desktop | `/Applications/Cursor.app` (mac), `~/.config/Cursor` (linux), `%LOCALAPPDATA%\Programs\cursor` (win) | `~/.cursor/mcp.json` (or `<project>/.cursor/mcp.json` with `--project`) | `~/.claude/skills/` (or `<project>/.claude/skills/`) |
+| `claude-desktop` | Desktop | `/Applications/Claude.app` (mac), `~/.config/Claude` (linux), `%APPDATA%\Claude` (win) | `~/Library/Application Support/Claude/claude_desktop_config.json` (mac), `~/.config/Claude/claude_desktop_config.json` (linux), `%APPDATA%\Claude\claude_desktop_config.json` (win) | n/a (Claude Desktop has no skills support) |
+| `copilot-cli` | CLI | `copilot` on PATH or `gh extension list` includes `gh-copilot` | `~/.copilot/mcp-config.json` | n/a (Copilot CLI has no skills support) |
+
+Phase 2 hosts get the Roboflow MCP entry written into their config files. Skills (where supported) are copied from `skills/<name>/` into the destination dir, with a per-skill `.roboflow-install-manifest.json` sidecar carrying a content hash. Re-running `agents.sh` reconciles upstream changes against pristine local copies and preserves user-edited skills.
+
 ### Future phases (planned)
 
 | ID | Kind | Notes |
 |---|---|---|
-| `cursor-desktop` | Desktop | Phase 2. Writes `~/.cursor/mcp.json`, installs skills via `npx skills add` (with `-g` for global), optional `.cursor/rules/roboflow.mdc`. |
-| `claude-desktop` | Desktop | Phase 2. Writes the platform-specific `claude_desktop_config.json` MCP entry. Skills not applicable. |
-| `copilot-cli` | CLI | Phase 2. Writes `~/.copilot/mcp-config.json`. |
 | `gemini-cli` | CLI | Phase 4. Writes `~/.gemini/settings.json`. |
 | `windsurf-desktop` | Desktop | Phase 4. Writes `~/.codeium/windsurf/mcp_config.json`. |
 | `vscode-copilot` | Desktop | Phase 4. Writes project `.vscode/mcp.json`; global path varies across builds. |
