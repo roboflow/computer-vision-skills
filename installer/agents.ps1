@@ -1,10 +1,10 @@
-﻿<#
+<#
 .SYNOPSIS
     Roboflow coding-agent installer (entry bootstrap).
 
 .DESCRIPTION
     Lives at installer/agents.ps1 in the source tree. Two modes:
-      1. Local checkout: pwsh -File installer/agents.ps1 from a clone —
+      1. Local checkout: pwsh -File installer/agents.ps1 from a clone --
          invokes main.ps1 from the same directory.
       2. Pipe-from-irm:
             irm https://roboflow.com/agents.ps1 | iex
@@ -36,7 +36,7 @@ function Invoke-RfFinish {
         Write-Host ""
         Write-Host "agents.ps1 exited with code $Code" -ForegroundColor Red
     }
-    # Don't `exit` — that would close the host shell when invoked via iex.
+    # Don't `exit` -- that would close the host shell when invoked via iex.
 }
 
 Write-Host "Roboflow installer (PowerShell $($PSVersionTable.PSEdition) $($PSVersionTable.PSVersion))" -ForegroundColor DarkGray
@@ -49,14 +49,14 @@ try {
         [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 } catch { }
 
-# Resolve the running PowerShell host (PS 5.1 → powershell.exe, PS 7+ → pwsh)
+# Resolve the running PowerShell host (PS 5.1 -> powershell.exe, PS 7+ -> pwsh)
 # so the rest of the installer runs in the same edition the user invoked.
 $Script:RfPwshExe = if ($PSVersionTable.PSEdition -eq 'Desktop') { 'powershell.exe' } else { 'pwsh' }
 
 $repo = $env:ROBOFLOW_AGENTS_REPO; if (-not $repo) { $repo = 'roboflow/computer-vision-skills' }
 $ref  = $env:ROBOFLOW_AGENTS_REF;  if (-not $ref)  { $ref  = 'main' }
 
-# Local-checkout mode — agents.ps1 sits next to main.ps1 under installer/.
+# Local-checkout mode -- agents.ps1 sits next to main.ps1 under installer/.
 # (Only reachable when invoked as a file; safe to `exit`.)
 if ($PSCommandPath) {
     $localMain = Join-Path (Split-Path -Parent $PSCommandPath) 'main.ps1'
@@ -67,7 +67,7 @@ if ($PSCommandPath) {
     }
 }
 
-# Pipe-from-irm mode — download + extract + invoke.
+# Pipe-from-irm mode -- download + extract + invoke.
 $cacheRoot = if ($env:XDG_CACHE_HOME) { $env:XDG_CACHE_HOME } else { Join-Path $HOME '.cache' }
 $cacheDir  = Join-Path $cacheRoot 'roboflow-agents'
 New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
@@ -76,9 +76,9 @@ $tmp = New-Item -ItemType Directory -Path (Join-Path $cacheDir ("dl." + [Guid]::
 try {
     $zipUrl = "https://codeload.github.com/$repo/zip/refs/heads/$ref"
 
-    Write-Host "Downloading installer from $repo@$ref…" -ForegroundColor Cyan
+    Write-Host "Downloading installer from $repo@$ref..." -ForegroundColor Cyan
 
-    # Prefer zip on Windows because Expand-Archive ships with PowerShell —
+    # Prefer zip on Windows because Expand-Archive ships with PowerShell --
     # tar is also available on Windows 10+ but unzip semantics are simpler.
     $zipPath = Join-Path $tmp 'src.zip'
     Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing

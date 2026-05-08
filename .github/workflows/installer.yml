@@ -28,6 +28,27 @@ jobs:
             installer/lib/*.sh \
             installer/hosts/*.sh
 
+  agents-ps1-encoding:
+    # agents.ps1 is the entry point invoked via `irm | iex`. iex doesn't strip
+    # a leading BOM, and Windows PowerShell 5.1 chokes on non-ASCII chars in
+    # source unless they're behind a BOM. The combination means agents.ps1
+    # specifically must stay ASCII-only and BOM-free.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify agents.ps1 encoding
+        run: |
+          python3 - <<'PY'
+          import sys
+          raw = open('installer/agents.ps1', 'rb').read()
+          if raw[:3] == b'\xef\xbb\xbf':
+              sys.exit('agents.ps1 starts with a UTF-8 BOM — irm | iex cannot parse this on Windows.')
+          try:
+              raw.decode('ascii')
+          except UnicodeDecodeError as e:
+              sys.exit(f'agents.ps1 contains non-ASCII bytes around offset {e.start}; replace with ASCII (— -> --, → -> ->, … -> ...).')
+          PY
+
   bats:
     strategy:
       fail-fast: false
