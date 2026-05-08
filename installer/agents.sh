@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # agents.sh — Roboflow coding-agent installer (entry bootstrap).
 #
-# Two modes:
-#   1. Local checkout: `bash agents.sh [args]` from a clone — execs main.sh
-#      from the same directory.
+# Lives at installer/agents.sh in the source tree. Two modes:
+#   1. Local checkout: `bash installer/agents.sh [args]` from a clone — execs
+#      main.sh from the same directory.
 #   2. Pipe-from-curl: `curl -fsSL https://roboflow.com/agents.sh | bash` —
 #      downloads a tarball of this repo, extracts to ~/.cache/roboflow-agents/,
-#      execs main.sh from there.
+#      execs installer/main.sh from there.
 #
 # Override the ref with ROBOFLOW_AGENTS_REF=<branch-or-tag> for testing.
 
@@ -15,10 +15,11 @@ set -euo pipefail
 ROBOFLOW_AGENTS_REPO="${ROBOFLOW_AGENTS_REPO:-roboflow/computer-vision-skills}"
 ROBOFLOW_AGENTS_REF="${ROBOFLOW_AGENTS_REF:-main}"
 
+# Local-checkout mode: agents.sh sits next to main.sh under installer/.
 if [[ -n "${BASH_SOURCE[0]:-}" ]] && [[ -f "${BASH_SOURCE[0]}" ]]; then
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    if [[ -f "$SCRIPT_DIR/installer/main.sh" ]]; then
-        exec bash "$SCRIPT_DIR/installer/main.sh" "$@"
+    if [[ -f "$SCRIPT_DIR/main.sh" ]]; then
+        exec bash "$SCRIPT_DIR/main.sh" "$@"
     fi
 fi
 

@@ -40,7 +40,7 @@ rf::usage() {
 agents.sh — install Roboflow into your coding agents
 
 USAGE
-  bash agents.sh [flags]
+  bash installer/agents.sh [flags]      (from a checkout)
 
   curl -fsSL https://roboflow.com/agents.sh | bash
   curl -fsSL https://roboflow.com/agents.sh | bash -s -- [flags]

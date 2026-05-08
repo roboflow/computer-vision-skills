@@ -3,12 +3,13 @@
     Roboflow coding-agent installer (entry bootstrap).
 
 .DESCRIPTION
-    Two modes:
-      1. Local checkout: pwsh -File agents.ps1 from a clone — invokes main.ps1
-         from the same directory.
+    Lives at installer/agents.ps1 in the source tree. Two modes:
+      1. Local checkout: pwsh -File installer/agents.ps1 from a clone —
+         invokes main.ps1 from the same directory.
       2. Pipe-from-irm:
             irm https://roboflow.com/agents.ps1 | iex
-         Downloads a tarball of the repo, extracts to the cache dir, runs main.ps1.
+         Downloads a tarball of the repo, extracts to the cache dir, runs
+         installer/main.ps1.
 
     Override the ref with $env:ROBOFLOW_AGENTS_REF=<branch-or-tag> for testing.
 #>
@@ -24,9 +25,9 @@ $ErrorActionPreference = 'Stop'
 $repo = $env:ROBOFLOW_AGENTS_REPO; if (-not $repo) { $repo = 'roboflow/computer-vision-skills' }
 $ref  = $env:ROBOFLOW_AGENTS_REF;  if (-not $ref)  { $ref  = 'main' }
 
-# Local-checkout mode — execute main.ps1 directly.
+# Local-checkout mode — agents.ps1 sits next to main.ps1 under installer/.
 if ($PSCommandPath) {
-    $localMain = Join-Path (Split-Path -Parent $PSCommandPath) 'installer/main.ps1'
+    $localMain = Join-Path (Split-Path -Parent $PSCommandPath) 'main.ps1'
     if (Test-Path -LiteralPath $localMain) {
         & pwsh -NoProfile -File $localMain @RemainingArgs
         exit $LASTEXITCODE

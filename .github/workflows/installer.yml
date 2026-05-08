@@ -4,16 +4,12 @@ on:
   push:
     branches: [main, installer]
     paths:
-      - 'agents.sh'
-      - 'agents.ps1'
       - 'installer/**'
       - 'tests/bats/**'
       - 'tests/pester/**'
       - '.github/workflows/installer.yml'
   pull_request:
     paths:
-      - 'agents.sh'
-      - 'agents.ps1'
       - 'installer/**'
       - 'tests/bats/**'
       - 'tests/pester/**'
@@ -27,7 +23,7 @@ jobs:
       - name: Run shellcheck
         run: |
           shellcheck -x --severity=warning \
-            agents.sh \
+            installer/agents.sh \
             installer/main.sh \
             installer/lib/*.sh \
             installer/hosts/*.sh

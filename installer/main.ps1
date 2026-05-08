@@ -41,7 +41,7 @@ function Show-RfUsage {
 agents.ps1 — install Roboflow into your coding agents
 
 USAGE
-  pwsh -File agents.ps1 [flags]
+  pwsh -File installer/agents.ps1 [flags]      (from a checkout)
 
   irm https://roboflow.com/agents.ps1 | iex
   & { iex (irm https://roboflow.com/agents.ps1) } [flags]
