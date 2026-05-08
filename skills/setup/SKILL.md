@@ -68,9 +68,14 @@ git rev-parse --is-inside-work-tree 2>/dev/null && IS_GIT=true || IS_GIT=false
 
 if [ "$IS_GIT" = "true" ]; then
   if [ -f .gitignore ]; then
-    grep -qxF '.claude/settings.local.json' .gitignore || echo '.claude/settings.local.json' >> .gitignore
+    if ! grep -qxF '.claude/settings.local.json' .gitignore; then
+      if [ -s .gitignore ] && [ "$(tail -c 1 .gitignore)" != "" ]; then
+        printf '\n' >> .gitignore
+      fi
+      printf '%s\n' '.claude/settings.local.json' >> .gitignore
+    fi
   else
-    echo '.claude/settings.local.json' > .gitignore
+    printf '%s\n' '.claude/settings.local.json' > .gitignore
   fi
 fi
 ```
