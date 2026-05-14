@@ -185,6 +185,10 @@ Describe 'claude-code-cli adapter (plugin path)' {
     BeforeEach {
         $script:rfHome = New-RfIsolatedHome
         $env:ROBOFLOW_API_KEY = 'rf_test_key'
+        # The plugin's MCP runs through `npx -y mcp-remote …` at runtime;
+        # main.ps1's prereq check needs npx visible, otherwise it tries to
+        # install Node.js via winget and fails inside the isolated PATH.
+        New-RfStubCommand -Name 'npx' -ExitCode 0 -Stdout '10.5.0'
     }
     AfterEach {
         Remove-Item Env:ROBOFLOW_API_KEY -ErrorAction SilentlyContinue

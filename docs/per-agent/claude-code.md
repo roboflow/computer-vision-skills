@@ -1,8 +1,22 @@
 # Claude Code
 
-Claude Code CLI exposes a plugin marketplace. The installer registers Roboflow as a marketplace, installs the plugin, and embeds your API key into the plugin's MCP config so the server authenticates without you needing to manage `ROBOFLOW_API_KEY` anywhere.
+Claude Code CLI exposes a plugin marketplace. The installer registers Roboflow as a marketplace, installs the plugin, and embeds your API key into the plugin's cached MCP config so the server authenticates without you needing to manage `ROBOFLOW_API_KEY` anywhere.
 
 This same plugin install is **also picked up by the Code tab in Claude Desktop** (which reads `~/.claude/`), so one install covers two surfaces.
+
+## Node.js prerequisite
+
+The plugin's MCP loads through a small stdio bridge — `npx -y mcp-remote@<version> https://mcp.roboflow.com/mcp …` — that translates Claude's local stdio MCP protocol to Roboflow's HTTP MCP. This is the path that survives Claude Desktop's plugin-runner shadowing logic, which silently suppresses plugin-declared HTTP MCPs.
+
+Bridge means **Node.js + npx must be on PATH**. The installer auto-installs Node if it's missing:
+
+| Platform | Install path |
+|---|---|
+| macOS | `brew install node` if Homebrew is present, otherwise `nvm` (`~/.nvm/`, no sudo) |
+| Linux | `nvm` (no sudo) |
+| Windows | `winget install OpenJS.NodeJS.LTS --silent` |
+
+Pass `--no-install-node` to skip the auto-install and fail with a manual-install link if Node is missing.
 
 ## Via agents.sh
 

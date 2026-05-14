@@ -39,6 +39,7 @@ ROBOFLOW_AGENTS_REF=installer curl -fsSL https://roboflow.com/agents.sh | bash
 | `--workspace=<url>` | Pick a workspace from the Python SDK config. |
 | `--inline-key` | Write the key literally. Global scope only. |
 | `--auth-skip` | Skip auth wiring; install everything else. |
+| `--no-install-node` | Don't auto-install Node.js if `npx` is missing — fail with manual-install link instead. |
 | `--update` | Reconcile-only mode. (A bare re-run also reconciles.) |
 | `--uninstall` | Remove Roboflow-managed components. |
 | `--dry-run` | Print plan without making changes. |
@@ -55,7 +56,7 @@ The installer dispatches to per-host adapters in `installer/hosts/`. Each adapte
 
 | ID | Kind | Detection | What the installer does |
 |---|---|---|---|
-| `claude-code-cli` | CLI | `claude` on PATH | `claude plugin marketplace add roboflow/computer-vision-skills` + `claude plugin install roboflow` + **patch `~/.claude/plugins/cache/roboflow/roboflow/<version>/.mcp.json` to embed the resolved API key**. Same install also feeds Claude Code in Claude Desktop (the Code tab). |
+| `claude-code-cli` | CLI | `claude` on PATH | `claude plugin marketplace add roboflow/computer-vision-skills` + `claude plugin install roboflow` + **patch `~/.claude/plugins/cache/roboflow/roboflow/<version>/.mcp.json` to embed the resolved API key into the `mcp-remote` stdio bridge args**. Same install also feeds Claude Code in Claude Desktop (the Code tab). Requires `npx` (Node.js) — installer auto-installs if missing. |
 | `codex-cli` | CLI | `codex` on PATH | `codex plugin marketplace add roboflow/computer-vision-skills`, then prints next steps for `/plugins` |
 
 Both use Roboflow's published plugin manifests in this repo (`.claude-plugin/`, `.codex-plugin/`), which bundle the skills (`skills/`) and the MCP server config (`.mcp.json`). The installer's job is to spare users from typing two commands per host, embed the API key into the cached MCP config so authentication works without a `ROBOFLOW_API_KEY` env var, and record the install in the central manifest.
@@ -94,9 +95,16 @@ Templates live in [`templates/rules/`](../templates/rules/).
 
 | Container key | Server type | Hosts |
 |---|---|---|
-| `mcpServers` | `http` | Cursor, Claude Desktop, Copilot CLI, Gemini, Windsurf |
+| `mcpServers` | `http` | Cursor, Copilot CLI, Gemini, Windsurf |
+| `mcpServers` | stdio (`command:npx args:[…mcp-remote…]`) | Claude Code plugin (CLI + Code tab in Claude Desktop), Codex plugin, Claude Desktop chat-tab — all via the `mcp-remote` bridge |
 | `servers` (with `inputs[]`) | `http` | VS Code Copilot |
 | `mcp` | `remote` | OpenCode |
+
+### Why some hosts need the stdio bridge
+
+Claude Desktop's plugin runner (used by both the Code tab inside Claude Desktop and by Claude Code CLI's plugin install) suppresses plugin-declared HTTP MCPs at load time — it expects HTTP MCPs to flow through the cloud Connector subsystem at `claude.ai/customize/connectors`. To get the same behavior end-to-end without waiting for a Roboflow Connector listing, the plugin's `.mcp.json` declares a stdio bridge: `npx -y mcp-remote@<ver> https://mcp.roboflow.com/mcp --header x-api-key:<key>`. This requires Node.js + npx on the user's machine; the installer auto-installs Node when missing.
+
+Claude Desktop's chat tab uses the same bridge mechanism — its config schema only accepts stdio MCPs anyway, and env-var expansion in args isn't reliable, so the literal key gets inlined.
 
 ## Authentication
 

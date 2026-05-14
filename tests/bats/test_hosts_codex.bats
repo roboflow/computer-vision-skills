@@ -7,6 +7,8 @@ setup() {
     rf_test::isolated_home
     export NO_COLOR=1
     export ROBOFLOW_API_KEY=rf_test_key
+    # Codex plugin also uses the mcp-remote bridge; prereq check needs npx.
+    rf_test::stub_command "npx" 0 "10.5.0"
 }
 
 teardown() {

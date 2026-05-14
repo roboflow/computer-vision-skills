@@ -120,11 +120,18 @@ rf::detect::opencode_cli() {
 }
 
 # Aggregator: print one line per detected host.
+#
+# Note: claude-desktop (chat tab) is deliberately omitted from the default
+# auto-detect list. Anthropic's Claude Desktop currently rewrites
+# claude_desktop_config.json on every prefs-save and strips out the
+# mcpServers block we just wrote — making the chat-tab install fragile
+# until Anthropic ships the cloud Connector path. Users who want to opt in
+# explicitly can still pass `--host=claude-desktop`, and rf::detect::lookup
+# still recognizes the id.
 rf::detect::all() {
     rf::detect::claude_code_cli
     rf::detect::codex_cli
     rf::detect::cursor_desktop
-    rf::detect::claude_desktop
     rf::detect::copilot_cli
     rf::detect::gemini_cli
     rf::detect::windsurf_desktop

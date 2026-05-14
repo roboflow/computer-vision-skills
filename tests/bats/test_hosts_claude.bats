@@ -7,6 +7,10 @@ setup() {
     rf_test::isolated_home
     export NO_COLOR=1
     export ROBOFLOW_API_KEY=rf_test_key
+    # The Claude Code plugin now needs npx at runtime (mcp-remote bridge).
+    # Stub it so prereq check passes; individual install calls don't actually
+    # invoke npx.
+    rf_test::stub_command "npx" 0 "10.5.0"
 }
 
 teardown() {

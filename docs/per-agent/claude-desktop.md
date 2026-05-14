@@ -1,13 +1,28 @@
 # Claude Desktop (chat tab)
 
+> **Heads up — this path is currently fragile.** Claude Desktop rewrites
+> `claude_desktop_config.json` on every preferences-save and strips out the
+> `mcpServers` block we just wrote. Until Anthropic ships the Connector
+> path for Roboflow (`claude.ai/customize/connectors`) or fixes the
+> preferences-save behavior, the chat-tab install gets clobbered the next
+> time you change any UI setting.
+>
+> **For most use cases, install [`claude-code-cli`](claude-code.md) instead.**
+> That covers both the standalone Claude Code CLI and the Code tab inside
+> Claude Desktop. The Code tab uses the Claude Code plugin system, which
+> Claude Desktop doesn't touch on preferences save.
+>
+> `claude-desktop` is no longer auto-detected; opt in explicitly with
+> `--host=claude-desktop` if you understand the trade-off.
+
 Claude Desktop has two AI surfaces: the **Chat tab** (general-purpose Claude conversations) and the **Code tab** (Claude Code, integrated). They use different config systems.
 
 | Surface | Reads from | Roboflow path |
 |---|---|---|
 | **Code tab** (Claude Code in Claude Desktop) | `~/.claude/plugins/` (Claude Code plugin system) | install via [`claude-code-cli`](claude-code.md) — covers both the standalone CLI and the Code tab in Claude Desktop |
-| **Chat tab** | `claude_desktop_config.json` (stdio-only schema) | install via `--host=claude-desktop` (this page) |
+| **Chat tab** | `claude_desktop_config.json` (stdio-only schema) | install via `--host=claude-desktop` (this page); see fragility warning above |
 
-If you only want Roboflow while coding, install [`claude-code-cli`](claude-code.md) and skip this page entirely. If you want Roboflow tools available in regular Claude conversations on the Chat tab, read on.
+If you only want Roboflow while coding, install [`claude-code-cli`](claude-code.md) and skip this page entirely. If you want Roboflow tools available in regular Claude conversations on the Chat tab, read on — but know it'll get wiped the next time Claude Desktop saves preferences.
 
 ## Why this needs a bridge
 

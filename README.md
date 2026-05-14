@@ -18,6 +18,8 @@ irm https://roboflow.com/agents.ps1 | iex
 
 The script detects which agents you have, asks what to install, and uses each agent's preferred mechanism — plugin install for Claude Code and Codex, config-file writes for everyone else.
 
+Claude Code (CLI + the Code tab inside Claude Desktop) and Codex need **Node.js** for the [`mcp-remote`](https://github.com/geelen/mcp-remote) stdio bridge that fronts the Roboflow MCP. If `npx` isn't already on your PATH, the installer offers to install it via `brew` (macOS) / `nvm` (Linux) / `winget` (Windows) — no sudo, no admin. Pass `--no-install-node` to skip and fail-with-link instead.
+
 Non-interactive variants:
 
 ```bash

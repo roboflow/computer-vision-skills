@@ -35,6 +35,7 @@ if (-not $env:ROBOFLOW_AGENTS_REPO) {
 . (Join-Path $Script:RfInstallerDir 'lib/mcp.ps1')
 . (Join-Path $Script:RfInstallerDir 'lib/skills.ps1')
 . (Join-Path $Script:RfInstallerDir 'lib/rules.ps1')
+. (Join-Path $Script:RfInstallerDir 'lib/prereq.ps1')
 
 function Show-RfUsage {
 @"
@@ -56,6 +57,7 @@ FLAGS (mirrors agents.sh; see docs/INSTALLER.md)
   --workspace=<url>     Pick a workspace from the Python SDK config
   --inline-key          Write key literally (global scope only)
   --auth-skip
+  --no-install-node     Don't auto-install Node.js if missing; fail instead
   --update / --uninstall
   --dry-run / --force / --force-skill=<name>
   --yes, -y
@@ -67,21 +69,22 @@ KNOWN HOST IDS
 }
 
 # Defaults.
-$Script:RfOptHosts        = @()
-$Script:RfOptAll          = $false
-$Script:RfOptComponents   = @()
-$Script:RfOptNoComponents = @()
-$Script:RfOptScope        = 'global'
-$Script:RfOptApiKey       = ''
-$Script:RfOptWorkspace    = ''
-$Script:RfOptInlineKey    = $false
-$Script:RfOptAuthSkip     = $false
-$Script:RfOptMode         = 'install'
-$Script:RfOptDryRun       = $false
-$Script:RfOptForce        = $false
-$Script:RfOptForceSkills  = @()
-$Script:RfYes             = $false
-$Script:RfProjectDir      = ''
+$Script:RfOptHosts          = @()
+$Script:RfOptAll            = $false
+$Script:RfOptComponents     = @()
+$Script:RfOptNoComponents   = @()
+$Script:RfOptScope          = 'global'
+$Script:RfOptApiKey         = ''
+$Script:RfOptWorkspace      = ''
+$Script:RfOptInlineKey      = $false
+$Script:RfOptAuthSkip       = $false
+$Script:RfOptNoInstallNode  = $false
+$Script:RfOptMode           = 'install'
+$Script:RfOptDryRun         = $false
+$Script:RfOptForce          = $false
+$Script:RfOptForceSkills    = @()
+$Script:RfYes               = $false
+$Script:RfProjectDir        = ''
 
 function Invoke-RfParseArgs {
     param([string[]]$Items)
@@ -112,6 +115,7 @@ function Invoke-RfParseArgs {
             '--workspace=*'    { $Script:RfOptWorkspace = $a.Substring(12); break }
             '--inline-key'     { $Script:RfOptInlineKey  = $true; break }
             '--auth-skip'      { $Script:RfOptAuthSkip   = $true; break }
+            '--no-install-node' { $Script:RfOptNoInstallNode = $true; break }
             '--update'         { $Script:RfOptMode       = 'update'; break }
             '--uninstall'      { $Script:RfOptMode       = 'uninstall'; break }
             '--dry-run'        { $Script:RfOptDryRun     = $true; break }
@@ -251,6 +255,16 @@ function Invoke-RfMain {
         Resolve-RfAuth
         if ($Script:RfApiKey) {
             Write-RfDim "  api key:     resolved from $Script:RfApiKeySource"
+        }
+    }
+
+    # Verify runtime prerequisites before configuring any host that depends
+    # on them. Failing halfway through leaves the user in a confusing
+    # partial state, so we gate up front.
+    if ($Script:RfOptMode -ne 'uninstall' -and (Test-RfAnyHostNeedsNode -Ids $selected)) {
+        if (-not (Confirm-RfNpxAvailable)) {
+            Write-RfErr 'Node.js prerequisite not met; refusing to configure hosts that depend on it.'
+            exit 1
         }
     }
 
