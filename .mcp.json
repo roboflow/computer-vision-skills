@@ -1,13 +1,15 @@
 {
   "mcpServers": {
     "roboflow": {
-      "type": "http",
-      "url": "https://mcp.roboflow.com/mcp",
-      "headers": {
-        "x-api-key": "${ROBOFLOW_API_KEY}",
-        "Accept": "application/json, text/event-stream"
-      },
-      "note": "Official Roboflow MCP server. Set ROBOFLOW_API_KEY in the agent environment so plugin-managed MCP requests can authenticate."
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@0.1.27",
+        "https://mcp.roboflow.com/mcp",
+        "--header",
+        "x-api-key:${ROBOFLOW_API_KEY}"
+      ],
+      "note": "Roboflow MCP via mcp-remote stdio bridge. Claude Desktop's plugin runner suppresses remote (type:http) MCPs to avoid double-loading; stdio bridges load through the normal plugin path. agents.sh patches the ${ROBOFLOW_API_KEY} placeholder in the cached copy of this file with your literal Roboflow API key at install time."
     }
   }
 }

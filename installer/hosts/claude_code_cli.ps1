@@ -37,20 +37,58 @@ function Update-RfClaudeCodePluginCache {
             continue
         }
 
+        # Idempotent re-runs detect the literal key already in place and skip.
+        # Supports both shapes the plugin's .mcp.json has ever shipped:
+        #   stdio (current 0.2+): args[] element of form "x-api-key:<key>"
+        #   http  (legacy 0.1.x): headers["x-api-key"] = "<key>"
         $data = Read-RfJsonFile -Path $mcpFile
         if (-not ($data.PSObject.Properties.Name -contains 'mcpServers')) { continue }
         if (-not ($data.mcpServers.PSObject.Properties.Name -contains 'roboflow')) { continue }
-        $entry = $data.mcpServers.roboflow
-        if (-not ($entry.PSObject.Properties.Name -contains 'headers')) {
-            $entry | Add-Member -NotePropertyName 'headers' -NotePropertyValue ([pscustomobject]@{})
+        $entry  = $data.mcpServers.roboflow
+        $target = 'x-api-key:' + $Script:RfApiKey
+        $patchedThis = $false
+        $alreadyThis = $false
+
+        # Current shape: stdio + mcp-remote bridge in args[].
+        if ($entry.PSObject.Properties.Name -contains 'args' -and $entry.args -is [System.Collections.IList]) {
+            $argsArr = @($entry.args)
+            for ($i = 0; $i -lt $argsArr.Length; $i++) {
+                $a = $argsArr[$i]
+                if ($a -is [string] -and $a.StartsWith('x-api-key:')) {
+                    if ($a -eq $target) {
+                        $alreadyThis = $true
+                    } else {
+                        $argsArr[$i] = $target
+                        $entry.args = $argsArr
+                        $patchedThis = $true
+                    }
+                    break
+                }
+            }
         }
-        $current = if ($entry.headers.PSObject.Properties.Name -contains 'x-api-key') { $entry.headers.'x-api-key' } else { '' }
-        if ($current -eq $Script:RfApiKey) {
+
+        # Legacy 0.1.x shape: type:http + headers["x-api-key"].
+        if (-not $patchedThis -and -not $alreadyThis -and
+            $entry.PSObject.Properties.Name -contains 'headers' -and $entry.headers) {
+            if ($entry.headers.PSObject.Properties.Name -contains 'x-api-key') {
+                if ($entry.headers.'x-api-key' -eq $Script:RfApiKey) {
+                    $alreadyThis = $true
+                } else {
+                    $entry.headers.'x-api-key' = $Script:RfApiKey
+                    $patchedThis = $true
+                }
+            }
+        }
+
+        if ($alreadyThis) {
             Write-RfDim "  already up to date: $mcpFile"
             $patched++
             continue
         }
-        $entry.headers.'x-api-key' = $Script:RfApiKey
+        if (-not $patchedThis) {
+            Write-RfWarn "unrecognized .mcp.json shape in $mcpFile — run \`claude plugin uninstall roboflow\` and re-run agents.ps1 to refresh"
+            continue
+        }
         if ($entry.PSObject.Properties.Name -contains 'note') {
             $entry.PSObject.Properties.Remove('note')
         }

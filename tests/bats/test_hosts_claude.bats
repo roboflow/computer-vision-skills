@@ -57,8 +57,39 @@ teardown() {
     grep -q '"component": "plugin"' "$HOME/.config/roboflow/installations.json"
 }
 
-@test "claude install: patches cached .mcp.json with literal key" {
+@test "claude install: patches cached .mcp.json (stdio shape) with literal key" {
     # Pretend the plugin is already cached (claude plugin install would do this).
+    local cache_dir="$HOME/.claude/plugins/cache/roboflow/roboflow/0.2.0"
+    mkdir -p "$cache_dir"
+    cat >"$cache_dir/.mcp.json" <<'EOF'
+{
+  "mcpServers": {
+    "roboflow": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@0.1.27",
+        "https://mcp.roboflow.com/mcp",
+        "--header",
+        "x-api-key:${ROBOFLOW_API_KEY}"
+      ],
+      "note": "Replace ${ROBOFLOW_API_KEY} with your key."
+    }
+  }
+}
+EOF
+    rf_test::stub_command "claude" 0
+    run bash "$RF_REPO_ROOT/installer/main.sh" --yes --host=claude-code-cli
+    [ "$status" -eq 0 ]
+    grep -q '"x-api-key:rf_test_key"' "$cache_dir/.mcp.json"
+    if grep -q '${ROBOFLOW_API_KEY}' "$cache_dir/.mcp.json"; then return 1; fi
+    if grep -q '"note":' "$cache_dir/.mcp.json"; then return 1; fi
+    grep -q '"api_key_mode": "inlined"' "$HOME/.config/roboflow/installations.json"
+}
+
+@test "claude install: legacy http-shape cache is still patched (back-compat)" {
+    # Users who installed under plugin 0.1.x have the http shape cached. The
+    # patcher should handle either shape so updaters land smoothly.
     local cache_dir="$HOME/.claude/plugins/cache/roboflow/roboflow/0.1.0"
     mkdir -p "$cache_dir"
     cat >"$cache_dir/.mcp.json" <<'EOF'
@@ -81,25 +112,23 @@ EOF
     [ "$status" -eq 0 ]
     grep -q '"x-api-key": "rf_test_key"' "$cache_dir/.mcp.json"
     if grep -q '${ROBOFLOW_API_KEY}' "$cache_dir/.mcp.json"; then return 1; fi
-    # The "note" should be stripped now that the placeholder is gone.
-    if grep -q '"note":' "$cache_dir/.mcp.json"; then return 1; fi
-    # Manifest records the inlined-key mode.
-    grep -q '"api_key_mode": "inlined"' "$HOME/.config/roboflow/installations.json"
 }
 
-@test "claude install: re-running on an already-patched cache is a no-op" {
-    local cache_dir="$HOME/.claude/plugins/cache/roboflow/roboflow/0.1.0"
+@test "claude install: re-running on already-patched stdio cache is a no-op" {
+    local cache_dir="$HOME/.claude/plugins/cache/roboflow/roboflow/0.2.0"
     mkdir -p "$cache_dir"
     cat >"$cache_dir/.mcp.json" <<'EOF'
 {
   "mcpServers": {
     "roboflow": {
-      "type": "http",
-      "url": "https://mcp.roboflow.com/mcp",
-      "headers": {
-        "x-api-key": "rf_test_key",
-        "Accept": "application/json, text/event-stream"
-      }
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@0.1.27",
+        "https://mcp.roboflow.com/mcp",
+        "--header",
+        "x-api-key:rf_test_key"
+      ]
     }
   }
 }
@@ -110,16 +139,15 @@ EOF
     [[ "$output" == *"already up to date"* ]]
 }
 
-@test "claude install: --auth-skip leaves placeholder in cache, warns" {
-    local cache_dir="$HOME/.claude/plugins/cache/roboflow/roboflow/0.1.0"
+@test "claude install: --auth-skip leaves placeholder in stdio cache, warns" {
+    local cache_dir="$HOME/.claude/plugins/cache/roboflow/roboflow/0.2.0"
     mkdir -p "$cache_dir"
     cat >"$cache_dir/.mcp.json" <<'EOF'
 {
   "mcpServers": {
     "roboflow": {
-      "type": "http",
-      "url": "https://mcp.roboflow.com/mcp",
-      "headers": { "x-api-key": "${ROBOFLOW_API_KEY}" }
+      "command": "npx",
+      "args": ["-y", "mcp-remote@0.1.27", "https://mcp.roboflow.com/mcp", "--header", "x-api-key:${ROBOFLOW_API_KEY}"]
     }
   }
 }

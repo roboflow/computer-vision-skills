@@ -205,7 +205,38 @@ Describe 'claude-code-cli adapter (plugin path)' {
         ($calls -match 'arg: plugin') | Should -BeFalse
     }
 
-    It 'patches cached .mcp.json with literal key after install' {
+    It 'patches cached .mcp.json (stdio shape) with literal key after install' {
+        New-RfStubCommand -Name 'claude' -ExitCode 0
+        $cacheDir = Join-Path $script:rfHome '.claude/plugins/cache/roboflow/roboflow/0.2.0'
+        New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
+        $mcpFile = Join-Path $cacheDir '.mcp.json'
+        @'
+{
+  "mcpServers": {
+    "roboflow": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@0.1.27",
+        "https://mcp.roboflow.com/mcp",
+        "--header",
+        "x-api-key:${ROBOFLOW_API_KEY}"
+      ],
+      "note": "Replace ${ROBOFLOW_API_KEY} with your key."
+    }
+  }
+}
+'@ | Set-Content -LiteralPath $mcpFile
+
+        Invoke-RfMainPs -Items @('--yes', '--host=claude-code-cli') | Should -Be 0
+
+        $content = Get-Content -LiteralPath $mcpFile -Raw
+        $content | Should -Match '"x-api-key:rf_test_key"'
+        $content | Should -Not -Match '\$\{ROBOFLOW_API_KEY\}'
+        $content | Should -Not -Match '"note":'
+    }
+
+    It 'patches legacy http-shape cache for back-compat' {
         New-RfStubCommand -Name 'claude' -ExitCode 0
         $cacheDir = Join-Path $script:rfHome '.claude/plugins/cache/roboflow/roboflow/0.1.0'
         New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
@@ -219,8 +250,7 @@ Describe 'claude-code-cli adapter (plugin path)' {
       "headers": {
         "x-api-key": "${ROBOFLOW_API_KEY}",
         "Accept": "application/json, text/event-stream"
-      },
-      "note": "Set ROBOFLOW_API_KEY in env to authenticate."
+      }
     }
   }
 }
@@ -231,6 +261,5 @@ Describe 'claude-code-cli adapter (plugin path)' {
         $content = Get-Content -LiteralPath $mcpFile -Raw
         $content | Should -Match '"x-api-key":\s*"rf_test_key"'
         $content | Should -Not -Match '\$\{ROBOFLOW_API_KEY\}'
-        $content | Should -Not -Match '"note":'
     }
 }

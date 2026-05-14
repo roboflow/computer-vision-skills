@@ -45,22 +45,52 @@ rf::host::claude_code_cli::patch_cache() {
             continue
         fi
 
-        # Only rewrite if the placeholder is still there. Idempotent re-runs
-        # against an already-patched file detect the literal key and skip.
+        # Idempotent re-runs detect the literal key already in place and skip.
+        # Supports both shapes the plugin's .mcp.json has ever shipped:
+        #   stdio  (current 0.2+): args[] element of form "x-api-key:<key>"
+        #   http   (legacy 0.1.x): headers["x-api-key"] = "<key>"
         if RF_KEY="$key" FILE="$mcp_file" python3 -c '
 import json, os, sys
 path = os.environ["FILE"]
+key = os.environ["RF_KEY"]
+target = "x-api-key:" + key
 with open(path) as fh:
     data = json.load(fh)
 servers = data.get("mcpServers", {})
 entry = servers.get("roboflow")
 if not entry:
-    sys.exit(2)  # nothing to patch
-hdrs = entry.setdefault("headers", {})
-current = hdrs.get("x-api-key", "")
-if current == os.environ["RF_KEY"]:
-    sys.exit(3)  # already patched with this key
-hdrs["x-api-key"] = os.environ["RF_KEY"]
+    sys.exit(2)  # no roboflow server in this version, skip
+
+patched = False
+already = False
+
+# Current shape: stdio + mcp-remote bridge in args[].
+if isinstance(entry.get("args"), list):
+    args = entry["args"]
+    for i, a in enumerate(args):
+        if isinstance(a, str) and a.startswith("x-api-key:"):
+            if a == target:
+                already = True
+            else:
+                args[i] = target
+                patched = True
+            break
+
+# Legacy 0.1.x shape: type:http + headers.x-api-key.
+if not patched and not already and isinstance(entry.get("headers"), dict):
+    hdrs = entry["headers"]
+    if "x-api-key" in hdrs:
+        if hdrs["x-api-key"] == key:
+            already = True
+        else:
+            hdrs["x-api-key"] = key
+            patched = True
+
+if already:
+    sys.exit(3)
+if not patched:
+    sys.exit(4)  # neither shape recognized
+
 entry.pop("note", None)
 with open(path, "w") as fh:
     json.dump(data, fh, indent=2)
@@ -74,6 +104,7 @@ sys.exit(0)
             case $rc in
                 3) rf::dim "  already up to date: $mcp_file"; patched=1 ;;
                 2) ;;  # no roboflow server in this version, skip silently
+                4) rf::warn "unrecognized .mcp.json shape in $mcp_file — run \`claude plugin uninstall roboflow\` and re-run agents.sh to refresh" ;;
                 *) rf::warn "failed to patch $mcp_file (exit $rc)" ;;
             esac
         fi
