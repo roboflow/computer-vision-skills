@@ -14,6 +14,63 @@ function Get-RfClaudeCodePluginCacheDir {
     return Join-Path $HOME '.claude/plugins/cache/roboflow/roboflow'
 }
 
+function Get-RfClaudeCodePluginMarketplaceDir {
+    # Mirror of the source repo that `claude plugin marketplace add` clones
+    # to. Field debugging on a real install showed Claude Code loads the
+    # plugin's MCP config from this mirror (with the source's
+    # ${ROBOFLOW_API_KEY} placeholder intact), NOT from the cache, so the
+    # patcher has to hit both.
+    return Join-Path $HOME '.claude/plugins/marketplaces/roboflow'
+}
+
+# Try to embed $Script:RfApiKey into a single roboflow MCP entry inside
+# the JSON object $Data. Returns a hashtable with keys:
+#   Status: 'patched' | 'already' | 'noop' (no roboflow entry / unknown shape)
+function Edit-RfRoboflowMcpEntry {
+    param([Parameter(Mandatory)] [psobject]$Data)
+    if (-not ($Data.PSObject.Properties.Name -contains 'mcpServers')) {
+        return @{ Status = 'noop' }
+    }
+    if (-not ($Data.mcpServers.PSObject.Properties.Name -contains 'roboflow')) {
+        return @{ Status = 'noop' }
+    }
+    $entry  = $Data.mcpServers.roboflow
+    $target = 'x-api-key:' + $Script:RfApiKey
+
+    # Current shape: stdio + mcp-remote bridge in args[].
+    if ($entry.PSObject.Properties.Name -contains 'args' -and $entry.args -is [System.Collections.IList]) {
+        $argsArr = @($entry.args)
+        for ($i = 0; $i -lt $argsArr.Length; $i++) {
+            $a = $argsArr[$i]
+            if ($a -is [string] -and $a.StartsWith('x-api-key:')) {
+                if ($a -eq $target) { return @{ Status = 'already' } }
+                $argsArr[$i] = $target
+                $entry.args = $argsArr
+                if ($entry.PSObject.Properties.Name -contains 'note') {
+                    $entry.PSObject.Properties.Remove('note')
+                }
+                return @{ Status = 'patched' }
+            }
+        }
+    }
+
+    # Legacy 0.1.x shape: type:http + headers["x-api-key"].
+    if ($entry.PSObject.Properties.Name -contains 'headers' -and $entry.headers) {
+        if ($entry.headers.PSObject.Properties.Name -contains 'x-api-key') {
+            if ($entry.headers.'x-api-key' -eq $Script:RfApiKey) {
+                return @{ Status = 'already' }
+            }
+            $entry.headers.'x-api-key' = $Script:RfApiKey
+            if ($entry.PSObject.Properties.Name -contains 'note') {
+                $entry.PSObject.Properties.Remove('note')
+            }
+            return @{ Status = 'patched' }
+        }
+    }
+
+    return @{ Status = 'noop' }
+}
+
 function Update-RfClaudeCodePluginCache {
     if (-not $Script:RfApiKey) {
         Write-RfWarn 'no API key resolved — Roboflow MCP will keep ${ROBOFLOW_API_KEY} placeholder'
@@ -21,84 +78,67 @@ function Update-RfClaudeCodePluginCache {
         return $true
     }
 
-    $cacheDir = Get-RfClaudeCodePluginCacheDir
-    if (-not (Test-Path -LiteralPath $cacheDir)) {
-        Write-RfWarn "plugin cache not found at $cacheDir"
+    # Walk every .mcp.json under both the cache tree AND the marketplace
+    # clone -- Claude Code reads from at least the marketplace mirror when
+    # the plugin is enabled, so missing it leaves the placeholder live.
+    # Recurse so future layouts that move .mcp.json under .claude-plugin/
+    # also get caught.
+    $roots = @(
+        (Get-RfClaudeCodePluginCacheDir),
+        (Get-RfClaudeCodePluginMarketplaceDir)
+    )
+    $existingRoots = @($roots | Where-Object { Test-Path -LiteralPath $_ })
+    if ($existingRoots.Count -eq 0) {
+        Write-RfWarn ("plugin cache + marketplace not found under {0}" -f ($roots -join ', '))
         return $false
     }
 
+    $mcpFiles = @()
+    foreach ($root in $existingRoots) {
+        $mcpFiles += @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '.mcp.json' -ErrorAction SilentlyContinue)
+    }
+    if ($mcpFiles.Count -eq 0) {
+        Write-RfWarn ("no plugin .mcp.json found under: {0}" -f ($existingRoots -join ', '))
+        return $true
+    }
+
     $patched = 0
-    foreach ($dir in (Get-ChildItem -LiteralPath $cacheDir -Directory)) {
-        $mcpFile = Join-Path $dir.FullName '.mcp.json'
-        if (-not (Test-Path -LiteralPath $mcpFile)) { continue }
+    foreach ($f in $mcpFiles) {
+        $mcpFile = $f.FullName
         if ($Script:RfOptDryRun) {
             Write-RfInfo "[dry-run] would embed API key in $mcpFile"
             $patched++
             continue
         }
 
-        # Idempotent re-runs detect the literal key already in place and skip.
-        # Supports both shapes the plugin's .mcp.json has ever shipped:
-        #   stdio (current 0.2+): args[] element of form "x-api-key:<key>"
-        #   http  (legacy 0.1.x): headers["x-api-key"] = "<key>"
         $data = Read-RfJsonFile -Path $mcpFile
-        if (-not ($data.PSObject.Properties.Name -contains 'mcpServers')) { continue }
-        if (-not ($data.mcpServers.PSObject.Properties.Name -contains 'roboflow')) { continue }
-        $entry  = $data.mcpServers.roboflow
-        $target = 'x-api-key:' + $Script:RfApiKey
-        $patchedThis = $false
-        $alreadyThis = $false
-
-        # Current shape: stdio + mcp-remote bridge in args[].
-        if ($entry.PSObject.Properties.Name -contains 'args' -and $entry.args -is [System.Collections.IList]) {
-            $argsArr = @($entry.args)
-            for ($i = 0; $i -lt $argsArr.Length; $i++) {
-                $a = $argsArr[$i]
-                if ($a -is [string] -and $a.StartsWith('x-api-key:')) {
-                    if ($a -eq $target) {
-                        $alreadyThis = $true
-                    } else {
-                        $argsArr[$i] = $target
-                        $entry.args = $argsArr
-                        $patchedThis = $true
-                    }
-                    break
+        $result = Edit-RfRoboflowMcpEntry -Data $data
+        switch ($result.Status) {
+            'already' {
+                Write-RfDim "  already up to date: $mcpFile"
+                $patched++
+            }
+            'patched' {
+                Write-RfJsonFile -Path $mcpFile -Object $data
+                Write-RfDim "  embedded API key in $mcpFile"
+                $patched++
+            }
+            'noop' {
+                # File has no roboflow entry or an unrecognized shape. Skip
+                # silently for the no-roboflow case (could be an unrelated
+                # plugin's .mcp.json that happens to live under this tree);
+                # warn loudly only if the file mentions roboflow at all so
+                # users get a signal when their config drifted off-spec.
+                $raw = Get-Content -LiteralPath $mcpFile -Raw -ErrorAction SilentlyContinue
+                if ($raw -and $raw -match 'roboflow') {
+                    Write-RfWarn "unrecognized .mcp.json shape in $mcpFile — run \`claude plugin uninstall roboflow\` and re-run agents.ps1 to refresh"
                 }
             }
         }
-
-        # Legacy 0.1.x shape: type:http + headers["x-api-key"].
-        if (-not $patchedThis -and -not $alreadyThis -and
-            $entry.PSObject.Properties.Name -contains 'headers' -and $entry.headers) {
-            if ($entry.headers.PSObject.Properties.Name -contains 'x-api-key') {
-                if ($entry.headers.'x-api-key' -eq $Script:RfApiKey) {
-                    $alreadyThis = $true
-                } else {
-                    $entry.headers.'x-api-key' = $Script:RfApiKey
-                    $patchedThis = $true
-                }
-            }
-        }
-
-        if ($alreadyThis) {
-            Write-RfDim "  already up to date: $mcpFile"
-            $patched++
-            continue
-        }
-        if (-not $patchedThis) {
-            Write-RfWarn "unrecognized .mcp.json shape in $mcpFile — run \`claude plugin uninstall roboflow\` and re-run agents.ps1 to refresh"
-            continue
-        }
-        if ($entry.PSObject.Properties.Name -contains 'note') {
-            $entry.PSObject.Properties.Remove('note')
-        }
-        Write-RfJsonFile -Path $mcpFile -Object $data
-        Write-RfDim "  embedded API key in $mcpFile"
-        $patched++
     }
 
     if ($patched -eq 0) {
-        Write-RfWarn "no plugin .mcp.json found to patch under $cacheDir"
+        Write-RfWarn ("no roboflow MCP entry found in any of {0} .mcp.json file(s)" -f $mcpFiles.Count)
     }
     return $true
 }

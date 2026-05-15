@@ -17,10 +17,18 @@ rf::host::claude_code_cli::cache_dir() {
     printf '%s/.claude/plugins/cache/roboflow/roboflow' "$HOME"
 }
 
-# Find every cached version dir whose .mcp.json still has the placeholder
-# header, replace it with the resolved literal key, drop the now-misleading
-# "set ROBOFLOW_API_KEY" note. No-op (returns 0) if RF_API_KEY is empty so
-# users with --auth-skip can still install the plugin.
+# Mirror that `claude plugin marketplace add` clones to. Field debugging
+# on a real install showed Claude Code reads the plugin's MCP config
+# from this mirror, not the cache, so we have to patch it too -- else
+# the literal ${ROBOFLOW_API_KEY} placeholder stays live in mcpServers.
+rf::host::claude_code_cli::marketplace_dir() {
+    printf '%s/.claude/plugins/marketplaces/roboflow' "$HOME"
+}
+
+# Find every roboflow plugin .mcp.json (under cache/ and marketplaces/)
+# and replace its x-api-key placeholder/value with the resolved literal
+# key. Idempotent on re-run. No-op (returns 0) if RF_API_KEY is empty so
+# users with --auth-skip can still install.
 rf::host::claude_code_cli::patch_cache() {
     local key="${RF_API_KEY:-}"
     if [[ -z "$key" ]]; then
@@ -29,16 +37,34 @@ rf::host::claude_code_cli::patch_cache() {
         return 0
     fi
 
-    local cache_dir
-    cache_dir="$(rf::host::claude_code_cli::cache_dir)"
-    [[ -d "$cache_dir" ]] || { rf::warn "plugin cache not found at $cache_dir"; return 1; }
-
     rf::json::has_tool || rf::die "no JSON tool available (need python3 or jq)"
 
-    local patched=0 dir mcp_file
-    for dir in "$cache_dir"/*/; do
-        mcp_file="${dir}.mcp.json"
-        [[ -f "$mcp_file" ]] || continue
+    # Build the list of .mcp.json files to patch. Recurse so future
+    # layouts that move the file under .claude-plugin/ are also caught.
+    local roots=()
+    local cache_dir marketplace_dir
+    cache_dir="$(rf::host::claude_code_cli::cache_dir)"
+    marketplace_dir="$(rf::host::claude_code_cli::marketplace_dir)"
+    [[ -d "$cache_dir" ]] && roots+=("$cache_dir")
+    [[ -d "$marketplace_dir" ]] && roots+=("$marketplace_dir")
+    if [[ ${#roots[@]} -eq 0 ]]; then
+        rf::warn "plugin cache + marketplace not found under $cache_dir, $marketplace_dir"
+        return 1
+    fi
+
+    local mcp_files=()
+    local r f
+    for r in "${roots[@]}"; do
+        while IFS= read -r f; do mcp_files+=("$f"); done < <(find "$r" -type f -name '.mcp.json' 2>/dev/null)
+    done
+
+    if [[ ${#mcp_files[@]} -eq 0 ]]; then
+        rf::warn "no plugin .mcp.json found under: ${roots[*]}"
+        return 0
+    fi
+
+    local patched=0 mcp_file
+    for mcp_file in "${mcp_files[@]}"; do
         if [[ "${RF_OPT_DRY_RUN:-0}" == "1" ]]; then
             rf::info "[dry-run] would embed API key in $mcp_file"
             patched=1
@@ -59,7 +85,7 @@ with open(path) as fh:
 servers = data.get("mcpServers", {})
 entry = servers.get("roboflow")
 if not entry:
-    sys.exit(2)  # no roboflow server in this version, skip
+    sys.exit(2)  # no roboflow server in this file, skip
 
 patched = False
 already = False
@@ -103,14 +129,14 @@ sys.exit(0)
             local rc=$?
             case $rc in
                 3) rf::dim "  already up to date: $mcp_file"; patched=1 ;;
-                2) ;;  # no roboflow server in this version, skip silently
+                2) ;;  # no roboflow server in this file, skip silently
                 4) rf::warn "unrecognized .mcp.json shape in $mcp_file — run \`claude plugin uninstall roboflow\` and re-run agents.sh to refresh" ;;
                 *) rf::warn "failed to patch $mcp_file (exit $rc)" ;;
             esac
         fi
     done
 
-    [[ $patched -eq 0 ]] && rf::warn "no plugin .mcp.json found to patch under $cache_dir"
+    [[ $patched -eq 0 ]] && rf::warn "no roboflow MCP entry found in any of ${#mcp_files[@]} .mcp.json file(s)"
     return 0
 }
 
