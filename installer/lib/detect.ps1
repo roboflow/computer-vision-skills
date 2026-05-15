@@ -322,15 +322,11 @@ function Test-RfHostOpencodeCli {
 }
 
 function Get-RfDetectedHosts {
-    # claude-desktop (chat tab) is deliberately omitted from auto-detect.
-    # Claude Desktop currently strips the mcpServers block on prefs-save,
-    # making the chat-tab install fragile. Users who want it explicitly
-    # still pass `--host=claude-desktop`, and Get-RfHostById still resolves
-    # the id.
     $lines = @()
     $lines += Test-RfHostClaudeCodeCli
     $lines += Test-RfHostCodexCli
     $lines += Test-RfHostCursorDesktop
+    $lines += Test-RfHostClaudeDesktop
     $lines += Test-RfHostCopilotCli
     $lines += Test-RfHostGeminiCli
     $lines += Test-RfHostWindsurfDesktop

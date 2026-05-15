@@ -20,11 +20,33 @@ RF_HOST_LABEL="Claude Desktop"
 rf::host::claude_desktop::config_path() {
     if rf::is_macos; then
         printf '%s/Library/Application Support/Claude/claude_desktop_config.json' "$HOME"
-    elif rf::is_linux; then
-        printf '%s/.config/Claude/claude_desktop_config.json' "$HOME"
-    else
-        printf '%s/Claude/claude_desktop_config.json' "${APPDATA:-$HOME/AppData/Roaming}"
+        return 0
     fi
+    if rf::is_linux; then
+        printf '%s/.config/Claude/claude_desktop_config.json' "$HOME"
+        return 0
+    fi
+
+    # Windows (via Git Bash / MSYS / WSL): Claude Desktop is an MSIX app,
+    # so %APPDATA%\Claude is per-process-virtualized. The bash installer
+    # writes from outside the MSIX container, so we have to target the
+    # underlying real path under
+    # %LOCALAPPDATA%\Packages\Claude_<family>\LocalCache\Roaming\Claude\.
+    local appdata="${APPDATA:-$HOME/AppData/Roaming}"
+    local local_app="${LOCALAPPDATA:-$HOME/AppData/Local}"
+    appdata="${appdata//\\//}"
+    local_app="${local_app//\\//}"
+
+    local pkg_root="$local_app/Packages"
+    if [[ -d "$pkg_root" ]]; then
+        local pkg
+        pkg="$(find "$pkg_root" -mindepth 1 -maxdepth 1 -type d -name 'Claude_*' 2>/dev/null | head -n1 || true)"
+        if [[ -n "$pkg" ]]; then
+            printf '%s/LocalCache/Roaming/Claude/claude_desktop_config.json' "$pkg"
+            return 0
+        fi
+    fi
+    printf '%s/Claude/claude_desktop_config.json' "$appdata"
 }
 
 # Pinned version + key go into args literally because Claude Desktop neither

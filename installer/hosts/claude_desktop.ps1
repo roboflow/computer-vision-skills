@@ -22,10 +22,50 @@ function Get-RfClaudeDesktopConfigPath {
         return Join-Path $HOME 'Library/Application Support/Claude/claude_desktop_config.json'
     } elseif (Test-RfLinux) {
         return Join-Path $HOME '.config/Claude/claude_desktop_config.json'
-    } else {
-        $appdata = if ($env:APPDATA) { $env:APPDATA } else { Join-Path $HOME 'AppData/Roaming' }
-        return Join-Path $appdata 'Claude/claude_desktop_config.json'
     }
+
+    # Windows: Claude Desktop ships as MSIX (Claude_<hash>). When it runs,
+    # it sees `%APPDATA%\Claude\` redirected to its own per-package
+    # storage; a regular PowerShell session writing to the un-virtualized
+    # `%APPDATA%\Claude\` puts the file in a location Claude Desktop never
+    # reads, so the entry "doesn't persist." Detect the MSIX install and
+    # write directly to the real path under
+    # `%LOCALAPPDATA%\Packages\Claude_<family>\LocalCache\Roaming\Claude\`.
+    $appdata  = if ($env:APPDATA)      { $env:APPDATA }      else { Join-Path $HOME 'AppData\Roaming' }
+    $localApp = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { Join-Path $HOME 'AppData\Local' }
+
+    # In tests, Get-AppxPackage queries the real OS package registry --
+    # there's no way to isolate it via $env:HOME -- so we'd leak the
+    # developer's real Claude install into the isolated test home. Honor
+    # the same suppression flag the detectors use so writes stay scoped
+    # to the test's temp dir.
+    if ($env:RF_TEST_NO_DETECT_APPS -ne '1') {
+        $msixPath = $null
+        try {
+            $pkg = Get-AppxPackage -Name 'Claude' -ErrorAction SilentlyContinue
+            if ($pkg -and $pkg.PackageFamilyName) {
+                $msixPath = Join-Path $localApp ("Packages\$($pkg.PackageFamilyName)\LocalCache\Roaming\Claude\claude_desktop_config.json")
+            }
+        } catch { }
+
+        # Fall back to scanning the Packages directory when Get-AppxPackage
+        # isn't available (PS Core on Windows without the Appx module, etc).
+        if (-not $msixPath) {
+            $pkgRoot = Join-Path $localApp 'Packages'
+            if (Test-Path -LiteralPath $pkgRoot) {
+                try {
+                    $first = Get-ChildItem -LiteralPath $pkgRoot -Directory -Filter 'Claude_*' -ErrorAction Stop | Select-Object -First 1
+                    if ($first) {
+                        $msixPath = Join-Path $first.FullName 'LocalCache\Roaming\Claude\claude_desktop_config.json'
+                    }
+                } catch { }
+            }
+        }
+
+        if ($msixPath) { return $msixPath }
+    }
+
+    return (Join-Path $appdata 'Claude\claude_desktop_config.json')
 }
 
 function Get-RfClaudeDesktopBridgeServer {
