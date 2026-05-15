@@ -9,12 +9,104 @@
 # label: human-readable name
 # hint: short note about how it was detected (path, version, etc.)
 
-rf::detect::claude_code_cli() {
-    if rf::on_path claude; then
-        local v
-        v="$(claude --version 2>/dev/null | head -n1 || true)"
-        printf 'claude-code-cli|cli|Claude Code CLI|%s\n' "${v:-detected on PATH}"
+# rf::resolve_claude_cli — print the path/name we should use to invoke
+# `claude`, or nothing if Claude Code isn't installed. Cached in
+# $_RF_CLAUDE_CLI_PATH so repeat calls within one run don't re-stat the FS.
+#
+# Lookup order:
+#   1. `claude` on PATH (npm/global install).
+#   2. macOS Anthropic installer / Claude Desktop CLI bundle:
+#      ~/Library/Application Support/Claude/claude-code/<ver>/claude
+#   3. Linux native install:
+#      ~/.local/share/anthropic-claude/claude-code/<ver>/claude
+#      ~/.config/Claude/claude-code/<ver>/claude
+#   4. Common Unix prefix fallbacks (Homebrew, /usr/local).
+#
+# On Windows-via-bash (Git Bash / MSYS) we also try the same %APPDATA%
+# location the PowerShell installer probes, since users sometimes pipe
+# agents.sh through bash on Windows.
+rf::resolve_claude_cli() {
+    if [[ -n "${_RF_CLAUDE_CLI_PATH:-}" ]]; then
+        printf '%s\n' "$_RF_CLAUDE_CLI_PATH"
+        return 0
     fi
+
+    if rf::on_path claude; then
+        _RF_CLAUDE_CLI_PATH="claude"
+        printf '%s\n' "$_RF_CLAUDE_CLI_PATH"
+        return 0
+    fi
+
+    # bats tests set RF_TEST_NO_DETECT_APPS=1 to suppress probes that would
+    # find the developer's real Anthropic install. PATH lookup above is
+    # already isolated by the harness; install-dir probes are not.
+    [[ "${RF_TEST_NO_DETECT_APPS:-}" == "1" ]] && return 1
+
+    local candidates=() versioned_root=""
+    if rf::is_macos; then
+        versioned_root="$HOME/Library/Application Support/Claude/claude-code"
+    elif rf::is_linux; then
+        # Prefer XDG layout; fall back to ~/.config/Claude (parity with the
+        # Windows %APPDATA%\Claude path).
+        if [[ -d "$HOME/.local/share/anthropic-claude/claude-code" ]]; then
+            versioned_root="$HOME/.local/share/anthropic-claude/claude-code"
+        elif [[ -d "$HOME/.config/Claude/claude-code" ]]; then
+            versioned_root="$HOME/.config/Claude/claude-code"
+        fi
+    elif rf::is_windows; then
+        # MSYS / Git Bash: APPDATA is a Windows path. Convert with a leading
+        # slash so bash globbing works; cygpath isn't always available.
+        local appdata="${APPDATA:-$HOME/AppData/Roaming}"
+        # MSYS-style: /c/Users/... — translate drive letter if needed.
+        appdata="${appdata//\\//}"
+        versioned_root="$appdata/Claude/claude-code"
+    fi
+
+    if [[ -n "$versioned_root" && -d "$versioned_root" ]]; then
+        # Sort numerically by dotted version. `sort -V` is GNU-specific but
+        # ships on macOS 11+; fall back to lex sort if -V isn't supported.
+        local sorter="sort -V"
+        if ! printf '1.0\n' | sort -V >/dev/null 2>&1; then sorter="sort"; fi
+        local latest
+        latest="$(
+            find "$versioned_root" -mindepth 1 -maxdepth 1 -type d 2>/dev/null \
+                | $sorter \
+                | tail -n1
+        )"
+        if [[ -n "$latest" ]]; then
+            local exe="$latest/claude"
+            if rf::is_windows; then exe="$latest/claude.exe"; fi
+            if [[ -x "$exe" || -f "$exe" ]]; then
+                _RF_CLAUDE_CLI_PATH="$exe"
+                printf '%s\n' "$_RF_CLAUDE_CLI_PATH"
+                return 0
+            fi
+        fi
+    fi
+
+    candidates+=(
+        '/opt/homebrew/bin/claude'
+        '/usr/local/bin/claude'
+        "$HOME/.local/bin/claude"
+    )
+    for c in "${candidates[@]}"; do
+        if [[ -x "$c" ]]; then
+            _RF_CLAUDE_CLI_PATH="$c"
+            printf '%s\n' "$_RF_CLAUDE_CLI_PATH"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+rf::detect::claude_code_cli() {
+    local claude
+    claude="$(rf::resolve_claude_cli)" || return 0
+    local v on_path_suffix=""
+    v="$("$claude" --version 2>/dev/null | head -n1 || true)"
+    if [[ "$claude" != "claude" ]]; then on_path_suffix=" (not on PATH)"; fi
+    printf 'claude-code-cli|cli|Claude Code CLI|%s%s\n' "${v:-detected}" "$on_path_suffix"
 }
 
 rf::detect::codex_cli() {

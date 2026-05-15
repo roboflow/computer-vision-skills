@@ -3,6 +3,27 @@ skills.ps1 — install Roboflow skill directories into agent skill paths.
 PowerShell port of installer/lib/skills.sh.
 #>
 
+# [System.IO.Path]::GetRelativePath ships in .NET Core 2.0+ / .NET 5+ but
+# NOT in .NET Framework 4.x, which Windows PowerShell 5.1 (the default
+# shell on stock Windows) runs on. Calling it there throws
+# "MethodNotFound", which broke every skill install on PS 5.1.
+# Polyfill via Uri.MakeRelativeUri so both editions take the same path.
+function Get-RfRelativePath {
+    param([string]$Base, [string]$Path)
+    # Trailing separator on the base makes MakeRelativeUri treat it as a
+    # directory; without it, the last segment is dropped.
+    $baseDir = $Base
+    if (-not $baseDir.EndsWith([IO.Path]::DirectorySeparatorChar) -and
+        -not $baseDir.EndsWith([IO.Path]::AltDirectorySeparatorChar)) {
+        $baseDir = $baseDir + [IO.Path]::DirectorySeparatorChar
+    }
+    $baseUri = [Uri]::new($baseDir)
+    $pathUri = [Uri]::new($Path)
+    $rel = [Uri]::UnescapeDataString($baseUri.MakeRelativeUri($pathUri).ToString())
+    # MakeRelativeUri returns forward slashes; normalize to native separator.
+    return $rel -replace '/', [IO.Path]::DirectorySeparatorChar
+}
+
 function Get-RfSkillsSourceDir { return Join-Path $Script:RfRepoDir 'skills' }
 
 function Test-RfSkillsSourceAvailable { return Test-Path -LiteralPath (Get-RfSkillsSourceDir) }
@@ -26,7 +47,7 @@ function Get-RfSkillContentHash {
     $files = @(Get-ChildItem -LiteralPath $Path -Recurse -File `
         | Where-Object { $_.Name -ne '.roboflow-install-manifest.json' -and $_.Name -ne '.DS_Store' } `
         | ForEach-Object {
-            $rel = [System.IO.Path]::GetRelativePath($Path, $_.FullName) -replace '\\', '/'
+            $rel = (Get-RfRelativePath -Base $Path -Path $_.FullName) -replace '\\', '/'
             [pscustomobject]@{ Rel = $rel; Full = $_.FullName }
         } | Sort-Object Rel)
     $combined = New-Object System.Text.StringBuilder

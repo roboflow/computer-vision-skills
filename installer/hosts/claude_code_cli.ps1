@@ -106,10 +106,14 @@ function Update-RfClaudeCodePluginCache {
 function Install-RfHostClaudeCodeCli {
     Write-RfHeader "Installing Roboflow plugin for $Script:RfHostLabel"
 
-    if (-not (Test-RfOnPath 'claude')) {
-        Write-RfErr 'claude not found on PATH'
+    $claude = Resolve-RfClaudeCliPath
+    if (-not $claude) {
+        Write-RfErr 'claude not found (PATH or any known install location)'
         Write-RfDim 'Install Claude Code: https://docs.claude.com/claude-code'
         return $false
+    }
+    if ($claude -ne 'claude' -and -not (Get-Command -Name 'claude' -CommandType Application, ExternalScript -ErrorAction SilentlyContinue)) {
+        Write-RfDim "using claude at: $claude (not on PATH)"
     }
 
     $repo = if ($env:ROBOFLOW_AGENTS_REPO) { $env:ROBOFLOW_AGENTS_REPO } else { 'roboflow/computer-vision-skills' }
@@ -124,13 +128,13 @@ function Install-RfHostClaudeCodeCli {
     }
 
     Write-RfStep "claude plugin marketplace add $repo"
-    & claude plugin marketplace add $repo 2>&1 | ForEach-Object { Write-Host $_ }
+    & $claude plugin marketplace add $repo 2>&1 | ForEach-Object { Write-Host $_ }
     if ($LASTEXITCODE -ne 0) {
         Write-RfWarn 'marketplace add reported a non-zero exit (may already be registered); continuing'
     }
 
     Write-RfStep ("claude plugin install roboflow {0}" -f ($scopeFlags -join ' '))
-    & claude plugin install roboflow @scopeFlags 2>&1 | ForEach-Object { Write-Host $_ }
+    & $claude plugin install roboflow @scopeFlags 2>&1 | ForEach-Object { Write-Host $_ }
     if ($LASTEXITCODE -ne 0) {
         Write-RfErr 'claude plugin install failed'
         return $false
@@ -161,15 +165,16 @@ function Install-RfHostClaudeCodeCli {
 
 function Uninstall-RfHostClaudeCodeCli {
     Write-RfHeader "Removing Roboflow plugin from $Script:RfHostLabel"
-    if (-not (Test-RfOnPath 'claude')) {
-        Write-RfWarn 'claude not on PATH; skipping uninstall (run `claude plugin remove roboflow` manually)'
+    $claude = Resolve-RfClaudeCliPath
+    if (-not $claude) {
+        Write-RfWarn 'claude not found; skipping uninstall (run `claude plugin remove roboflow` manually)'
         return $true
     }
     if ($Script:RfOptDryRun) {
         Write-RfInfo '[dry-run] would run: claude plugin remove roboflow'
         return $true
     }
-    & claude plugin remove roboflow 2>&1 | ForEach-Object { Write-Host $_ }
+    & $claude plugin remove roboflow 2>&1 | ForEach-Object { Write-Host $_ }
     if ($LASTEXITCODE -eq 0) {
         Write-RfOk "removed Roboflow plugin from $Script:RfHostLabel"
     } else {

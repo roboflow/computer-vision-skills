@@ -117,10 +117,14 @@ sys.exit(0)
 rf::host::claude_code_cli::install() {
     rf::header "Installing Roboflow plugin for $RF_HOST_LABEL"
 
-    if ! rf::on_path claude; then
-        rf::err "claude not found on PATH"
+    local claude
+    if ! claude="$(rf::resolve_claude_cli)"; then
+        rf::err "claude not found (PATH or any known install location)"
         rf::dim "Install Claude Code: https://docs.claude.com/claude-code"
         return 1
+    fi
+    if [[ "$claude" != "claude" ]]; then
+        rf::dim "using claude at: $claude (not on PATH)"
     fi
 
     local marketplace_source plugin_name scope_flag
@@ -139,13 +143,13 @@ rf::host::claude_code_cli::install() {
     fi
 
     rf::step "claude plugin marketplace add $marketplace_source"
-    if ! claude plugin marketplace add "$marketplace_source" 2>&1; then
+    if ! "$claude" plugin marketplace add "$marketplace_source" 2>&1; then
         rf::warn "marketplace add reported a non-zero exit (may already be registered); continuing"
     fi
 
     rf::step "claude plugin install $plugin_name $scope_flag"
     # shellcheck disable=SC2086
-    if ! claude plugin install "$plugin_name" $scope_flag 2>&1; then
+    if ! "$claude" plugin install "$plugin_name" $scope_flag 2>&1; then
         rf::err "claude plugin install failed"
         return 1
     fi
@@ -166,8 +170,9 @@ rf::host::claude_code_cli::install() {
 
 rf::host::claude_code_cli::uninstall() {
     rf::header "Removing Roboflow plugin from $RF_HOST_LABEL"
-    if ! rf::on_path claude; then
-        rf::warn "claude not on PATH; skipping uninstall (run \`claude plugin remove roboflow\` manually)"
+    local claude
+    if ! claude="$(rf::resolve_claude_cli)"; then
+        rf::warn "claude not found; skipping uninstall (run \`claude plugin remove roboflow\` manually)"
         return 0
     fi
 
@@ -176,7 +181,7 @@ rf::host::claude_code_cli::uninstall() {
         return 0
     fi
 
-    if claude plugin remove roboflow 2>&1; then
+    if "$claude" plugin remove roboflow 2>&1; then
         rf::ok "removed Roboflow plugin from $RF_HOST_LABEL"
     else
         rf::warn "claude plugin remove reported a non-zero exit (plugin may not have been installed)"
