@@ -241,6 +241,13 @@ function Invoke-RfMain {
         Write-RfWarn "no supported coding agents detected (or selected)"
         Write-RfInfo "Install one and re-run, or pass --host=<id> to override detection."
         Write-RfInfo "Known host IDs: $((Get-RfKnownHostIds) -join ', ')"
+        # Windows users hit this when Claude Code is installed off-PATH
+        # (MSIX Claude Desktop bundle or native Anthropic installer) AND
+        # our APPDATA probe doesn't see it for some reason — elevated
+        # shells with a different APPDATA, RF_TEST_NO_DETECT_APPS set in
+        # the environment, etc. Dump enough diagnostic context that the
+        # user can see why without us having to ask.
+        if (Test-RfWindows) { Show-RfDetectDiagnostics }
         exit 3
     }
 

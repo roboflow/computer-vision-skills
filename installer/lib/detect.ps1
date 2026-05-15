@@ -340,3 +340,57 @@ function Get-RfKnownHostIds {
         'opencode-cli'
     )
 }
+
+# Show-RfDetectDiagnostics — dump the inputs the detector saw on Windows
+# when nothing was found, so the user can tell us (or see themselves) why.
+# Cheap to call; only runs on the failure path.
+function Show-RfDetectDiagnostics {
+    Write-Host ""
+    Write-RfDim "Detection diagnostics (Windows):"
+    $appdata  = if ($env:APPDATA)      { $env:APPDATA }      else { '(unset)' }
+    $localApp = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { '(unset)' }
+    $noDetect = if ($env:RF_TEST_NO_DETECT_APPS) { $env:RF_TEST_NO_DETECT_APPS } else { '(unset)' }
+    $onPath = [bool](Get-Command -Name 'claude' -CommandType Application, ExternalScript -ErrorAction SilentlyContinue)
+    Write-RfDim "  claude on PATH:            $onPath"
+    Write-RfDim "  `$env:APPDATA:              $appdata"
+    Write-RfDim "  `$env:LOCALAPPDATA:         $localApp"
+    Write-RfDim "  `$env:RF_TEST_NO_DETECT_APPS: $noDetect"
+    Write-RfDim "  whoami:                    $(try { whoami 2>$null } catch { '(failed)' })"
+
+    if ($env:APPDATA) {
+        $codeRoot = Join-Path $env:APPDATA 'Claude\claude-code'
+        if (Test-Path -LiteralPath $codeRoot) {
+            Write-RfDim "  Probe $codeRoot — EXISTS, subdirs:"
+            try {
+                foreach ($d in (Get-ChildItem -LiteralPath $codeRoot -Directory -ErrorAction Stop)) {
+                    $exe = Join-Path $d.FullName 'claude.exe'
+                    $hasExe = Test-Path -LiteralPath $exe -PathType Leaf
+                    Write-RfDim "    - $($d.Name)  (claude.exe present: $hasExe)"
+                }
+            } catch {
+                Write-RfDim "    (enumeration failed: $($_.Exception.Message))"
+            }
+        } else {
+            Write-RfDim "  Probe $codeRoot — does NOT exist"
+        }
+    }
+
+    # Cross-check: maybe the file lives under the *other* user profile, which
+    # is the typical "elevated PowerShell" trap (APPDATA still points to
+    # yours, but a sibling profile owns the install).
+    $usersRoot = Join-Path $env:SystemDrive 'Users'
+    if (Test-Path -LiteralPath $usersRoot) {
+        $other = @()
+        try {
+            foreach ($u in (Get-ChildItem -LiteralPath $usersRoot -Directory -ErrorAction Stop)) {
+                $p = Join-Path $u.FullName 'AppData\Roaming\Claude\claude-code'
+                if (Test-Path -LiteralPath $p) { $other += $p }
+            }
+        } catch { }
+        if ($other.Count -gt 0) {
+            Write-RfDim "  Claude install dirs found under other profiles:"
+            foreach ($p in $other) { Write-RfDim "    - $p" }
+            Write-RfDim '  Tip: if claude was installed under a different user, run agents.ps1 from that user (or pass --host=claude-code-cli).'
+        }
+    }
+}
