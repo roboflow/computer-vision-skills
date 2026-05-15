@@ -67,7 +67,11 @@ rf::prereq::ensure_npx() {
     fi
 
     if [[ "${RF_YES:-0}" != "1" ]]; then
-        if ! rf::confirm "Install Node.js LTS now via $(rf::prereq::node_method_label)?"; then
+        # Default to yes -- see the PowerShell equivalent for rationale:
+        # refusing means the installer aborts and the user has to install
+        # Node manually and re-run, which is worse than just letting us
+        # install it. Saying no is still one keystroke (`n`).
+        if ! rf::confirm "Install Node.js LTS now via $(rf::prereq::node_method_label)?" y; then
             rf::err "Node.js is required to proceed. Install it from https://nodejs.org and re-run agents.sh."
             return 1
         fi

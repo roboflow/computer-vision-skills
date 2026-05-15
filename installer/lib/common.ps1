@@ -45,8 +45,19 @@ function Invoke-RfDie {
 }
 
 function Confirm-Rf {
-    param([string]$Prompt)
+    param(
+        [string]$Prompt,
+        # 'y' means the prompt shows "[Y/n]" and enter without input is yes;
+        # 'n' (default) keeps the legacy "[y/N]" with no-on-enter.
+        [ValidateSet('y', 'n')]
+        [string]$DefaultAnswer = 'n'
+    )
     if ($Script:RfYes) { return $true }
+    if ($DefaultAnswer -eq 'y') {
+        $reply = Read-Host "$Prompt [Y/n]"
+        if ([string]::IsNullOrEmpty($reply)) { return $true }
+        return $reply -notmatch '^[Nn]'
+    }
     $reply = Read-Host "$Prompt [y/N]"
     return $reply -match '^[Yy]'
 }

@@ -55,7 +55,11 @@ function Confirm-RfNpxAvailable {
     }
 
     if (-not $Script:RfYes) {
-        if (-not (Confirm-Rf -Prompt "Install Node.js LTS now via $(Get-RfNodeInstallMethodLabel)?")) {
+        # Default to yes: the alternative is "installer aborts with no
+        # progress, user manually installs Node, re-runs," which is worse
+        # than a winget install in every case where the user didn't have a
+        # specific reason to refuse. Refusing is still one keystroke (`n`).
+        if (-not (Confirm-Rf -Prompt "Install Node.js LTS now via $(Get-RfNodeInstallMethodLabel)?" -DefaultAnswer 'y')) {
             Write-RfErr 'Node.js is required to proceed. Install it from https://nodejs.org and re-run agents.ps1.'
             return $false
         }

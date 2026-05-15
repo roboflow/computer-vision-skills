@@ -41,14 +41,22 @@ rf::die() {
     exit "${RF_EXIT_CODE:-1}"
 }
 
-# rf::confirm <prompt>  — returns 0 for yes, 1 for no. Auto-yes if RF_YES=1.
+# rf::confirm <prompt> [default]  — returns 0 for yes, 1 for no.
+# Auto-yes if RF_YES=1. Default arg "y" inverts the prompt to "[Y/n]" and
+# treats an empty answer as yes; default "n" (or omitted) is the legacy
+# "[y/N]" with no-on-enter.
 rf::confirm() {
     if [[ "${RF_YES:-0}" == "1" ]]; then
         return 0
     fi
-    local prompt="$1" reply
-    read -r -p "$prompt [y/N] " reply </dev/tty
-    [[ "$reply" =~ ^[Yy] ]]
+    local prompt="$1" default="${2:-n}" reply
+    if [[ "$default" == "y" ]]; then
+        read -r -p "$prompt [Y/n] " reply </dev/tty
+        [[ -z "$reply" || "$reply" =~ ^[Yy] ]]
+    else
+        read -r -p "$prompt [y/N] " reply </dev/tty
+        [[ "$reply" =~ ^[Yy] ]]
+    fi
 }
 
 # rf::prompt <prompt> [default]  — read a line from /dev/tty.
