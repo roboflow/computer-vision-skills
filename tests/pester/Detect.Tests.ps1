@@ -76,6 +76,33 @@ Describe 'Resolve-RfClaudeCliPath' {
         $resolved | Should -Be (Join-Path $verDir 'claude.exe')
     }
 
+    It 'finds claude inside the MSIX-private AppData (the elevated-shell case)' -Skip:(-not $script:rfTestIsWindows) {
+        # Field bug: a regular PowerShell session (not a child of the
+        # MSIX-containerized Claude Desktop) doesn't see the
+        # %APPDATA%\Claude redirect, so the install only resolves via the
+        # real path under %LOCALAPPDATA%\Packages\Claude_<hash>\LocalCache\.
+        # Don't create the APPDATA copy here — only the MSIX-private copy.
+        $pkgDir = Join-Path $env:LOCALAPPDATA 'Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude-code\2.1.138'
+        New-Item -ItemType Directory -Path $pkgDir -Force | Out-Null
+        New-Item -ItemType File -Path (Join-Path $pkgDir 'claude.exe') -Force | Out-Null
+        $resolved = Resolve-RfClaudeCliPath -Force
+        $resolved | Should -Be (Join-Path $pkgDir 'claude.exe')
+    }
+
+    It 'APPDATA probe wins over MSIX-package probe when both exist' -Skip:(-not $script:rfTestIsWindows) {
+        # Both layouts present (e.g. a process inside MSIX context sees
+        # the redirect AND can also reach the underlying file). The
+        # APPDATA path is the canonical user-facing one, so prefer it.
+        $appdataVer = Join-Path $env:APPDATA 'Claude\claude-code\2.1.138'
+        New-Item -ItemType Directory -Path $appdataVer -Force | Out-Null
+        New-Item -ItemType File -Path (Join-Path $appdataVer 'claude.exe') -Force | Out-Null
+        $pkgVer = Join-Path $env:LOCALAPPDATA 'Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude-code\2.1.138'
+        New-Item -ItemType Directory -Path $pkgVer -Force | Out-Null
+        New-Item -ItemType File -Path (Join-Path $pkgVer 'claude.exe') -Force | Out-Null
+        $resolved = Resolve-RfClaudeCliPath -Force
+        $resolved | Should -Be (Join-Path $appdataVer 'claude.exe')
+    }
+
     It 'picks the highest semver dir when multiple versions exist' -Skip:(-not $script:rfTestIsWindows) {
         $root = Join-Path $env:APPDATA 'Claude\claude-code'
         foreach ($v in @('1.0.0', '2.1.138', '2.1.9', '2.10.0')) {
@@ -142,13 +169,17 @@ Describe 'Test-RfHostClaudeCodeCli' {
     BeforeEach {
         $script:rfHome = New-RfIsolatedHome
         $Script:RfClaudeCliPath = $null
-        $script:origAppData = $env:APPDATA
-        $env:APPDATA = Join-Path $script:rfHome 'AppData/Roaming'
-        New-Item -ItemType Directory -Path $env:APPDATA -Force | Out-Null
+        $script:origAppData      = $env:APPDATA
+        $script:origLocalAppData = $env:LOCALAPPDATA
+        $env:APPDATA      = Join-Path $script:rfHome 'AppData/Roaming'
+        $env:LOCALAPPDATA = Join-Path $script:rfHome 'AppData/Local'
+        New-Item -ItemType Directory -Path $env:APPDATA      -Force | Out-Null
+        New-Item -ItemType Directory -Path $env:LOCALAPPDATA -Force | Out-Null
         Remove-Item Env:RF_TEST_NO_DETECT_APPS -ErrorAction SilentlyContinue
     }
     AfterEach {
-        $env:APPDATA = $script:origAppData
+        $env:APPDATA      = $script:origAppData
+        $env:LOCALAPPDATA = $script:origLocalAppData
         $Script:RfClaudeCliPath = $null
         Remove-RfIsolatedHome
     }

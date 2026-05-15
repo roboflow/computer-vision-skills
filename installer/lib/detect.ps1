@@ -60,13 +60,41 @@ function Resolve-RfClaudeCliPath {
         $appdata  = if ($env:APPDATA)      { $env:APPDATA }      else { Join-Path $HOME 'AppData\Roaming' }
         $localApp = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { Join-Path $HOME 'AppData\Local' }
 
-        # Versioned tree: %APPDATA%\Claude\claude-code\<semver>\claude.exe.
-        # This is what both the standalone Anthropic Windows installer and
-        # the Claude Desktop MSIX (Claude_<...>) populate. Pick the newest
-        # semver dir. Fall back to lex-sort if [Version] parse fails for an
-        # unusual name (e.g. nightly/preview build).
-        $codeRoot = Join-Path $appdata 'Claude\claude-code'
-        if (Test-Path -LiteralPath $codeRoot) {
+        # Versioned tree: <root>\claude-code\<semver>\claude.exe.
+        # Three possible roots on Windows, all checked in order:
+        #
+        #   a) %APPDATA%\Claude\claude-code\
+        #      What both the standalone Anthropic installer and the
+        #      Claude Desktop MSIX populate -- visible from any process
+        #      that is a child of the MSIX app (the path is virtualized
+        #      back via the WindowsApps redirect), and from any process
+        #      outside the MSIX context IF the install also wrote a real
+        #      reparse point there.
+        #
+        #   b) %LOCALAPPDATA%\Packages\Claude_*\LocalCache\Roaming\Claude\claude-code\
+        #      The REAL filesystem location that the MSIX redirect points
+        #      to. When a user launches a fresh PowerShell (not a child
+        #      of the MSIX app), (a) typically returns "does not exist"
+        #      because the redirect only applies to processes inside the
+        #      MSIX container, and you have to fall through to here.
+        #      This was the bug reported in the field.
+        #
+        #   c) %LOCALAPPDATA%\Programs\claude\claude.exe and friends --
+        #      Squirrel installer / future paths, kept for completeness.
+        $codeRoots = @()
+        $codeRoots += (Join-Path $appdata 'Claude\claude-code')
+        $msixPackages = Join-Path $localApp 'Packages'
+        if (Test-Path -LiteralPath $msixPackages) {
+            try {
+                Get-ChildItem -LiteralPath $msixPackages -Directory -Filter 'Claude_*' -ErrorAction Stop |
+                    ForEach-Object {
+                        $codeRoots += (Join-Path $_.FullName 'LocalCache\Roaming\Claude\claude-code')
+                    }
+            } catch { }
+        }
+
+        foreach ($codeRoot in $codeRoots) {
+            if (-not (Test-Path -LiteralPath $codeRoot)) { continue }
             $versioned = Get-ChildItem -LiteralPath $codeRoot -Directory -ErrorAction SilentlyContinue |
                 Where-Object {
                     $exe = Join-Path $_.FullName 'claude.exe'
@@ -357,12 +385,22 @@ function Show-RfDetectDiagnostics {
     Write-RfDim "  `$env:RF_TEST_NO_DETECT_APPS: $noDetect"
     Write-RfDim "  whoami:                    $(try { whoami 2>$null } catch { '(failed)' })"
 
-    if ($env:APPDATA) {
-        $codeRoot = Join-Path $env:APPDATA 'Claude\claude-code'
-        if (Test-Path -LiteralPath $codeRoot) {
-            Write-RfDim "  Probe $codeRoot — EXISTS, subdirs:"
+    $probes = @()
+    if ($env:APPDATA)      { $probes += (Join-Path $env:APPDATA 'Claude\claude-code') }
+    if ($env:LOCALAPPDATA) {
+        $pkgRoot = Join-Path $env:LOCALAPPDATA 'Packages'
+        if (Test-Path -LiteralPath $pkgRoot) {
             try {
-                foreach ($d in (Get-ChildItem -LiteralPath $codeRoot -Directory -ErrorAction Stop)) {
+                Get-ChildItem -LiteralPath $pkgRoot -Directory -Filter 'Claude_*' -ErrorAction Stop |
+                    ForEach-Object { $probes += (Join-Path $_.FullName 'LocalCache\Roaming\Claude\claude-code') }
+            } catch { }
+        }
+    }
+    foreach ($probe in $probes) {
+        if (Test-Path -LiteralPath $probe) {
+            Write-RfDim "  Probe $probe — EXISTS, subdirs:"
+            try {
+                foreach ($d in (Get-ChildItem -LiteralPath $probe -Directory -ErrorAction Stop)) {
                     $exe = Join-Path $d.FullName 'claude.exe'
                     $hasExe = Test-Path -LiteralPath $exe -PathType Leaf
                     Write-RfDim "    - $($d.Name)  (claude.exe present: $hasExe)"
@@ -371,7 +409,7 @@ function Show-RfDetectDiagnostics {
                 Write-RfDim "    (enumeration failed: $($_.Exception.Message))"
             }
         } else {
-            Write-RfDim "  Probe $codeRoot — does NOT exist"
+            Write-RfDim "  Probe $probe — does NOT exist"
         }
     }
 
