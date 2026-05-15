@@ -9,6 +9,47 @@ requires Node + npx on PATH and inlines the literal API key.
 Note: this only configures the chat tab. The Code tab (Claude Code in Claude
 Desktop) reads the Claude Code plugin system, which is covered by the
 claude-code-cli host without any bridge or Node dependency.
+
+== Why we write to the MSIX-private path on Windows ==
+
+Anthropic's canonical install path going forward is Desktop Extensions
+(`.mcpb` files: https://www.anthropic.com/engineering/desktop-extensions).
+The plan there is: vendor ships a `.mcpb`, user double-clicks, Claude
+Desktop's file handler installs into its own managed storage and stores
+the API key in OS keychain. We'd love to use that path.
+
+We can't, yet. Verified on Claude_1.7196.0.0_arm64 (Nov 2026 build):
+  * The MSIX manifest registers exactly one URI scheme — `claude://` for
+    `claude://cowork/shared-artifact?uuid=...`. No install-extension URL,
+    no install-mcp URL. (AppxManifest.xml in WindowsApps\Claude_...)
+  * No file association is registered for `.mcpb` or `.dxt` anywhere in
+    HKCR / HKCU / per-user FTA. `Start-Process roboflow.mcpb` does
+    nothing on a fresh box.
+  * The `installExtension` and `installExtensionFromPreview` handlers
+    inside app.asar are Electron IPC routes from the renderer to the
+    main process, gated by an origin check ("did not pass origin
+    validation" error strings) -- not callable from outside the app.
+
+So today, the only way to put MCP config into the chat tab from an
+external installer is to write the JSON ourselves, the way every other
+remote-MCP vendor does (Atlassian, Cloudflare, Linear, Notion, ...).
+
+That brings the MSIX virtualization wrinkle: Claude Desktop's MSIX
+package per-process-virtualizes `%APPDATA%\Claude\` to its own private
+LocalCache. A regular PowerShell (outside the MSIX container) writing
+to `%APPDATA%\Claude\claude_desktop_config.json` lands in a location
+Claude Desktop never reads. The actual on-disk path Claude Desktop
+reads/writes is `%LOCALAPPDATA%\Packages\Claude_<family>\LocalCache\
+Roaming\Claude\claude_desktop_config.json`. That's what we target.
+
+Tracking issues:
+  * https://github.com/anthropics/claude-code/issues/26073 (open, no fix)
+
+When Anthropic ships either (a) a `claude://install-mcp?url=...` URI,
+(b) `.mcpb` file association in the MSIX manifest, or (c) a CLI flag on
+the Claude binary that installs extensions, swap this whole approach
+for that. Until then, the MSIX-private write is the only way "install
+and persist" actually works on Windows.
 #>
 
 $Script:RfHostId    = 'claude-desktop'

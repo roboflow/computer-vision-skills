@@ -13,6 +13,31 @@
 # Note: this adapter only configures the chat tab. The Code tab (Claude Code
 # in Claude Desktop) reads the Claude Code plugin system, so installing
 # `claude-code-cli` covers it without any bridge or Node dependency.
+#
+# == Why we write to the MSIX-private path on Windows ==
+#
+# Anthropic's canonical install path going forward is Desktop Extensions
+# (`.mcpb` files: https://www.anthropic.com/engineering/desktop-extensions).
+# We can't use that path yet. Verified on Claude_1.7196.0.0_arm64 (Nov 2026):
+#   * The MSIX manifest registers only `claude://cowork/shared-artifact?...`
+#     — no claude://install-mcp, no .mcpb file association.
+#   * No file handler is registered for .mcpb or .dxt; Start-Process /
+#     `open` on a .mcpb does nothing.
+#   * The `installExtension` handlers inside app.asar are Electron IPC
+#     routes from the renderer, gated by origin validation — not externally
+#     callable.
+#
+# So today, writing claude_desktop_config.json ourselves is the only way to
+# install + persist from an external installer. On Windows specifically, the
+# MSIX package per-process-virtualizes %APPDATA%\Claude\, so the *real* path
+# Claude Desktop reads from is
+# %LOCALAPPDATA%\Packages\Claude_<family>\LocalCache\Roaming\Claude\
+# claude_desktop_config.json. config_path() resolves to that path when an
+# MSIX package is detected.
+#
+# Tracking: https://github.com/anthropics/claude-code/issues/26073 (open).
+# Migrate to .mcpb / claude://install-mcp / a CLI install flag when any of
+# those ship.
 
 RF_HOST_ID="claude-desktop"
 RF_HOST_LABEL="Claude Desktop"
