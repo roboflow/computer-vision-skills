@@ -19,6 +19,10 @@ Open repository of 1M+ computer vision datasets and 50K+ pre-trained models at `
 
 ## Searching Universe
 
+### MCP app (`universe_search_app`)
+
+Use when someone must **choose a dataset after seeing it**: previews, classes, license, image counts, etc. Pure MCP JSON hits from `universe_search` are not a substitute for that UX — open the app when the decision needs eyes on the listings.
+
 ### MCP Tool
 
 Use `universe_search` to find datasets/models programmatically. Pass a descriptive query (e.g. "hard hat detection construction site").
