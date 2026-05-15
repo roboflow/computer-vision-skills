@@ -20,7 +20,7 @@
     "mcp"
   ],
   "skills": "./skills/",
-  "mcpServers": "./.mcp.json",
+  "mcpServers": "../.claude-plugin/.mcp.json",
   "interface": {
     "displayName": "Roboflow",
     "shortDescription": "Build computer vision projects with Roboflow",
