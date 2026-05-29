@@ -33,7 +33,9 @@ rf_test::claude_desktop_config_path() {
     cfg="$(rf_test::claude_desktop_config_path)"
     [ -f "$cfg" ]
     grep -q '"roboflow"' "$cfg"
-    # Bridge schema: command + args, NOT type/url/headers
+    # Bridge schema: command + args, NOT type/url/headers. On macOS/Linux
+    # (the CI host OS) that's bare npx; the Windows cmd /c form is covered
+    # by the unit tests below.
     grep -q '"command": "npx"' "$cfg"
     grep -q 'mcp-remote@' "$cfg"
     grep -q 'https://mcp.roboflow.com/mcp' "$cfg"
@@ -44,6 +46,45 @@ rf_test::claude_desktop_config_path() {
     if grep -q '"url":' "$cfg"; then return 1; fi
 }
 
+# --- bridge command form (Windows vs Unix) ------------------------------
+# Claude Desktop spawns the MCP command without a shell, so on Windows the
+# bare name "npx" fails (CreateProcess can't run npx.cmd without PATHEXT
+# resolution). The adapter must emit `cmd /c npx` on Windows. We force the
+# platform branch by overriding rf::is_windows so the test is host-agnostic.
+
+rf_test::source_claude_desktop() {
+    # shellcheck disable=SC1091
+    source "$RF_REPO_ROOT/installer/lib/common.sh"
+    # shellcheck disable=SC1091
+    source "$RF_REPO_ROOT/installer/lib/json_io.sh"
+    # shellcheck disable=SC1091
+    source "$RF_REPO_ROOT/installer/hosts/claude_desktop.sh"
+}
+
+@test "claude-desktop bridge: Windows routes through cmd /c npx" {
+    rf_test::source_claude_desktop
+    rf::is_windows() { return 0; }
+    run rf::host::claude_desktop::bridge_server_json "rf_test_key"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'"cmd"'* ]]
+    [[ "$output" == *'/c'* ]]
+    [[ "$output" == *'npx'* ]]
+    [[ "$output" == *'mcp-remote@'* ]]
+    [[ "$output" == *'x-api-key:rf_test_key'* ]]
+}
+
+@test "claude-desktop bridge: non-Windows uses bare npx (no cmd wrapper)" {
+    rf_test::source_claude_desktop
+    rf::is_windows() { return 1; }
+    run rf::host::claude_desktop::bridge_server_json "rf_test_key"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'"command": "npx"'* ]] || [[ "$output" == *'"command":"npx"'* ]]
+    if [[ "$output" == *'"cmd"'* ]]; then
+        echo "ERROR: non-Windows bridge should not wrap in cmd: $output" >&2
+        return 1
+    fi
+}
+
 @test "claude-desktop install: refuses without a resolved API key" {
     unset ROBOFLOW_API_KEY
     run bash "$RF_REPO_ROOT/installer/main.sh" --yes --host=claude-desktop --auth-skip
@@ -52,12 +93,17 @@ rf_test::claude_desktop_config_path() {
 }
 
 @test "claude-desktop install: refuses when npx is missing" {
-    # Hide the stub by clearing PATH back to system minimum (no test bin)
+    # Hide the stub by clearing PATH back to system minimum (no test bin).
     export PATH="$RF_SYSTEM_PATH"
-    run bash "$RF_REPO_ROOT/installer/main.sh" --yes --host=claude-desktop
+    # --no-install-node so the Node prereq gate fails fast instead of trying
+    # to download nvm/Node over the network inside the test sandbox (which
+    # is what made this test slow + non-deterministic before).
+    run bash "$RF_REPO_ROOT/installer/main.sh" --yes --host=claude-desktop --no-install-node
     [ "$status" -ne 0 ]
+    # The Node prereq gate now intercepts missing npx before the adapter
+    # runs; both surfaces phrase it as "npx (Node.js) is required".
     [[ "$output" == *"npx (Node.js) is required"* ]]
-    [[ "$output" == *"claude-code-cli"* ]]   # points at the no-Node alternative
+    [[ "$output" == *"Node.js prerequisite not met"* ]]
 }
 
 @test "claude-desktop install: --no-mcp is a no-op" {

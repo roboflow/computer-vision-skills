@@ -78,26 +78,38 @@ rf::host::claude_desktop::config_path() {
 # expands ${VAR} nor accepts http MCPs natively.
 RF_MCP_REMOTE_VERSION="0.1.27"
 
+# On Windows (Git Bash / MSYS), Claude Desktop spawns the MCP command
+# without a shell, and CreateProcess can't exec the bare name "npx" (the
+# launcher is npx.cmd; PATHEXT only applies through a shell). Route through
+# cmd.exe so npx.cmd resolves. macOS/Linux use bare npx as before.
 rf::host::claude_desktop::bridge_server_json() {
     local key="$1"
     rf::json::has_tool || rf::die "no JSON tool available (need python3 or jq)"
+    local win=0
+    rf::is_windows && win=1
     if [[ "$(rf::json::tool)" == "python3" ]]; then
-        KEY="$key" VER="$RF_MCP_REMOTE_VERSION" python3 -c '
+        KEY="$key" VER="$RF_MCP_REMOTE_VERSION" WIN="$win" python3 -c '
 import json, os, sys
 ver = os.environ["VER"]
 api_key = os.environ["KEY"]
-server = {
-    "command": "npx",
-    "args": [
-        "-y",
-        "mcp-remote@" + ver,
-        "https://mcp.roboflow.com/mcp",
-        "--header",
-        "x-api-key:" + api_key,
-    ],
-}
+remote_args = [
+    "-y",
+    "mcp-remote@" + ver,
+    "https://mcp.roboflow.com/mcp",
+    "--header",
+    "x-api-key:" + api_key,
+]
+if os.environ.get("WIN") == "1":
+    server = {"command": "cmd", "args": ["/c", "npx"] + remote_args}
+else:
+    server = {"command": "npx", "args": remote_args}
 json.dump(server, sys.stdout)
 '
+    elif [[ "$win" == "1" ]]; then
+        jq -n --arg k "$key" --arg v "$RF_MCP_REMOTE_VERSION" '{
+            command: "cmd",
+            args: ["/c", "npx", "-y", ("mcp-remote@" + $v), "https://mcp.roboflow.com/mcp", "--header", ("x-api-key:" + $k)]
+        }'
     else
         jq -n --arg k "$key" --arg v "$RF_MCP_REMOTE_VERSION" '{
             command: "npx",

@@ -78,9 +78,31 @@ The installer adds an entry under `mcpServers` and preserves anything else in th
 
 The `mcp-remote` version is pinned in the installer so behavior is reproducible — bumps go through `agents.sh` updates.
 
+### Windows: `cmd /c npx`
+
+On **Windows** the installer writes a different `command` — it routes through `cmd.exe`:
+
+```json
+{
+  "mcpServers": {
+    "roboflow": {
+      "command": "cmd",
+      "args": [
+        "/c", "npx",
+        "-y", "mcp-remote@0.1.27",
+        "https://mcp.roboflow.com/mcp",
+        "--header", "x-api-key:rf_xxxxxxxxxxxxxxxx"
+      ]
+    }
+  }
+}
+```
+
+Claude Desktop (Electron) spawns the MCP `command` **without a shell**. On Windows the Node launcher is `npx.cmd`, and `CreateProcess` can't execute the bare name `npx` (PATHEXT resolution only happens through a shell), so `"command": "npx"` dies with `ENOENT` and no Roboflow tools show up in the chat tab. Going through `cmd /c npx` lets `cmd.exe` resolve `npx.cmd`. macOS/Linux use bare `npx` since there's no `.cmd` indirection there.
+
 ## Manual install
 
-If you'd rather skip `agents.sh` and edit the file by hand: take the JSON above, replace `rf_xxx…` with your Roboflow API key (from `https://app.roboflow.com/{workspace}/settings/api`), and drop it into the platform-specific config path. Make sure Node + npx are on the PATH that Claude Desktop inherits when it launches.
+If you'd rather skip `agents.sh` and edit the file by hand: take the JSON above (the `cmd /c npx` variant on Windows, bare `npx` on macOS/Linux), replace `rf_xxx…` with your Roboflow API key (from `https://app.roboflow.com/{workspace}/settings/api`), and drop it into the platform-specific config path. Make sure Node + npx are on the PATH that Claude Desktop inherits when it launches, then fully **quit and relaunch** Claude Desktop (tray → Quit, not just close the window) — the config is read once at startup.
 
 ## Uninstall
 

@@ -111,15 +111,29 @@ function Get-RfClaudeDesktopConfigPath {
 
 function Get-RfClaudeDesktopBridgeServer {
     param([Parameter(Mandatory)] [string]$Key)
+    $remoteArgs = @(
+        '-y',
+        ("mcp-remote@" + $Script:RfMcpRemoteVersion),
+        'https://mcp.roboflow.com/mcp',
+        '--header',
+        ("x-api-key:" + $Key)
+    )
+    if (Test-RfWindows) {
+        # Claude Desktop (Electron) spawns the MCP command WITHOUT a shell.
+        # On Windows the Node launcher is npx.cmd, and CreateProcess can't
+        # execute the bare name "npx" (PATHEXT resolution only happens through
+        # a shell), so "command": "npx" dies with ENOENT and the server never
+        # starts — no tools appear in the chat tab. Route through cmd.exe (a
+        # real PE always on the System32 PATH), which resolves npx.cmd via
+        # PATHEXT. This is the canonical Windows form for npx-based MCPs.
+        return [pscustomobject]@{
+            command = 'cmd'
+            args    = @('/c', 'npx') + $remoteArgs
+        }
+    }
     return [pscustomobject]@{
         command = 'npx'
-        args    = @(
-            '-y',
-            ("mcp-remote@" + $Script:RfMcpRemoteVersion),
-            'https://mcp.roboflow.com/mcp',
-            '--header',
-            ("x-api-key:" + $Key)
-        )
+        args    = $remoteArgs
     }
 }
 

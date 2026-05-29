@@ -146,6 +146,34 @@ Describe 'claude-desktop adapter (mcp-remote stdio bridge)' {
     }
 }
 
+Describe 'Get-RfClaudeDesktopBridgeServer command form' {
+    # Unit tests on the bridge builder directly so we can force the platform
+    # branch via a Test-RfWindows mock (the end-to-end test above runs on the
+    # CI host OS and only covers the bare-npx form).
+    BeforeAll {
+        . (Join-Path $Script:RfRepoRoot 'installer/lib/common.ps1')
+        . (Join-Path $Script:RfRepoRoot 'installer/hosts/claude_desktop.ps1')
+    }
+
+    It 'routes through cmd /c npx on Windows (Electron spawns without a shell)' {
+        Mock Test-RfWindows { $true }
+        $server = Get-RfClaudeDesktopBridgeServer -Key 'rf_test_key'
+        $server.command | Should -Be 'cmd'
+        $server.args[0] | Should -Be '/c'
+        $server.args[1] | Should -Be 'npx'
+        ($server.args -join ' ') | Should -Match 'mcp-remote@'
+        ($server.args -join ' ') | Should -Match 'x-api-key:rf_test_key'
+    }
+
+    It 'uses bare npx on macOS/Linux' {
+        Mock Test-RfWindows { $false }
+        $server = Get-RfClaudeDesktopBridgeServer -Key 'rf_test_key'
+        $server.command | Should -Be 'npx'
+        $server.args[0] | Should -Be '-y'
+        ($server.args -join ' ') | Should -Not -Match '(^|\s)/c(\s|$)'
+    }
+}
+
 Describe 'copilot-cli adapter' {
     BeforeEach {
         $script:rfHome = New-RfIsolatedHome
