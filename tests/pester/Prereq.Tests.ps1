@@ -28,6 +28,27 @@ Describe 'host-needs-node lookups' {
     }
 }
 
+Describe 'Find-RfNpx' {
+    BeforeEach { $script:rfHome = New-RfIsolatedHome }
+    AfterEach  { Remove-RfIsolatedHome }
+
+    It 'returns a single string, not an array, when both npx and npx.ps1 are on PATH' {
+        # Reproduces the field crash: Get-Command -CommandType
+        # Application,ExternalScript matches BOTH npx.cmd/npx (Application)
+        # and npx.ps1 (ExternalScript), so $cmd.Source was a 2-element
+        # array and binding it to Use-RfNpx's [string]$NpxPath threw
+        # "Cannot convert value to type System.String".
+        New-RfStubCommand -Name 'npx' -ExitCode 0 -Stdout '10.5.0'
+        $binDir = Join-Path $env:HOME 'bin'
+        Set-Content -LiteralPath (Join-Path $binDir 'npx.ps1') -Value 'Write-Output 10.5.0'
+
+        $result = Find-RfNpx
+        $result | Should -Not -BeNullOrEmpty
+        @($result).Count | Should -Be 1
+        $result | Should -BeOfType ([string])
+    }
+}
+
 Describe 'Confirm-RfNpxAvailable behavior' {
     BeforeEach {
         $script:rfHome = New-RfIsolatedHome
@@ -39,6 +60,15 @@ Describe 'Confirm-RfNpxAvailable behavior' {
 
     It 'returns true when npx is already on PATH' {
         New-RfStubCommand -Name 'npx' -ExitCode 0 -Stdout '10.5.0'
+        Confirm-RfNpxAvailable | Should -BeTrue
+    }
+
+    It 'returns true when both npx and npx.ps1 resolve (multi-result PATH)' {
+        # The crash path end-to-end: Confirm-RfNpxAvailable calls Find-RfNpx
+        # then Use-RfNpx -NpxPath, which previously threw on the array.
+        New-RfStubCommand -Name 'npx' -ExitCode 0 -Stdout '10.5.0'
+        $binDir = Join-Path $env:HOME 'bin'
+        Set-Content -LiteralPath (Join-Path $binDir 'npx.ps1') -Value 'Write-Output 10.5.0'
         Confirm-RfNpxAvailable | Should -BeTrue
     }
 

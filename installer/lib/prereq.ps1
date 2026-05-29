@@ -84,14 +84,30 @@ function Confirm-RfNpxAvailable {
 }
 
 # Find-RfNpx — locate npx without trusting Get-Command's per-session cache.
-# Returns the full path to npx.cmd, or $null. Checks the current PATH first,
-# then known Node install locations (system-wide, user-scope, npm global).
-# This matters because winget may install Node and update the persistent
-# PATH in the registry, but PowerShell only re-reads PATH at process start,
-# and Get-Command caches "not found" results.
+# Returns a SINGLE full path string to npx (or $null). Checks the current
+# PATH first, then known Node install locations (system-wide, user-scope,
+# npm global). This matters because winget may install Node and update the
+# persistent PATH in the registry, but PowerShell only re-reads PATH at
+# process start, and Get-Command caches "not found" results.
 function Find-RfNpx {
-    $cmd = Get-Command npx -CommandType Application, ExternalScript -ErrorAction SilentlyContinue
-    if ($cmd) { return $cmd.Source }
+    # Get-Command with two CommandTypes returns BOTH npx.cmd (Application)
+    # and npx.ps1 (ExternalScript) when a Node install ships both, so the
+    # result is an array. Collapse to one, preferring .cmd/.exe over .ps1
+    # (piping a .ps1 through our outer pwsh would re-trigger ExecutionPolicy
+    # prompts), and always return a scalar string so callers binding to a
+    # [string] parameter don't blow up on a multi-element array.
+    $cmds = @(Get-Command npx -CommandType Application, ExternalScript -ErrorAction SilentlyContinue)
+    if ($cmds.Count -gt 0) {
+        $preferred = $cmds | Sort-Object @{Expression = {
+            switch -Regex ($_.Source) {
+                '\.exe$' { 0; break }
+                '\.cmd$' { 1; break }
+                '\.bat$' { 2; break }
+                default  { 3 }
+            }
+        }} | Select-Object -First 1
+        return [string]$preferred.Source
+    }
     if (-not (Test-RfWindows)) { return $null }
 
     $candidates = @(
@@ -101,7 +117,7 @@ function Find-RfNpx {
         (Join-Path $env:APPDATA 'npm\npx.cmd')
     )
     foreach ($c in $candidates) {
-        if ($c -and (Test-Path -LiteralPath $c)) { return $c }
+        if ($c -and (Test-Path -LiteralPath $c)) { return [string]$c }
     }
     return $null
 }
