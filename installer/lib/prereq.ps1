@@ -33,10 +33,12 @@ function Get-RfNodeInstallMethodLabel {
 # install), $false otherwise. Respects $Script:RfOptNoInstallNode and
 # $Script:RfYes.
 function Confirm-RfNpxAvailable {
-    if (Test-RfOnPath 'npx') {
-        $v = & npx --version 2>$null
+    $npxPath = Find-RfNpx
+    if ($npxPath) {
+        Use-RfNpx -NpxPath $npxPath
+        $v = & $npxPath --version 2>$null
         if (-not $v) { $v = '(unknown version)' }
-        Write-RfDim "  npx detected: $v"
+        Write-RfDim "  npx detected: $v ($npxPath)"
         return $true
     }
 
@@ -70,13 +72,51 @@ function Confirm-RfNpxAvailable {
         return $false
     }
 
-    if (Test-RfOnPath 'npx') {
-        $v = & npx --version 2>$null
-        Write-RfOk "Node.js installed: npx $v"
+    $npxPath = Find-RfNpx
+    if ($npxPath) {
+        Use-RfNpx -NpxPath $npxPath
+        $v = & $npxPath --version 2>$null
+        Write-RfOk "Node.js installed: npx $v ($npxPath)"
         return $true
     }
-    Write-RfErr 'Node.js installer reported success but npx still not on PATH. Restart your shell and re-run.'
+    Write-RfErr 'Node.js installer reported success but npx still not found. Open a new PowerShell window and re-run agents.ps1.'
     return $false
+}
+
+# Find-RfNpx — locate npx without trusting Get-Command's per-session cache.
+# Returns the full path to npx.cmd, or $null. Checks the current PATH first,
+# then known Node install locations (system-wide, user-scope, npm global).
+# This matters because winget may install Node and update the persistent
+# PATH in the registry, but PowerShell only re-reads PATH at process start,
+# and Get-Command caches "not found" results.
+function Find-RfNpx {
+    $cmd = Get-Command npx -CommandType Application, ExternalScript -ErrorAction SilentlyContinue
+    if ($cmd) { return $cmd.Source }
+    if (-not (Test-RfWindows)) { return $null }
+
+    $candidates = @(
+        (Join-Path $env:ProgramFiles 'nodejs\npx.cmd'),
+        (Join-Path ${env:ProgramFiles(x86)} 'nodejs\npx.cmd'),
+        (Join-Path $env:LOCALAPPDATA 'Programs\nodejs\npx.cmd'),
+        (Join-Path $env:APPDATA 'npm\npx.cmd')
+    )
+    foreach ($c in $candidates) {
+        if ($c -and (Test-Path -LiteralPath $c)) { return $c }
+    }
+    return $null
+}
+
+# Use-RfNpx — make sure npx's directory is on the *current* session's PATH
+# so adapters that shell out to bare `npx` resolve it.
+function Use-RfNpx {
+    param([Parameter(Mandatory)][string]$NpxPath)
+    $dir = Split-Path -Parent $NpxPath
+    if (-not $dir) { return }
+    $sep = if (Test-RfWindows) { ';' } else { ':' }
+    $parts = $env:PATH -split [regex]::Escape($sep)
+    if ($parts -notcontains $dir) {
+        $env:PATH = "$dir$sep$env:PATH"
+    }
 }
 
 function Install-RfNodeWindows {
@@ -84,14 +124,26 @@ function Install-RfNodeWindows {
         Write-RfErr 'winget not available — install Node.js manually from https://nodejs.org'
         return $false
     }
-    Write-RfStep 'winget install OpenJS.NodeJS.LTS --silent'
-    & winget install --id OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements --silent 2>&1 | ForEach-Object { Write-Host $_ }
-    # Some winget releases return non-zero on --silent when a UAC prompt
-    # appeared; don't trust the exit code by itself. Refresh PATH and
-    # check whether npx is actually visible.
+    # --source winget pins to the winget repository explicitly. Skips
+    # msstore, which on some corporate boxes fails with a cert-validation
+    # error ("server certificate did not match"). The Node.js LTS package
+    # lives in the winget source anyway, so this only removes a flaky path.
+    Write-RfStep 'winget install OpenJS.NodeJS.LTS --source winget --silent'
+    & winget install --id OpenJS.NodeJS.LTS --source winget `
+        --accept-source-agreements --accept-package-agreements --silent 2>&1 |
+        ForEach-Object { Write-Host $_ }
+    # Don't trust the exit code by itself — winget can return non-zero when
+    # a secondary source fails or a UAC prompt was suppressed, even though
+    # the actual install succeeded. Verify by disk in the caller via
+    # Find-RfNpx.
     if ($LASTEXITCODE -ne 0) {
         Write-RfWarn "winget reported non-zero exit ($LASTEXITCODE); verifying install state regardless"
     }
-    $env:PATH = [Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH', 'User')
+    # Refresh PATH from both registry hives. winget's Node install writes
+    # to the Machine hive when system-scope, User hive when user-scope.
+    $machinePath = [Environment]::GetEnvironmentVariable('PATH', 'Machine')
+    $userPath    = [Environment]::GetEnvironmentVariable('PATH', 'User')
+    $merged = @($machinePath, $userPath) | Where-Object { $_ } | ForEach-Object { $_ }
+    if ($merged) { $env:PATH = ($merged -join ';') }
     return $true
 }
