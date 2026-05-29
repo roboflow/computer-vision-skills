@@ -113,3 +113,74 @@ teardown() {
 # pipeline — stubbing `bash` interferes with bats's own test runner.
 # install_node_unix is a 6-line wrapper around well-known commands; the
 # branching it makes (brew vs nvm) is covered by node_method_label.
+
+# --- host-needs-git lookups ---------------------------------------------
+
+@test "host_needs_git: claude-code-cli and codex-cli need git" {
+    rf::prereq::host_needs_git claude-code-cli
+    rf::prereq::host_needs_git codex-cli
+}
+
+@test "host_needs_git: claude-desktop and the http-MCP hosts do not" {
+    ! rf::prereq::host_needs_git claude-desktop
+    ! rf::prereq::host_needs_git cursor-desktop
+    ! rf::prereq::host_needs_git gemini-cli
+    ! rf::prereq::host_needs_git opencode-cli
+}
+
+@test "any_needs_git: true if at least one selected host needs git" {
+    rf::prereq::any_needs_git cursor-desktop codex-cli gemini-cli
+    ! rf::prereq::any_needs_git cursor-desktop gemini-cli claude-desktop
+}
+
+# --- ensure_git happy path: git present ---------------------------------
+
+@test "ensure_git: returns 0 when git is on PATH (no install attempted)" {
+    rf_test::stub_command "git" 0 "git version 2.43.0"
+    rf_test::stub_command "brew" 0
+    run rf::prereq::ensure_git
+    [ "$status" -eq 0 ]
+    [ "$(rf_test::stub_call_count brew)" = "0" ]
+}
+
+# --- ensure_git: missing git, --no-install-git --------------------------
+
+# git lives in /usr/bin alongside coreutils the stub harness needs, so we
+# can't make it "absent" by narrowing PATH. Instead shadow rf::on_path to
+# report git missing while delegating every other lookup (brew, etc.) to
+# the real implementation.
+rf_test::hide_git() {
+    eval "$(declare -f rf::on_path | sed 's/rf::on_path/rf::on_path::real/')"
+    rf::on_path() {
+        [[ "$1" == "git" ]] && return 1
+        rf::on_path::real "$1"
+    }
+}
+
+@test "ensure_git: --no-install-git fails without installing (macOS)" {
+    [[ "$(uname -s)" == "Darwin" ]] || skip "macOS-only branch"
+    rf_test::stub_command "brew" 0
+    rf_test::hide_git
+    export RF_OPT_NO_INSTALL_GIT=1
+    run rf::prereq::ensure_git
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"--no-install-git"* ]]
+    [ "$(rf_test::stub_call_count brew)" = "0" ]
+}
+
+# --- ensure_git: missing git, --yes + brew (macOS) ----------------------
+
+@test "ensure_git: --yes + brew on macOS invokes brew install git" {
+    [[ "$(uname -s)" == "Darwin" ]] || skip "macOS-only branch"
+    rf_test::stub_command "brew" 0
+    rf_test::hide_git
+    export RF_YES=1
+    run rf::prereq::ensure_git
+    # git still won't appear on PATH after the stubbed brew, so the
+    # post-install check returns non-zero; we just assert brew was called
+    # with the right args.
+    local calls
+    calls="$(rf_test::stub_calls brew)"
+    [[ "$calls" == *"install"* ]]
+    [[ "$calls" == *"git"* ]]
+}

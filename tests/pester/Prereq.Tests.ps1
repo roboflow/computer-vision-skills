@@ -2,6 +2,10 @@
 # and auto-install dispatch. Never actually runs winget; stubs catch the
 # would-be invocations.
 
+BeforeDiscovery {
+    $script:rfTestIsWindows = ($PSVersionTable.PSEdition -eq 'Desktop') -or [bool]$IsWindows
+}
+
 BeforeAll {
     . (Join-Path $PSScriptRoot 'helpers/Setup.ps1')
     . (Join-Path $Script:RfRepoRoot 'installer/lib/common.ps1')
@@ -25,6 +29,54 @@ Describe 'host-needs-node lookups' {
     It 'Test-RfAnyHostNeedsNode is true iff at least one host needs Node' {
         Test-RfAnyHostNeedsNode -Ids @('cursor-desktop','claude-code-cli','gemini-cli') | Should -BeTrue
         Test-RfAnyHostNeedsNode -Ids @('cursor-desktop','gemini-cli','opencode-cli')    | Should -BeFalse
+    }
+}
+
+Describe 'host-needs-git lookups' {
+    It 'Test-RfHostNeedsGit is true for the plugin-marketplace hosts' {
+        Test-RfHostNeedsGit -Id 'claude-code-cli' | Should -BeTrue
+        Test-RfHostNeedsGit -Id 'codex-cli'       | Should -BeTrue
+    }
+    It 'Test-RfHostNeedsGit is false for claude-desktop and http-MCP hosts' {
+        Test-RfHostNeedsGit -Id 'claude-desktop'  | Should -BeFalse
+        Test-RfHostNeedsGit -Id 'cursor-desktop'  | Should -BeFalse
+        Test-RfHostNeedsGit -Id 'gemini-cli'      | Should -BeFalse
+        Test-RfHostNeedsGit -Id 'opencode-cli'    | Should -BeFalse
+    }
+    It 'Test-RfAnyHostNeedsGit is true iff at least one host needs git' {
+        Test-RfAnyHostNeedsGit -Ids @('cursor-desktop','codex-cli','gemini-cli')      | Should -BeTrue
+        Test-RfAnyHostNeedsGit -Ids @('cursor-desktop','gemini-cli','claude-desktop') | Should -BeFalse
+    }
+}
+
+Describe 'Confirm-RfGitAvailable behavior' {
+    BeforeEach {
+        $script:rfHome = New-RfIsolatedHome
+        $Script:RfOptDryRun      = $false
+        $Script:RfOptNoInstallGit = $false
+        $Script:RfYes             = $false
+    }
+    AfterEach { Remove-RfIsolatedHome }
+
+    It 'returns true when git is on PATH (no winget invoked)' {
+        New-RfStubCommand -Name 'git' -ExitCode 0 -Stdout 'git version 2.43.0'
+        New-RfStubCommand -Name 'winget' -ExitCode 0
+        Confirm-RfGitAvailable | Should -BeTrue
+        (Get-RfStubCallCount -Name 'winget') | Should -Be 0
+    }
+
+    It 'returns true on non-Windows without gating' -Skip:$script:rfTestIsWindows {
+        # The macOS/Linux branch short-circuits to $true (git is assumed
+        # present; claude's own error guides the rare missing case).
+        Confirm-RfGitAvailable | Should -BeTrue
+    }
+
+    It '--no-install-git refuses without invoking winget (Windows)' -Skip:(-not $script:rfTestIsWindows) {
+        # git + pwsh both absent → would install, but --no-install-git blocks.
+        New-RfStubCommand -Name 'winget' -ExitCode 0
+        $Script:RfOptNoInstallGit = $true
+        Confirm-RfGitAvailable | Should -BeFalse
+        (Get-RfStubCallCount -Name 'winget') | Should -Be 0
     }
 }
 

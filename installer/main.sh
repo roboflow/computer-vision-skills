@@ -63,6 +63,7 @@ FLAGS
   --inline-key          Write key literally (global scope only)
   --auth-skip           Skip auth wiring; install everything else
   --no-install-node     Don't auto-install Node.js if missing; fail instead
+  --no-install-git      Don't auto-install git if missing; fail instead
   --update              Reconcile-only mode (also implicit on re-run)
   --uninstall           Remove Roboflow-managed components
   --dry-run             Print plan; no writes
@@ -113,6 +114,7 @@ RF_OPT_WORKSPACE=""
 RF_OPT_INLINE_KEY=0
 RF_OPT_AUTH_SKIP=0
 RF_OPT_NO_INSTALL_NODE=0
+RF_OPT_NO_INSTALL_GIT=0
 RF_OPT_MODE="install"          # install | update | uninstall
 RF_OPT_DRY_RUN=0
 RF_OPT_FORCE=0
@@ -138,6 +140,7 @@ rf::parse_args() {
             --inline-key) RF_OPT_INLINE_KEY=1 ;;
             --auth-skip) RF_OPT_AUTH_SKIP=1 ;;
             --no-install-node) RF_OPT_NO_INSTALL_NODE=1 ;;
+            --no-install-git) RF_OPT_NO_INSTALL_GIT=1 ;;
             --update) RF_OPT_MODE="update" ;;
             --uninstall) RF_OPT_MODE="uninstall" ;;
             --dry-run) RF_OPT_DRY_RUN=1 ;;
@@ -167,8 +170,8 @@ rf::parse_args() {
     fi
 
     export RF_OPT_API_KEY RF_OPT_WORKSPACE RF_OPT_AUTH_SKIP RF_OPT_INLINE_KEY \
-           RF_OPT_NO_INSTALL_NODE RF_OPT_SCOPE RF_OPT_DRY_RUN RF_OPT_FORCE \
-           RF_YES RF_INSTALLER_VERSION
+           RF_OPT_NO_INSTALL_NODE RF_OPT_NO_INSTALL_GIT RF_OPT_SCOPE RF_OPT_DRY_RUN \
+           RF_OPT_FORCE RF_YES RF_INSTALLER_VERSION
 }
 
 # --- host selection ------------------------------------------------------
@@ -340,6 +343,12 @@ rf::main() {
     if [[ "$RF_OPT_MODE" != "uninstall" ]] && rf::prereq::any_needs_node "${selected[@]}"; then
         if ! rf::prereq::ensure_npx; then
             rf::err "Node.js prerequisite not met; refusing to configure hosts that depend on it."
+            exit 1
+        fi
+    fi
+    if [[ "$RF_OPT_MODE" != "uninstall" ]] && rf::prereq::any_needs_git "${selected[@]}"; then
+        if ! rf::prereq::ensure_git; then
+            rf::err "git prerequisite not met; refusing to configure hosts that depend on it."
             exit 1
         fi
     fi

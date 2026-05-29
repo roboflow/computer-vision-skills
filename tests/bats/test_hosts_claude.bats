@@ -175,11 +175,14 @@ EOF
 }
 
 @test "claude install: missing claude exits non-zero with hint" {
-    # No stub — claude not on PATH.
-    
+    # No stub — claude not on PATH. The isolated_home helper sets
+    # RF_TEST_NO_DETECT_APPS=1 so the off-PATH install-dir probe doesn't find
+    # the developer's real claude at /usr/local/bin or /opt/homebrew/bin.
     run bash "$RF_REPO_ROOT/installer/main.sh" --yes --host=claude-code-cli
     [ "$status" -ne 0 ]
-    [[ "$output" == *"claude not found on PATH"* ]]
+    # Message reads "claude not found (PATH or any known install location)"
+    # since the off-PATH detection landed; match the stable prefix.
+    [[ "$output" == *"claude not found"* ]]
 }
 
 @test "claude install: marketplace-add nonzero is treated as warning" {

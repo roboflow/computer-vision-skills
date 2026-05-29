@@ -58,6 +58,7 @@ FLAGS (mirrors agents.sh; see docs/INSTALLER.md)
   --inline-key          Write key literally (global scope only)
   --auth-skip
   --no-install-node     Don't auto-install Node.js if missing; fail instead
+  --no-install-git      Don't auto-install Git for Windows if missing; fail instead
   --update / --uninstall
   --dry-run / --force / --force-skill=<name>
   --yes, -y
@@ -79,6 +80,7 @@ $Script:RfOptWorkspace      = ''
 $Script:RfOptInlineKey      = $false
 $Script:RfOptAuthSkip       = $false
 $Script:RfOptNoInstallNode  = $false
+$Script:RfOptNoInstallGit   = $false
 $Script:RfOptMode           = 'install'
 $Script:RfOptDryRun         = $false
 $Script:RfOptForce          = $false
@@ -116,6 +118,7 @@ function Invoke-RfParseArgs {
             '--inline-key'     { $Script:RfOptInlineKey  = $true; break }
             '--auth-skip'      { $Script:RfOptAuthSkip   = $true; break }
             '--no-install-node' { $Script:RfOptNoInstallNode = $true; break }
+            '--no-install-git'  { $Script:RfOptNoInstallGit = $true; break }
             '--update'         { $Script:RfOptMode       = 'update'; break }
             '--uninstall'      { $Script:RfOptMode       = 'uninstall'; break }
             '--dry-run'        { $Script:RfOptDryRun     = $true; break }
@@ -271,6 +274,12 @@ function Invoke-RfMain {
     if ($Script:RfOptMode -ne 'uninstall' -and (Test-RfAnyHostNeedsNode -Ids $selected)) {
         if (-not (Confirm-RfNpxAvailable)) {
             Write-RfErr 'Node.js prerequisite not met; refusing to configure hosts that depend on it.'
+            exit 1
+        }
+    }
+    if ($Script:RfOptMode -ne 'uninstall' -and (Test-RfAnyHostNeedsGit -Ids $selected)) {
+        if (-not (Confirm-RfGitAvailable)) {
+            Write-RfErr 'Git prerequisite not met; refusing to configure hosts that depend on it.'
             exit 1
         }
     }

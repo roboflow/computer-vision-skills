@@ -8,6 +8,13 @@ claude-desktop adapter writes the same bridge into the chat-tab config.
 
 $Script:RfPrereqNodeHosts = @('claude-code-cli', 'codex-cli', 'claude-desktop')
 
+# Hosts whose install path shells out to git — `plugin marketplace add
+# <repo>` clones the marketplace, and on Windows Claude Code also needs the
+# bash that Git for Windows bundles for its plugin/git operations. Only
+# enforced on Windows (git is effectively always present on dev macOS/Linux,
+# and there's no universal no-sudo installer there).
+$Script:RfPrereqGitHosts = @('claude-code-cli', 'codex-cli')
+
 function Test-RfHostNeedsNode {
     param([string]$Id)
     return $Script:RfPrereqNodeHosts -contains $Id
@@ -17,6 +24,19 @@ function Test-RfAnyHostNeedsNode {
     param([string[]]$Ids)
     foreach ($id in $Ids) {
         if (Test-RfHostNeedsNode -Id $id) { return $true }
+    }
+    return $false
+}
+
+function Test-RfHostNeedsGit {
+    param([string]$Id)
+    return $Script:RfPrereqGitHosts -contains $Id
+}
+
+function Test-RfAnyHostNeedsGit {
+    param([string[]]$Ids)
+    foreach ($id in $Ids) {
+        if (Test-RfHostNeedsGit -Id $id) { return $true }
     }
     return $false
 }
@@ -145,21 +165,126 @@ function Install-RfNodeWindows {
     # error ("server certificate did not match"). The Node.js LTS package
     # lives in the winget source anyway, so this only removes a flaky path.
     Write-RfStep 'winget install OpenJS.NodeJS.LTS --source winget --silent'
-    & winget install --id OpenJS.NodeJS.LTS --source winget `
-        --accept-source-agreements --accept-package-agreements --silent 2>&1 |
-        ForEach-Object { Write-Host $_ }
+    # Invoke-RfNative so winget's stderr progress doesn't throw under the
+    # script-wide ErrorActionPreference=Stop.
+    $code = Invoke-RfNative -FilePath 'winget' -Arguments @(
+        'install', '--id', 'OpenJS.NodeJS.LTS', '--source', 'winget',
+        '--accept-source-agreements', '--accept-package-agreements', '--silent')
     # Don't trust the exit code by itself — winget can return non-zero when
     # a secondary source fails or a UAC prompt was suppressed, even though
     # the actual install succeeded. Verify by disk in the caller via
     # Find-RfNpx.
-    if ($LASTEXITCODE -ne 0) {
-        Write-RfWarn "winget reported non-zero exit ($LASTEXITCODE); verifying install state regardless"
+    if ($code -ne 0) {
+        Write-RfWarn "winget reported non-zero exit ($code); verifying install state regardless"
     }
-    # Refresh PATH from both registry hives. winget's Node install writes
-    # to the Machine hive when system-scope, User hive when user-scope.
+    Update-RfSessionPathFromRegistry
+    return $true
+}
+
+# Update-RfSessionPathFromRegistry — rebuild $env:PATH from the persisted
+# Machine + User hives so a just-completed winget install (which writes to
+# one of those hives) is visible to the current process without a restart.
+function Update-RfSessionPathFromRegistry {
+    if (-not (Test-RfWindows)) { return }
     $machinePath = [Environment]::GetEnvironmentVariable('PATH', 'Machine')
     $userPath    = [Environment]::GetEnvironmentVariable('PATH', 'User')
-    $merged = @($machinePath, $userPath) | Where-Object { $_ } | ForEach-Object { $_ }
+    $merged = @($machinePath, $userPath) | Where-Object { $_ }
     if ($merged) { $env:PATH = ($merged -join ';') }
+}
+
+# Confirm-RfGitAvailable — Claude Code / Codex shell out to git for plugin
+# marketplace operations, and on Windows Claude Code wants either Git for
+# Windows (bash) or PowerShell 7. If neither git nor pwsh is present, offer
+# to install Git for Windows via winget. Windows-only; on other platforms
+# git is assumed present (returns $true). Returns $true if the requirement
+# is satisfied (now or after install). Respects $Script:RfOptNoInstallGit
+# and $Script:RfYes.
+function Confirm-RfGitAvailable {
+    if (-not (Test-RfWindows)) {
+        # macOS/Linux: git is effectively always present; if it somehow
+        # isn't, claude's own error will guide the user. Don't gate.
+        return $true
+    }
+    if (Test-RfOnPath 'git') {
+        Write-RfDim '  git detected (Claude Code plugin/git operations satisfied)'
+        return $true
+    }
+    if (Test-RfOnPath 'pwsh') {
+        Write-RfDim '  PowerShell 7 (pwsh) detected (Claude Code shell requirement satisfied)'
+        return $true
+    }
+
+    Write-RfWarn 'git is required for Claude Code / Codex plugin operations on Windows.'
+    Write-RfInfo 'Claude Code clones the plugin marketplace with git and needs a POSIX'
+    Write-RfInfo 'shell (Git for Windows bundles bash). Manual install: https://git-scm.com/download/win'
+
+    if ($Script:RfOptNoInstallGit) {
+        Write-RfErr '--no-install-git set; install Git for Windows manually and re-run.'
+        return $false
+    }
+
+    if ($Script:RfOptDryRun) {
+        Write-RfInfo '[dry-run] would install Git for Windows via winget (Git.Git)'
+        return $true
+    }
+
+    if (-not $Script:RfYes) {
+        if (-not (Confirm-Rf -Prompt 'Install Git for Windows now via winget (Git.Git)?' -DefaultAnswer 'y')) {
+            Write-RfErr 'Git is required to configure Claude Code. Install it from https://git-scm.com/download/win and re-run.'
+            return $false
+        }
+    }
+
+    if (-not (Install-RfGitWindows)) {
+        Write-RfErr 'Git install failed. Install manually from https://git-scm.com/download/win and re-run.'
+        return $false
+    }
+
+    $gitPath = Find-RfGit
+    if ($gitPath) {
+        # Prepend git's dir so the claude/codex child processes we spawn
+        # next inherit it without a shell restart.
+        $dir = Split-Path -Parent $gitPath
+        if ($dir -and (($env:PATH -split ';') -notcontains $dir)) {
+            $env:PATH = "$dir;$env:PATH"
+        }
+        Write-RfOk "Git installed: $gitPath"
+        return $true
+    }
+    Write-RfErr 'Git installer reported success but git still not found. Open a new PowerShell window and re-run agents.ps1.'
+    return $false
+}
+
+# Find-RfGit — locate git.exe, tolerating Get-Command's per-session cache
+# and the just-installed-but-PATH-not-refreshed case. Returns a single path
+# string or $null.
+function Find-RfGit {
+    $cmds = @(Get-Command git -CommandType Application -ErrorAction SilentlyContinue)
+    if ($cmds.Count -gt 0) { return [string]$cmds[0].Source }
+    if (-not (Test-RfWindows)) { return $null }
+    $candidates = @(
+        (Join-Path $env:ProgramFiles 'Git\cmd\git.exe'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Git\cmd\git.exe'),
+        (Join-Path $env:LOCALAPPDATA 'Programs\Git\cmd\git.exe')
+    )
+    foreach ($c in $candidates) {
+        if ($c -and (Test-Path -LiteralPath $c)) { return [string]$c }
+    }
+    return $null
+}
+
+function Install-RfGitWindows {
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        Write-RfErr 'winget not available — install Git for Windows manually from https://git-scm.com/download/win'
+        return $false
+    }
+    Write-RfStep 'winget install Git.Git --source winget --silent'
+    $code = Invoke-RfNative -FilePath 'winget' -Arguments @(
+        'install', '--id', 'Git.Git', '--source', 'winget',
+        '--accept-source-agreements', '--accept-package-agreements', '--silent')
+    if ($code -ne 0) {
+        Write-RfWarn "winget reported non-zero exit ($code); verifying install state regardless"
+    }
+    Update-RfSessionPathFromRegistry
     return $true
 }
