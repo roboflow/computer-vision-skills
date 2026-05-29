@@ -135,7 +135,11 @@ function Resolve-RfClaudeCliPath {
     }
 
     # 4. macOS / Linux off-PATH install locations.
-    if (Test-RfMacOS -or Test-RfLinux) {
+    # Same suppression flag the Windows block uses, so the Pester suite's
+    # "no agents installed" tests pass on a dev Mac that has a real
+    # /usr/local/bin/claude.
+    if ((Test-RfMacOS) -or (Test-RfLinux)) {
+        if ($env:RF_TEST_NO_DETECT_APPS -eq '1') { return $null }
         $unixFallbacks = @()
         $share = Join-Path $HOME '.local/share/anthropic-claude/claude-code'
         if (Test-Path -LiteralPath $share) {

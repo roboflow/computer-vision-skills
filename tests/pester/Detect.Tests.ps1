@@ -33,9 +33,13 @@ Describe 'Resolve-RfClaudeCliPath' {
         New-Item -ItemType Directory -Path $env:LOCALAPPDATA -Force | Out-Null
         # New-RfIsolatedHome sets RF_TEST_NO_DETECT_APPS=1 (desktop-app
         # suppression), but this Describe is *testing* the install-dir
-        # probe specifically. Clear the flag inside the controlled APPDATA
-        # so we exercise the code under test.
-        Remove-Item Env:RF_TEST_NO_DETECT_APPS -ErrorAction SilentlyContinue
+        # probe specifically. Clear the flag on Windows so we exercise the
+        # code under test. On Unix, leave it set so the macOS fallback
+        # (/usr/local/bin/claude, /opt/homebrew/bin/claude) doesn't pick up
+        # a real dev-box install during the "claude is nowhere" test.
+        if ($script:rfTestIsWindows) {
+            Remove-Item Env:RF_TEST_NO_DETECT_APPS -ErrorAction SilentlyContinue
+        }
     }
     AfterEach {
         $env:APPDATA      = $script:origAppData
@@ -175,7 +179,12 @@ Describe 'Test-RfHostClaudeCodeCli' {
         $env:LOCALAPPDATA = Join-Path $script:rfHome 'AppData/Local'
         New-Item -ItemType Directory -Path $env:APPDATA      -Force | Out-Null
         New-Item -ItemType Directory -Path $env:LOCALAPPDATA -Force | Out-Null
-        Remove-Item Env:RF_TEST_NO_DETECT_APPS -ErrorAction SilentlyContinue
+        # Clear on Windows so the install-dir probe runs against our fake
+        # APPDATA; leave set on Unix so a real /usr/local/bin/claude doesn't
+        # leak into "not installed" expectations.
+        if ($script:rfTestIsWindows) {
+            Remove-Item Env:RF_TEST_NO_DETECT_APPS -ErrorAction SilentlyContinue
+        }
     }
     AfterEach {
         $env:APPDATA      = $script:origAppData
