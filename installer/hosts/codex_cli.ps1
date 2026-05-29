@@ -23,8 +23,8 @@ function Install-RfHostCodexCli {
     }
 
     Write-RfStep "codex plugin marketplace add $repo"
-    & codex plugin marketplace add $repo 2>&1 | ForEach-Object { Write-Host $_ }
-    if ($LASTEXITCODE -ne 0) {
+    $code = Invoke-RfNative -FilePath 'codex' -Arguments @('plugin', 'marketplace', 'add', $repo)
+    if ($code -ne 0) {
         Write-RfWarn "marketplace add reported a non-zero exit (may already be registered); continuing"
     }
 
@@ -65,8 +65,8 @@ function Uninstall-RfHostCodexCli {
         Write-RfInfo "[dry-run] would run: codex plugin marketplace remove roboflow"
         return $true
     }
-    & codex plugin marketplace remove roboflow 2>&1 | ForEach-Object { Write-Host $_ }
-    if ($LASTEXITCODE -eq 0) {
+    $code = Invoke-RfNative -FilePath 'codex' -Arguments @('plugin', 'marketplace', 'remove', 'roboflow')
+    if ($code -eq 0) {
         Write-RfOk "removed Roboflow marketplace from $Script:RfHostLabel"
     } else {
         Write-RfWarn "codex plugin marketplace remove reported a non-zero exit (may not have been registered)"

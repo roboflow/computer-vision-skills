@@ -146,6 +146,24 @@ function Update-RfClaudeCodePluginCache {
     return $true
 }
 
+# Write-RfHostShellHintWindows — Claude Code's plugin/git operations on
+# Windows shell out to a POSIX-ish environment: it wants either Git for
+# Windows (which bundles bash) or PowerShell 7+ (pwsh). Windows PowerShell
+# 5.1 alone isn't enough, and claude's own error ("requires either Git for
+# Windows (for bash) or PowerShell") is the tell. When `claude plugin
+# install` fails on Windows and neither is present, surface the fix instead
+# of leaving claude's raw error as the last word. Silent when a shell is
+# present (the failure was something else) or off-Windows.
+function Write-RfHostShellHintWindows {
+    if (-not (Test-RfWindows)) { return }
+    if ((Test-RfOnPath 'git') -or (Test-RfOnPath 'pwsh')) { return }
+    Write-RfWarn 'Claude Code needs a POSIX shell for plugin/git operations on Windows.'
+    Write-RfInfo 'Install one of these, then re-run agents.ps1:'
+    Write-RfInfo '  - Git for Windows (bundles bash):  winget install Git.Git'
+    Write-RfInfo '  - PowerShell 7+ (pwsh):            winget install Microsoft.PowerShell'
+    Write-RfDim '  (claude-desktop chat-tab MCP was configured regardless — it does not need this.)'
+}
+
 function Install-RfHostClaudeCodeCli {
     Write-RfHeader "Installing Roboflow plugin for $Script:RfHostLabel"
 
@@ -171,15 +189,16 @@ function Install-RfHostClaudeCodeCli {
     }
 
     Write-RfStep "claude plugin marketplace add $repo"
-    & $claude plugin marketplace add $repo 2>&1 | ForEach-Object { Write-Host $_ }
-    if ($LASTEXITCODE -ne 0) {
+    $code = Invoke-RfNative -FilePath $claude -Arguments @('plugin', 'marketplace', 'add', $repo)
+    if ($code -ne 0) {
         Write-RfWarn 'marketplace add reported a non-zero exit (may already be registered); continuing'
     }
 
     Write-RfStep ("claude plugin install roboflow {0}" -f ($scopeFlags -join ' '))
-    & $claude plugin install roboflow @scopeFlags 2>&1 | ForEach-Object { Write-Host $_ }
-    if ($LASTEXITCODE -ne 0) {
+    $code = Invoke-RfNative -FilePath $claude -Arguments (@('plugin', 'install', 'roboflow') + $scopeFlags)
+    if ($code -ne 0) {
         Write-RfErr 'claude plugin install failed'
+        Write-RfHostShellHintWindows
         return $false
     }
 
@@ -217,8 +236,8 @@ function Uninstall-RfHostClaudeCodeCli {
         Write-RfInfo '[dry-run] would run: claude plugin remove roboflow'
         return $true
     }
-    & $claude plugin remove roboflow 2>&1 | ForEach-Object { Write-Host $_ }
-    if ($LASTEXITCODE -eq 0) {
+    $code = Invoke-RfNative -FilePath $claude -Arguments @('plugin', 'remove', 'roboflow')
+    if ($code -eq 0) {
         Write-RfOk "removed Roboflow plugin from $Script:RfHostLabel"
     } else {
         Write-RfWarn 'claude plugin remove reported a non-zero exit (plugin may not have been installed)'

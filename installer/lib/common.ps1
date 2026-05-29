@@ -109,6 +109,29 @@ function Test-RfOnPath {
     return [bool](Get-Command -Name $Command -CommandType Application, ExternalScript -ErrorAction SilentlyContinue)
 }
 
+# Invoke-RfNative — run a native command, stream its stdout+stderr to the
+# host, and RETURN its exit code for the caller to branch on.
+#
+# Why this exists: main.ps1 sets $ErrorActionPreference='Stop' for bash-like
+# fail-fast on *our* cmdlet errors. But `& native.exe ... 2>&1` turns every
+# stderr line the native program writes into an ErrorRecord, and under 'Stop'
+# the first one throws a terminating exception — even when the program exits
+# 0. claude/codex routinely print progress and warnings to stderr, so the
+# inline `& $claude ... 2>&1 | %{ Write-Host $_ }` pattern would abort the
+# whole run on the first stderr line, before we ever reached the
+# `if ($LASTEXITCODE -ne 0)` check. We want exit-code-driven control flow for
+# these, so localize the preference to 'Continue' (function scope only; the
+# caller's 'Stop' is untouched) and hand back the code.
+function Invoke-RfNative {
+    param(
+        [Parameter(Mandatory)][string]$FilePath,
+        [string[]]$Arguments = @()
+    )
+    $ErrorActionPreference = 'Continue'
+    & $FilePath @Arguments 2>&1 | ForEach-Object { Write-Host $_ }
+    return $LASTEXITCODE
+}
+
 function Get-RfHomeDir {
     return $HOME
 }
