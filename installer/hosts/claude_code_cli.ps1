@@ -95,7 +95,10 @@ function Update-RfClaudeCodePluginCache {
 
     $mcpFiles = @()
     foreach ($root in $existingRoots) {
-        $mcpFiles += @(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '.mcp.json' -ErrorAction SilentlyContinue)
+        # -Force so dot-prefixed files (hidden on macOS/Linux) are included;
+        # the file is literally .mcp.json so without -Force the recursion
+        # silently returns zero matches under HOME on Unix.
+        $mcpFiles += @(Get-ChildItem -LiteralPath $root -Recurse -File -Force -Filter '.mcp.json' -ErrorAction SilentlyContinue)
     }
     if ($mcpFiles.Count -eq 0) {
         Write-RfWarn ("no plugin .mcp.json found under: {0}" -f ($existingRoots -join ', '))
