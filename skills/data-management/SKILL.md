@@ -205,7 +205,7 @@ Prefab MCP apps (`create_project_app`) exist when parameters are unclear, you ne
 | `projects_create` | Create a new project (specify type, annotation group) |
 | `projects_list` / `projects_get` | List or get project details |
 | `images_search` | Search images using RoboQL filters |
-| `images_prepare_upload` | Prepare image upload to a project |
+| `image_upload` / `image_upload_status` | Prepare zip image upload and poll status |
 | `versions_generate` | Generate a dataset version with preprocessing/augmentation |
 | `versions_get` | Inspect a version |
 | `versions_export` | Export a version in a given format |
