@@ -3,7 +3,7 @@
     "roboflow": {
       "type": "http",
       "url": "https://mcp.roboflow.com/mcp",
-"note": "Official Roboflow MCP server. Set ROBOFLOW_API_KEY in the agent environment so plugin-managed MCP requests can authenticate."
+      "note": "Official Roboflow MCP server. Set ROBOFLOW_API_KEY in the agent environment so plugin-managed MCP requests can authenticate."
     }
   }
 }
