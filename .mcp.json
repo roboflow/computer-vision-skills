@@ -2,12 +2,7 @@
   "mcpServers": {
     "roboflow": {
       "type": "http",
-      "url": "https://mcp.roboflow.com/mcp",
-      "headers": {
-        "x-api-key": "${ROBOFLOW_API_KEY}",
-        "Accept": "application/json, text/event-stream"
-      },
-      "note": "Official Roboflow MCP server. Set ROBOFLOW_API_KEY in the agent environment so plugin-managed MCP requests can authenticate."
+      "url": "https://mcp.roboflow.com/mcp"
     }
   }
 }
