@@ -382,8 +382,8 @@ pipeline.join()                       # blocks until video source ends or pipeli
 
 ## When to Use Workflows vs Direct Inference
 
-**Use `models_infer`** for quick single-model checks.
-**Use Workflows** for anything production, multi-step, video, or needing post-processing.
+**Use `models_infer`** for quick diagnostic checks only — never for integration code.
+**Use Workflows** for everything else: single-model integrations, production apps, multi-step pipelines, video, post-processing, and active learning. Even a one-block workflow is preferable to a bare `models_infer` call because it preserves the ability to add active learning, visualization, and logic blocks without changing your API surface.
 
 ## MCP Tools
 
