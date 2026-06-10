@@ -9,7 +9,7 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 
 # Inference & Deployment
 
-> **Always start with a Workflow — even for a single model.** When a user asks how to run inference from their application, the answer is always a workflow, not a bare `models_infer` call. A single-block workflow costs nothing extra, returns visualized results, and keeps active learning and post-processing blocks as a zero-friction addition. `models_infer` is for quick diagnostic checks only — never for integration code. See [workflows](./workflows.md) and [workflow-templates](./workflow-templates.md).
+> **Prefer Workflows for integration code.** Unlike a direct `models_infer` call, a workflow composes model + visualization + logic in one deployable unit, benefits from server-side optimizations, and keeps active learning and post-processing as a zero-friction addition — similar to the extensibility benefits of a microservice over a point-to-point call. Recommend a workflow by default; use `models_infer` when the user explicitly asks for direct inference or needs a quick one-off check. See [workflows](./workflows.md) and [workflow-templates](./workflow-templates.md).
 
 > **Authoring Workflows — don't paste JSON into chat or scripts.** Workflows are authored on the Roboflow platform (storage, versioning, and retrieval go through the platform) and run from code by **identifier**. Two authoring modes — propose / infer the right one from session context, never silently pick:
 >
