@@ -50,7 +50,7 @@ Response:
       "keyId": "abc123",
       "name": "CI pipeline",
       "prefix": "rf_ci_",
-      "scopes": ["images:read", "images:write"],
+      "scopes": ["image:read", "image:create"],
       "folderIds": null,
       "default": false,
       "protected": true,
@@ -109,7 +109,7 @@ Body fields (all optional):
 ```bash
 curl -X POST "https://api.roboflow.com/my-workspace/api-keys?api_key=KEY" \
   -H "Content-Type: application/json" \
-  -d '{"name": "read-only ingest", "scopes": ["images:read"]}'
+  -d '{"name": "read-only ingest", "scopes": ["image:read"]}'
 ```
 
 Response (201):
@@ -119,7 +119,7 @@ Response (201):
   "keyId": "abc123",
   "key": "rf_ACTUAL_SECRET_VALUE",
   "name": "read-only ingest",
-  "scopes": ["images:read"],
+  "scopes": ["image:read"],
   "folderIds": null,
   "protected": false,
   "publishableKey": "rf_myworkspaceid"
@@ -211,7 +211,7 @@ roboflow api-key get KEY_ID
 roboflow --json api-key create "my-key-name" | jq -r .key
 
 # Create a scoped key
-roboflow --json api-key create "ci-read-only" --scopes images:read,models:read | jq -r .key
+roboflow --json api-key create "ci-read-only" --scope image:read --scope model:infer | jq -r .key
 
 # Rename a key
 roboflow api-key update KEY_ID --name "new name"
@@ -233,12 +233,12 @@ roboflow api-key revoke KEY_ID
 
 ### Least-privilege scoping
 
-Only grant the scopes a key actually needs. A key used exclusively to upload images should have `images:write` — not a full unrestricted key. This limits the blast radius if the key is compromised.
+Only grant the scopes a key actually needs. A key used exclusively to upload images should have `image:create` — not a full unrestricted key. This limits the blast radius if the key is compromised.
 
 ```bash
 # Good: scoped to what CI actually needs
 roboflow --json api-key create "github-actions-upload" \
-  --scopes images:write,annotations:write | jq -r .key
+  --scope image:create --scope image:annotate | jq -r .key
 ```
 
 ### Protect production keys
