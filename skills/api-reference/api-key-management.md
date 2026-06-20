@@ -99,7 +99,7 @@ Body fields (all optional):
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | Human-readable label |
-| `scopes` | string[] or null | Scope strings to grant; omit or `null` for a full key |
+| `scopes` | string[] or null | Scope strings to grant (or `role:<name>` presets). Omit to inherit the calling credential's scopes; `null` for full access (if the caller has it); `[]` for no abilities |
 | `folderIds` | string[] | Restrict key to specific folders (requires Advanced API Keys) |
 | `custom_metadata` | object | Arbitrary key-value metadata |
 | `protected` | bool | Mark as protected (cannot be disabled/revoked without dashboard action) |
