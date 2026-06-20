@@ -168,6 +168,10 @@ pip install roboflow
 roboflow import -w my-workspace -p my-project /path/to/images/
 ```
 
+## API Key Management
+
+See [api-key-management.md](api-key-management.md) for creating and managing API keys via REST, MCP tools, and the Python CLI — including scoped keys, key rotation, and the publishable key.
+
 ## Error Responses
 
 | Status | Meaning |
