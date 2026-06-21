@@ -134,15 +134,24 @@ Response (201):
 PATCH /:workspace/api-keys/:keyId
 ```
 
-Body fields (all optional):
+Body fields (all optional — send only the fields you want to change):
 
 | Field | Type | Notes |
 |-------|------|-------|
 | `name` | string | Rename the key |
-| `scopes` | string[] | Replace scope list |
-| `custom_metadata` | object | Replace metadata |
+| `scopes` | `string[] \| null` | Replace the key's scopes (tri-state — see below). Requires Advanced API Keys |
+| `custom_metadata` | object | Replace the key's metadata. Requires Advanced API Keys |
 | `protected` | bool | Set to `true` only — unprotect is dashboard-only |
-| `disabled` | bool | Temporarily disable or re-enable |
+| `disabled` | bool | Temporarily disable or re-enable. Requires Advanced API Keys |
+
+**The three states of `scopes`** (PATCH replaces, so omitting the field leaves scopes unchanged):
+
+- **Omitted** - the key's existing scopes are left unchanged.
+- **`null`** - the key becomes **full access** (unscoped). Use this to widen a scoped key back to full access; the caller must itself hold full access to grant it.
+- **`[]`** (empty array) - the key stays a valid credential but has **no abilities**.
+- **`["model:infer", ...]`** - **replaces** the scopes with exactly this set (a section name like `model` expands to all of that section's scopes).
+
+Sending `scopes` (including `[]` or `null`), `custom_metadata`, or `disabled` requires the **Advanced API Keys** plan feature.
 
 ```bash
 curl -X PATCH "https://api.roboflow.com/my-workspace/api-keys/abc123?api_key=KEY" \
