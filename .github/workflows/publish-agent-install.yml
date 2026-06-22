@@ -22,15 +22,54 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # Requiring an environment lets us add manual approval / restrict to main
-    # via the repo's environment protection rules without touching this file.
-    environment: agent-install-prod
+    strategy:
+      # Don't let one region's failure abort the others; each target is
+      # independent (different GCP project + WIF binding + bucket).
+      fail-fast: false
+      matrix:
+        include:
+          # US prod (existing behavior — unchanged).
+          - name: us-prod
+            bucket_name: roboflow-platform-agent-install
+            project: roboflow-platform
+            oidc_project_id: "481589474394"
+            service_account: gha-computer-vision-skills
+            wif_pool_id: github-actions
+            # Requiring an environment lets us add manual approval / restrict to
+            # main via the repo's environment protection rules without touching
+            # this file. Only US prod has an environment defined today.
+            environment: agent-install-prod
+          # EU staging. Depends on roboflow-infra PR #2208, which creates the
+          # gha-computer-vision-skills SA + WIF binding in roboflow-eu-staging.
+          # No GitHub environment is set: a non-existent environment: would
+          # block the job. Create an agent-install-eu-staging environment later
+          # if approval gating is desired.
+          - name: eu-staging
+            bucket_name: roboflow-eu-staging-agent-install
+            project: roboflow-eu-staging
+            oidc_project_id: "1044450058029"
+            service_account: gha-computer-vision-skills
+            wif_pool_id: github-actions
+            environment: ""
+          # EU prod. Depends on roboflow-infra PR #2208, which creates the
+          # gha-computer-vision-skills SA + WIF binding in roboflow-eu-platform.
+          # No GitHub environment is set (see eu-staging note above).
+          - name: eu-prod
+            bucket_name: roboflow-eu-platform-agent-install
+            project: roboflow-eu-platform
+            oidc_project_id: "563150022949"
+            service_account: gha-computer-vision-skills
+            wif_pool_id: github-actions
+            environment: ""
+    name: publish (${{ matrix.name }})
+    # When matrix.environment is "", GitHub treats this as no environment gate.
+    environment: ${{ matrix.environment }}
     env:
-      BUCKET_NAME: roboflow-platform-agent-install
-      PROJECT: roboflow-platform
-      OIDC_PROJECT_ID: "481589474394"
-      SERVICE_ACCOUNT: gha-computer-vision-skills
-      WIF_POOL_ID: github-actions
+      BUCKET_NAME: ${{ matrix.bucket_name }}
+      PROJECT: ${{ matrix.project }}
+      OIDC_PROJECT_ID: ${{ matrix.oidc_project_id }}
+      SERVICE_ACCOUNT: ${{ matrix.service_account }}
+      WIF_POOL_ID: ${{ matrix.wif_pool_id }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
