@@ -41,9 +41,10 @@ jobs:
             environment: agent-install-prod
           # EU staging. Depends on roboflow-infra PR #2208, which creates the
           # gha-computer-vision-skills SA + WIF binding in roboflow-eu-staging.
-          # No GitHub environment is set: a non-existent environment: would
-          # block the job. Create an agent-install-eu-staging environment later
-          # if approval gating is desired.
+          # environment is intentionally "" (no gate). Note: referencing a
+          # non-existent environment does NOT block the job — GitHub auto-creates
+          # it with no protection rules — so add a protected
+          # agent-install-eu-staging environment if approval gating is desired.
           - name: eu-staging
             bucket_name: roboflow-eu-staging-agent-install
             project: roboflow-eu-staging
