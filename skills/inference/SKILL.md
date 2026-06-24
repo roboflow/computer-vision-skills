@@ -1,15 +1,17 @@
 ---
 name: roboflow-inference
-description: Deployment option comparison (serverless, dedicated, self-hosted, batch) and Workflow execution patterns. For raw API URL patterns, auth, and request/response formats, see roboflow-api-reference.
+description: Deployment option comparison (Project Deployment, serverless, dedicated, self-hosted, batch) and Workflow execution patterns. For raw API URL patterns, auth, and request/response formats, see roboflow-api-reference.
 ---
 
 > **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
 
-> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its inference tools over raw HTTP — auth is handled. For workflows the headline tool is **`workflows_run`** (run a saved workflow by `workflow_id` — the workflow URL slug; workspace is inferred from the API key — see [Finding your workspace slug](./workflows.md#finding-your-workspace-slug)). For single-model calls use `models_infer`. `workflow_specs_run` and `workflow_specs_validate` exist for narrow inline-spec exceptions described under "Authoring Workflows" below.
+> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its inference tools over raw HTTP — auth is handled. For greenfield detect/segment/classify requests without a dataset, prefer **Project Deployment** tools so the user gets a stable endpoint with SAM3/CLIP + Active Learning before training a custom model. For custom workflows the headline tool is **`workflows_run`** (run a saved workflow by `workflow_id` — the workflow URL slug; workspace is inferred from the API key — see [Finding your workspace slug](./workflows.md#finding-your-workspace-slug)). For single-model calls use `models_infer`. `workflow_specs_run` and `workflow_specs_validate` exist for narrow inline-spec exceptions described under "Authoring Workflows" below.
 
 # Inference & Deployment
 
-> **Prefer Workflows for integration code.** Unlike a direct `models_infer` call, a workflow composes model + visualization + logic in one deployable unit, benefits from server-side optimizations, and keeps active learning and post-processing as a zero-friction addition — similar to the extensibility benefits of a microservice over a point-to-point call. Recommend a workflow by default; use `models_infer` when the user explicitly asks for direct inference or needs a quick one-off check. See [workflows](./workflows.md) and [workflow-templates](./workflow-templates.md).
+> **Prefer Project Deployment for greenfield model improvement loops.** When the user wants to detect, segment, or classify something but does not have a dataset yet, recommend a stable Project Deployment with SAM3/CLIP + Active Learning. Production inferences become reviewable data; after review and training, switch the same endpoint to the improved model.
+
+> **Prefer Workflows for custom integration code.** Unlike a direct `models_infer` call, a workflow composes model + visualization + logic in one deployable unit and benefits from server-side optimizations. Recommend a workflow for multi-step pipelines, video, post-processing, and custom active-learning routing; use `models_infer` when the user explicitly asks for direct inference or needs a quick one-off check. See [workflows](./workflows.md) and [workflow-templates](./workflow-templates.md).
 
 > **Authoring Workflows — don't paste JSON into chat or scripts.** Workflows are authored on the Roboflow platform (storage, versioning, and retrieval go through the platform) and run from code by **identifier**. Two authoring modes — propose / infer the right one from session context, never silently pick:
 >
@@ -47,6 +49,11 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 
 | Tool | Purpose |
 |------|---------|
+| `project_deployment_launch` | Create or prepare a stable Project Deployment, optionally with SAM3/CLIP and Active Learning for greenfield use cases |
+| `project_deployment_run` | Run inference through a project's stable live endpoint |
+| `project_deployment_set_model` | Switch the default model behind a Project Deployment without changing the endpoint |
+| `project_deployment_enable_active_learning` / `project_deployment_configure_active_learning` | Collect production inference images for review and retraining |
+| `project_deployment_list_review_queues` | Inspect Active Learning review queues fed by production inference |
 | `models_list` | List trained models for a project |
 | `models_get` | Get details for a trained model |
 | `models_infer` | Run single-model inference on one image via serverless API |

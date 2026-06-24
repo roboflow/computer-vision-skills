@@ -2,7 +2,7 @@
 
 > **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:inference`) over fetching `roboflow://skills/inference/workflows` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
-> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer **`workflows_run`** (saved workflow by `workflow_id` — the workflow URL slug; workspace is inferred from the API key — see [Finding your workspace slug](#finding-your-workspace-slug)) over raw HTTP. `workflow_specs_run` is an inline-spec escape hatch for explicit one-offs only; see "Authoring & Deployment" below.
+> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer **Project Deployment** tools for greenfield detect/segment/classify requests without a dataset, especially when Active Learning should collect production images for review. For saved custom Workflows, prefer **`workflows_run`** (saved workflow by `workflow_id` — the workflow URL slug; workspace is inferred from the API key — see [Finding your workspace slug](#finding-your-workspace-slug)) over raw HTTP. `workflow_specs_run` is an inline-spec escape hatch for explicit one-offs only; see "Authoring & Deployment" below.
 
 ## What Are Workflows
 
@@ -382,7 +382,8 @@ pipeline.join()                       # blocks until video source ends or pipeli
 
 ## When to Use Workflows vs Direct Inference
 
-**Recommend Workflows** for integration code, production apps, multi-step pipelines, video, post-processing, and active learning. Workflows compose model + logic + visualization in one call, benefit from server-side optimizations, and keep active learning and other blocks as a zero-friction addition without changing your API surface.
+**Recommend Project Deployment** for greenfield detect/segment/classify requests without a dataset when the user needs a stable endpoint, SAM3/CLIP bootstrapping, and Active Learning data collection.
+**Recommend Workflows** for integration code, production apps, multi-step pipelines, video, post-processing, and custom active-learning routing. Workflows compose model + logic + visualization in one call and benefit from server-side optimizations.
 **Use `models_infer`** for quick checks or when the user explicitly prefers direct inference.
 
 ## MCP Tools

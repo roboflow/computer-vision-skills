@@ -64,7 +64,7 @@ Model not good enough?
 
 | Action | How in Roboflow |
 |---|---|
-| **Production pipeline (active learning)** | If you have a deployed workflow, add a Dataset Upload block to pipe production images back to your project automatically. Best for capturing real-world distribution. See `roboflow://skills/training-and-evaluation/active-learning` |
+| **Production pipeline (active learning)** | Enable Project Deployment Active Learning so production inference images become reviewable data for annotation, retraining, and model improvement. Best for capturing real-world distribution. See `roboflow://skills/training-and-evaluation/active-learning` |
 | Fork from Universe | Universe > find similar dataset > fork to your project. Adds labeled images directly |
 | AI Labeling | Upload unlabeled images > use AI-assisted labeling to annotate faster |
 | Augmentation | Version settings > enable flip, rotation, crop, mosaic, etc. to synthetically expand training set |
@@ -144,4 +144,4 @@ Both are mAP@50. Cast to number before comparing.
 
 ## Related Pages
 
-- `roboflow://skills/training-and-evaluation/active-learning` — set up a production feedback loop with the Dataset Upload workflow block
+- `roboflow://skills/training-and-evaluation/active-learning` — set up a production feedback loop with Project Deployment Active Learning
