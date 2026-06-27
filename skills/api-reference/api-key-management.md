@@ -106,6 +106,12 @@ Body fields (all optional):
 
 `scopes`, `folderIds`, and `custom_metadata` require the **Advanced API Keys** plan feature. A new key can never exceed the caller's own abilities.
 
+**Who can create keys.** The acting credential may create keys only if it is **unscoped** (full access) or was granted the `api-key:create` scope; an OAuth token also needs the `create_api_key` permission. On workspaces with **Advanced API Keys**, new keys created from the dashboard are **scoped** (not full access) and `api-key:create` is **off by default** — include it explicitly only if the key must manage keys.
+
+**Scopes are stored as explicit leaves.** A section name (e.g. `model`) or a `role:<name>` preset is expanded to its current leaf scopes at create time, so a key never auto-gains an ability added to that group later — request the new scope explicitly when you need it.
+
+**A workspace-wide key** (no `folderIds`) requires the caller to have access to **all** folders in the workspace; otherwise scope the key to specific `folderIds` you can access.
+
 ```bash
 curl -X POST "https://api.roboflow.com/my-workspace/api-keys?api_key=KEY" \
   -H "Content-Type: application/json" \
