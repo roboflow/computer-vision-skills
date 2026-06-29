@@ -43,6 +43,14 @@ def _read_json(path: Path, errors: list[str]) -> Any:
         return None
 
 
+def _read_text(path: Path, errors: list[str]) -> str | None:
+    try:
+        return path.read_text(encoding="utf-8")
+    except Exception as exc:  # noqa: BLE001 - validation reports all read failures.
+        errors.append(f"{path.relative_to(ROOT)} could not be read: {exc}")
+        return None
+
+
 def _iter_text_files() -> list[Path]:
     files: list[Path] = []
     for pattern in TEXT_GLOBS:
@@ -95,7 +103,9 @@ def validate_codex_manifest(errors: list[str]) -> None:
 
 
 def validate_readme(errors: list[str]) -> None:
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme = _read_text(ROOT / "README.md", errors)
+    if readme is None:
+        return
     if "codex plugin add roboflow@roboflow" not in readme:
         errors.append("README.md must document `codex plugin add roboflow@roboflow`")
     if "python scripts/validate_plugin.py" not in readme:
@@ -103,7 +113,9 @@ def validate_readme(errors: list[str]) -> None:
 
 
 def validate_pricing(errors: list[str]) -> None:
-    pricing = (ROOT / "skills/plans-and-pricing/SKILL.md").read_text(encoding="utf-8")
+    pricing = _read_text(ROOT / "skills/plans-and-pricing/SKILL.md", errors)
+    if pricing is None:
+        return
     if re.search(r"\$\d", pricing):
         errors.append("plans-and-pricing must not embed dollar amounts")
 
@@ -132,8 +144,14 @@ def validate_installers(errors: list[str]) -> None:
 
 def validate_executable_claims(errors: list[str]) -> None:
     poller = ROOT / "skills/inference/bin/poll_batch_job.py"
-    text = poller.read_text(encoding="utf-8")
-    executable = bool(poller.stat().st_mode & stat.S_IXUSR)
+    text = _read_text(poller, errors)
+    if text is None:
+        return
+    try:
+        executable = bool(poller.stat().st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))
+    except Exception as exc:  # noqa: BLE001 - validation reports all stat failures.
+        errors.append(f"{poller.relative_to(ROOT)} metadata could not be read: {exc}")
+        return
     if "directly executable" in text and not executable:
         errors.append("poll_batch_job.py claims direct execution but is not executable")
 

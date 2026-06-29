@@ -18,5 +18,10 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
       - name: Validate plugin structure
-        run: python scripts/validate_plugin.py
+        run: python3 scripts/validate_plugin.py
