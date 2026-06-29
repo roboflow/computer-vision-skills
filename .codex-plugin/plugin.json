@@ -40,6 +40,8 @@
       "Improve my model accuracy and data pipeline"
     ],
     "brandColor": "#6A5CFF",
-    "screenshots": []
+    "screenshots": [
+      "assets/roboflow-plugin-overview.svg"
+    ]
   }
 }

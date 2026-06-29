@@ -56,21 +56,22 @@ claude --plugin-dir .
 
 ### Codex
 
-The Codex CLI currently exposes `codex plugin marketplace add`, `upgrade`, and `remove`. It does not expose a direct `codex plugin install` command or a `codex --plugin-dir` flow, so add this repo as a marketplace source and install the plugin from the plugin browser.
+Add this repo as a marketplace source, then install the plugin from that marketplace.
 
 Install from GitHub:
 
 ```bash
 codex plugin marketplace add roboflow/computer-vision-skills
+codex plugin add roboflow@roboflow
 ```
 
-Restart Codex, then open the plugin browser:
+You can also install from the plugin browser after adding the marketplace:
 
 ```text
 codex /plugins
 ```
 
-Choose the **Roboflow** marketplace source, select the **Roboflow** plugin, install it, and press <kbd>Space</kbd> if it is installed but still disabled.
+Choose the **Roboflow** marketplace source, select the **Roboflow** plugin, install it, and press <kbd>Space</kbd> if it is installed but still disabled. Restart Codex after installing or upgrading a plugin so cached skill metadata is refreshed.
 
 <details>
 <summary>Local clone workflow</summary>
@@ -81,13 +82,16 @@ When editing a local clone, register it as a local marketplace source:
 git clone https://github.com/roboflow/computer-vision-skills
 cd computer-vision-skills
 codex plugin marketplace add .
+codex plugin add roboflow@roboflow
 ```
 
-Restart Codex after edits. If the plugin browser still shows stale metadata, remove and re-add the local marketplace:
+Restart Codex after edits. If Codex still shows stale metadata, upgrade the marketplace or remove and re-add it:
 
 ```bash
+codex plugin marketplace upgrade roboflow
 codex plugin marketplace remove roboflow
 codex plugin marketplace add .
+codex plugin add roboflow@roboflow
 ```
 
 </details>
@@ -104,6 +108,20 @@ Codex caches installed plugins under `~/.codex/plugins/cache/`, so a running Cod
 </details>
 
 Codex CLI picks up `ROBOFLOW_API_KEY` from the shell environment that launches the `codex` binary. In Codex desktop, set the key in the local environment used by the workspace. Use a project-scoped `.env` if you need different keys per project.
+
+### One-line installer
+
+The installer script registers this marketplace and installs the plugin for whichever supported agent CLIs it finds (`codex`, `claude`, or both). When using the published endpoint:
+
+```bash
+curl -fsSL https://repo.roboflow.com/agent-install/agent.sh | bash
+```
+
+PowerShell:
+
+```powershell
+iwr -useb https://repo.roboflow.com/agent-install/agent.ps1 | iex
+```
 
 ## Install standalone skills
 
@@ -133,6 +151,14 @@ The `npx skills` CLI works with any agent that reads `SKILL.md` files from `.cla
 - **training-and-evaluation**: training models and improving accuracy
 - **universe**: searching and using Roboflow Universe
 
+## Try it
+
+After installing, start with one of these prompts:
+
+- "Build a Roboflow project for detecting defects in my manufacturing images."
+- "Run my saved Roboflow Workflow on a test image and save visual outputs to disk."
+- "Review my dataset and recommend the next model-training iteration."
+
 ## MCP and skills
 
 The [Roboflow MCP server](https://mcp.roboflow.com/) exposes live tools for projects, images, annotations, versions, models, Workflows, Universe, and feedback. Skills own the expert guidance and workflow playbooks.
@@ -142,6 +168,13 @@ That separation keeps the install model simple:
 - MCP server: live Roboflow tools and authenticated API access
 - Plugin skills: durable product guidance and workflow playbooks
 - This repo: canonical source for skill updates and plugin distribution
+
+## Limitations
+
+- Live MCP tools require `ROBOFLOW_API_KEY` in the environment used by your agent.
+- Product routes, model availability, credit rates, and pricing can change; verify current commercial details at `roboflow.com/pricing`, `roboflow.com/credits`, or the in-app billing pages.
+- Local skills are durable guidance, not a substitute for live MCP schema checks when a workflow block, API field, or tool parameter is uncertain.
+- The installer scripts require the target agent CLI (`codex` or `claude`) to already be installed.
 
 <details>
 <summary>Get your API key</summary>
@@ -164,6 +197,12 @@ For persistence, add the `export` to your shell profile (`~/.zshrc`, `~/.bashrc`
 ## Contributing
 
 Skills are markdown. Open a PR with edits or a new folder under [`skills/`](skills/). Each new skill must have a `SKILL.md` at its root with `name` and `description` frontmatter.
+
+Run the structural validator before opening a PR:
+
+```bash
+python scripts/validate_plugin.py
+```
 
 ## License
 

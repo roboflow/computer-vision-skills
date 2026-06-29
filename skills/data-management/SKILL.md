@@ -212,4 +212,4 @@ Prefab MCP apps (`create_project_app`) exist when parameters are unclear, you ne
 
 ## Related Pages
 
-- `roboflow://skills/roboflow-labeling/SKILL` — annotation tools, AI labeling, Label Assist, Smart Polygon, Auto Label, annotation jobs
+- [labeling](labeling.md) — annotation tools, AI labeling, Label Assist, Smart Polygon, Auto Label, annotation jobs

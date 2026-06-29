@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Roboflow Agent Plugin overview</title>
+  <desc id="desc">Overview of the Roboflow plugin connecting agent skills, MCP tools, and computer vision workflows.</desc>
+  <rect width="1280" height="720" fill="#f7f8fb"/>
+  <rect x="72" y="72" width="1136" height="576" rx="28" fill="#ffffff" stroke="#d9deea" stroke-width="2"/>
+  <text x="118" y="143" font-family="Arial, sans-serif" font-size="44" font-weight="700" fill="#172033">Roboflow Agent Plugin</text>
+  <text x="118" y="187" font-family="Arial, sans-serif" font-size="24" fill="#526070">Skills and MCP tools for computer vision workflows</text>
+  <g font-family="Arial, sans-serif">
+    <rect x="118" y="250" width="286" height="250" rx="16" fill="#eef2ff" stroke="#6a5cff" stroke-width="2"/>
+    <text x="150" y="308" font-size="28" font-weight="700" fill="#172033">Agent Skills</text>
+    <text x="150" y="352" font-size="21" fill="#334155">Guidance for data,</text>
+    <text x="150" y="382" font-size="21" fill="#334155">training, inference,</text>
+    <text x="150" y="412" font-size="21" fill="#334155">pricing, APIs, and</text>
+    <text x="150" y="442" font-size="21" fill="#334155">product navigation.</text>
+    <rect x="497" y="250" width="286" height="250" rx="16" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
+    <text x="529" y="308" font-size="28" font-weight="700" fill="#172033">Roboflow MCP</text>
+    <text x="529" y="352" font-size="21" fill="#334155">Live tools for projects,</text>
+    <text x="529" y="382" font-size="21" fill="#334155">images, annotations,</text>
+    <text x="529" y="412" font-size="21" fill="#334155">versions, models,</text>
+    <text x="529" y="442" font-size="21" fill="#334155">Workflows, Universe.</text>
+    <rect x="876" y="250" width="286" height="250" rx="16" fill="#fff7ed" stroke="#f97316" stroke-width="2"/>
+    <text x="908" y="308" font-size="28" font-weight="700" fill="#172033">CV Workflows</text>
+    <text x="908" y="352" font-size="21" fill="#334155">Upload data, label,</text>
+    <text x="908" y="382" font-size="21" fill="#334155">train, evaluate, deploy,</text>
+    <text x="908" y="412" font-size="21" fill="#334155">run Workflows, and</text>
+    <text x="908" y="442" font-size="21" fill="#334155">close feedback loops.</text>
+  </g>
+  <path d="M421 375h58" stroke="#64748b" stroke-width="6" stroke-linecap="round"/>
+  <path d="M460 354l21 21-21 21" fill="none" stroke="#64748b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M800 375h58" stroke="#64748b" stroke-width="6" stroke-linecap="round"/>
+  <path d="M839 354l21 21-21 21" fill="none" stroke="#64748b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="118" y="570" font-family="Arial, sans-serif" font-size="23" fill="#526070">Install once, then ask your agent to build, run, and improve Roboflow projects from your coding environment.</text>
+</svg>

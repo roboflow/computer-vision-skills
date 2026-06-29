@@ -59,7 +59,7 @@ Active learning is most effective when it's targeted, not random. Use the model 
 | Small objects missed | High-resolution images with small instances |
 | Dataset distribution mismatch (new environment) | Random sample from the new deployment context |
 
-See `roboflow://skills/roboflow-model-improvement/SKILL` for the full diagnostic decision tree.
+See [improvement-playbook](improvement-playbook.md) for the full diagnostic decision tree.
 
 ## Common Mistakes
 
