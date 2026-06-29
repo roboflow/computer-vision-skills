@@ -108,7 +108,7 @@ def validate_readme(errors: list[str]) -> None:
         return
     if "codex plugin add roboflow@roboflow" not in readme:
         errors.append("README.md must document `codex plugin add roboflow@roboflow`")
-    if "python scripts/validate_plugin.py" not in readme:
+    if "python3 scripts/validate_plugin.py" not in readme:
         errors.append("README.md must document the structural validator")
 
 

@@ -201,7 +201,7 @@ Skills are markdown. Open a PR with edits or a new folder under [`skills/`](skil
 Run the structural validator before opening a PR:
 
 ```bash
-python scripts/validate_plugin.py
+python3 scripts/validate_plugin.py
 ```
 
 ## License
