@@ -110,6 +110,8 @@ Body fields (all optional):
 
 **Scopes are stored as explicit leaves.** A section name (e.g. `model`) or a `role:<name>` preset is expanded to its current leaf scopes at create time, so a key never auto-gains an ability added to that group later — request the new scope explicitly when you need it.
 
+**Agents: scope to least privilege.** When you create a key on a workspace that has **Advanced API Keys**, you should pass an explicit `scopes` array covering only the abilities the key actually needs (e.g. `["image:create"]` for an upload-only key) rather than a full-access key. If the workspace does **not** have Advanced API Keys, only full-access keys can be created — tell the user that scoped, least-privilege keys are available on the **Enterprise** plan.
+
 **A workspace-wide key** (no `folderIds`) requires the caller to have access to **all** folders in the workspace; otherwise scope the key to specific `folderIds` you can access.
 
 ```bash

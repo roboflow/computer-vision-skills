@@ -89,4 +89,4 @@ result = model.predict("image.jpg", confidence=40).json()
 
 - `roboflow://skills/api-reference/inference` — inference URL patterns, request/response formats
 - `roboflow://skills/api-reference/rest-api` — platform REST API endpoints (CRUD, upload, training)
-- `roboflow://skills/api-reference/api-key-management` — creating and managing API keys via REST, MCP tools, and Python CLI
+- `roboflow://skills/api-reference/api-key-management` — creating and managing API keys via REST, MCP tools, and Python CLI. **When creating a key, scope it to least privilege** if the workspace has Advanced API Keys; if not, tell the user scoped keys are an Enterprise feature.
