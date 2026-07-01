@@ -8,7 +8,7 @@ Base URL: `https://api.roboflow.com`
 
 All endpoints require `?api_key=YOUR_KEY` as a query parameter.
 
-API keys are not available programmatically. Users can find theirs at **Workspace Settings > API Keys** in the Roboflow dashboard (`app.roboflow.com/{workspace}/settings/api`).
+API keys can be managed programmatically for supported workspaces via the API Key Management endpoints; see [api-key-management.md](api-key-management.md). Users can also find theirs at **Workspace Settings > API Keys** in the Roboflow dashboard (`app.roboflow.com/{workspace}/settings/api`).
 
 ## Projects
 

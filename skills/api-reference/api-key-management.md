@@ -51,7 +51,7 @@ Response:
       "name": "CI pipeline",
       "prefix": "rf_ci_",
       "scopes": ["image:read", "image:create"],
-      "folderIds": null,
+      "folderIds": [],
       "default": false,
       "protected": true,
       "disabled": false,
@@ -128,7 +128,7 @@ Response (201):
   "key": "rf_ACTUAL_SECRET_VALUE",
   "name": "read-only ingest",
   "scopes": ["image:read"],
-  "folderIds": null,
+  "folderIds": [],
   "protected": false,
   "publishableKey": "rf_myworkspaceid"
 }
