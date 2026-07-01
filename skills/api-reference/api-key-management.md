@@ -57,7 +57,7 @@ Response:
       "disabled": false,
       "created_on": "2024-01-15T10:30:00Z",
       "created_by": "user@example.com",
-      "custom_metadata": {}
+      "customMetadata": {}
     }
   ],
   "publishableKey": "rf_myworkspaceid"
@@ -101,10 +101,10 @@ Body fields (all optional):
 | `name` | string | Human-readable label |
 | `scopes` | string[] or null | Scope strings to grant (or `role:<name>` presets). Omit to inherit the calling credential's scopes; `null` for full access (if the caller has it); `[]` for no abilities |
 | `folderIds` | string[] | Restrict key to specific folders (requires Advanced API Keys) |
-| `custom_metadata` | object | Arbitrary key-value metadata |
+| `customMetadata` | object | Arbitrary key-value metadata |
 | `protected` | bool | Mark as protected (cannot be disabled/revoked without dashboard action) |
 
-`scopes`, `folderIds`, and `custom_metadata` require the **Advanced API Keys** plan feature. A new key can never exceed the caller's own abilities.
+`scopes`, `folderIds`, and `customMetadata` require the **Advanced API Keys** plan feature. A new key can never exceed the caller's own abilities.
 
 **Who can create keys.** The acting credential may create keys only if it is **unscoped** (full access) or was granted the `api-key:create` scope; an OAuth token also needs the `create_api_key` permission. On workspaces with **Advanced API Keys**, new keys created from the dashboard are **scoped** (not full access) and `api-key:create` is **off by default** — include it explicitly only if the key must manage keys.
 
@@ -148,7 +148,7 @@ Body fields (all optional — send only the fields you want to change):
 |-------|------|-------|
 | `name` | string | Rename the key |
 | `scopes` | `string[] \| null` | Replace the key's scopes (tri-state — see below). Requires Advanced API Keys |
-| `custom_metadata` | object | Replace the key's metadata. Requires Advanced API Keys |
+| `customMetadata` | object | Replace the key's metadata. Requires Advanced API Keys |
 | `protected` | bool | Set to `true` only — unprotect is dashboard-only |
 | `disabled` | bool | Temporarily disable or re-enable. Requires Advanced API Keys |
 
@@ -159,7 +159,7 @@ Body fields (all optional — send only the fields you want to change):
 - **`[]`** (empty array) - the key stays a valid credential but has **no abilities**.
 - **`["model:infer", ...]`** - **replaces** the scopes with exactly this set (a section name like `model` expands to all of that section's scopes).
 
-Sending `scopes` (including `[]` or `null`), `custom_metadata`, or `disabled` requires the **Advanced API Keys** plan feature.
+Sending `scopes` (including `[]` or `null`), `customMetadata`, or `disabled` requires the **Advanced API Keys** plan feature.
 
 ```bash
 curl -X PATCH "https://api.roboflow.com/my-workspace/api-keys/abc123?api_key=KEY" \
