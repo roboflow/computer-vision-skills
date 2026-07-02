@@ -126,6 +126,7 @@ The `npx skills` CLI works with any agent that reads `SKILL.md` files from `.cla
 ## Available skills
 
 - **api-reference**: REST API and inference API references
+- **cloud-storage**: connecting S3/GCS buckets to mirror images into a workspace
 - **data-management**: uploading images, labeling, dataset organization
 - **inference**: running inference, workflows, workflow templates
 - **plans-and-pricing**: Roboflow plans and credit usage
