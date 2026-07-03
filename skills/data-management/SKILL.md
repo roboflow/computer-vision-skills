@@ -28,6 +28,7 @@ Project type is set at creation and **cannot be changed later**.
 |--------|----------|---------|
 | Web UI drag-and-drop | < 1,000 images | JPG, PNG, WEBP, AVIF, BMP, MOV, MP4, PDF + 40+ annotation formats |
 | CLI (`roboflow import`) | > 1,000 images (images only) | Same image formats, no video |
+| Cloud storage bucket mirror | Extensive or continuously-growing data already in S3 / GCS | See `roboflow://skills/cloud-storage/SKILL` |
 | Dataset Upload Workflow Block | Collecting from production Workflows | Programmatic |
 | Universe fork | Starting from a public dataset | Any Universe dataset |
 

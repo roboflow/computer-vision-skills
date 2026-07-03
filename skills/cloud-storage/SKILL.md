@@ -28,6 +28,10 @@ run. Prefer it for new setups.
 - Reuse a credential: pass `credential_id` (from `credentials_list`).
 - Create a new credential: pass `credential_name` + `credential_type` (the
   secret is collected securely out-of-band — see Security).
+- Describe the datasource so it can be created first: `bucket_type` (`s3`/`gcs`),
+  `bucket_name`, `region`, plus optional `mirror_configs` glob rules (see
+  Datasources). The datasource must exist before anything can be validated or
+  triggered — there is nothing to mirror without it.
 - `trigger` (default true) starts a mirror run **only if validation passes**;
   triggering consumes credits.
 - Returns `{credentialId, credentialCreated, datasourceId, validation,
