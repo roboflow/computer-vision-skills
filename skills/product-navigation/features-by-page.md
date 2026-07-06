@@ -10,9 +10,8 @@ Base URL: `https://app.roboflow.com`
 
 | Intent | Web URL | Alternatives |
 |--------|---------|-------------|
-| Upload images/videos from your computer (local files) | `/{ws}/{proj}/upload` | Python SDK: `project.upload(path)`, MCP: `image_upload` + `image_upload_status` |
+| Upload images/videos | `/{ws}/{proj}/upload` | Python SDK: `project.upload(path)`, MCP: `image_upload` + `image_upload_status` |
 | Import from S3/GCS/Azure | `/{ws}/{proj}/upload` -> Cloud Import tab | Python SDK with cloud URLs |
-| Import images from cloud storage (S3 / GCS bucket mirror) | `/{ws}/settings/datasources` | MCP: `connect_cloud_storage`; see `roboflow://skills/cloud-storage/SKILL` |
 | Import from Universe | `/{ws}/{proj}/upload` -> Universe tab | MCP: `universe_search` then fork |
 | Upload pre-annotated data | `/{ws}/{proj}/upload` (drag folder with annotations) | Python SDK: `project.upload(path)` auto-detects annotations |
 
