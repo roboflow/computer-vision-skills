@@ -56,10 +56,10 @@ Base URL: `https://app.roboflow.com`
 
 | Intent | Web URL | Alternatives |
 |--------|---------|-------------|
-| Train a model | `/{ws}/{proj}/train` | MCP: `models_train` |
-| Choose model architecture | `/{ws}/{proj}/train` -> architecture step | MCP: `models_train` (model param) |
-| Train from checkpoint | `/{ws}/{proj}/train` -> checkpoint step | MCP: `models_train` |
-| Train specific version | `/{ws}/{proj}/{version}/train` | MCP: `models_train` |
+| Train a model | `/{ws}/{proj}/train` | MCP: `trainings_create` |
+| Choose model architecture | `/{ws}/{proj}/train` -> architecture step | MCP: `trainings_create` (model param) |
+| Train from checkpoint | `/{ws}/{proj}/train` -> checkpoint step | MCP: `trainings_create` |
+| Train specific version | `/{ws}/{proj}/{version}/train` | MCP: `trainings_create` |
 | Check training status | `/{ws}/{proj}/{version}` (shows progress bar) | MCP: `models_get_training_status` |
 | View training results (mAP, etc.) | `/{ws}/{proj}/{version}/train/results` | MCP: `models_get` |
 | Cancel training | `/{ws}/{proj}/{version}` -> Cancel button | -- |
