@@ -18,7 +18,7 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 >
 > Either mode lands at the same run path: `workflows_run` (MCP) or `client.run_workflow(workspace_name=..., workflow_id=...)` (SDK). Inline specs (`workflow_specs_run`) are an exception, not a default — only when the user explicitly asks for a throwaway run, and validate the spec first with `workflow_specs_validate`. See [workflows](./workflows.md) "Authoring & Deployment" for the full flow.
 
-> **For live video (webcam, RTSP, file):** the MCP `workflows_run` tool only handles single static images. For live video, present the user with **three options** (don't pick one silently): **(A)** WebRTC → serverless GPU, **(B)** WebRTC → local `inference server`, or **(C)** in-process `InferencePipeline`. They have different setup costs, dep sizes, and latency characteristics — surface a brief 1-line summary of each and let the user choose. See `roboflow://skills/inference/workflows` ("Video Stream" section) for full code and the comparison table.
+> **For live video (webcam, RTSP, file):** the MCP `workflows_run` tool only handles single static images. For live video, present the user with **three options** (don't pick one silently): **(A)** WebRTC → serverless GPU, **(B)** WebRTC → local `inference server`, or **(C)** in-process `InferencePipeline`. They have different setup costs, dep sizes, and latency characteristics — surface a brief 1-line summary of each and let the user choose. See [workflows](./workflows.md) ("Video Stream" section) for full code and the comparison table.
 
 ## Deployment Options
 
@@ -41,7 +41,7 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
   - **(C) `InferencePipeline` in-process** — `pip install inference` in a venv (prefer `uv`); runs the workflow loop directly in the user's Python process, no separate server. Heavy deps (torch, opencv, onnxruntime) install locally.
 
   All three have a slower first run (model download / warmup) before subsequent runs hit cached state — tell the user this so they don't think the script is hung.
-  - See `roboflow://skills/inference/workflows` ("Video Stream" section) for full code and a comparison table.
+  - See [workflows](./workflows.md) ("Video Stream" section) for full code and a comparison table.
 
 ## MCP Tools for Inference
 
@@ -64,7 +64,7 @@ See [`local-tooling`](local-tooling.md) for what to install for which use case, 
 
 ## Response Shapes by Task
 
-For canonical response shapes (object detection, classification, segmentation, keypoint) with all fields including `class_id`, `detection_id`, `class_confidence`, see `roboflow://skills/api-reference/inference`.
+For canonical response shapes (object detection, classification, segmentation, keypoint) with all fields including `class_id`, `detection_id`, `class_confidence`, see [api-reference inference](../api-reference/inference.md).
 
 ## Large Response Handling
 

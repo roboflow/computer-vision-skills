@@ -28,7 +28,7 @@ Project type is set at creation and **cannot be changed later**.
 |--------|----------|---------|
 | Web UI drag-and-drop | < 1,000 images | JPG, PNG, WEBP, AVIF, BMP, MOV, MP4, PDF + 40+ annotation formats |
 | CLI (`roboflow import`) | > 1,000 images (images only) | Same image formats, no video |
-| Cloud storage bucket mirror | Extensive or continuously-growing data already in S3 / GCS | See `roboflow://skills/cloud-storage/SKILL` |
+| Cloud storage bucket mirror | Extensive or continuously-growing data already in S3 / GCS | See [cloud-storage](../cloud-storage/SKILL.md) |
 | Dataset Upload Workflow Block | Collecting from production Workflows | Programmatic |
 | Universe fork | Starting from a public dataset | Any Universe dataset |
 
@@ -213,5 +213,5 @@ Prefab MCP apps (`create_project_app`) exist when parameters are unclear, you ne
 
 ## Related Pages
 
-- `roboflow://skills/data-management/labeling` — annotation tools, AI labeling, Label Assist, Smart Polygon, Auto Label, annotation jobs
-- `roboflow://skills/cloud-storage/SKILL` — mirror an S3/GCS bucket into the workspace (credentials, datasources, glob rules, scheduled sync)
+- [labeling](./labeling.md) — annotation tools, AI labeling, Label Assist, Smart Polygon, Auto Label, annotation jobs
+- [cloud-storage](../cloud-storage/SKILL.md) — mirror an S3/GCS bucket into the workspace (credentials, datasources, glob rules, scheduled sync)

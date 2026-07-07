@@ -78,7 +78,7 @@ result = model.predict("image.jpg", confidence=40).json()
 | Start training | `api.roboflow.com` |
 | High-throughput / SLA inference | Dedicated deployment URL |
 | Air-gapped / on-prem inference | Self-hosted `localhost:9001` |
-| Real-time video / webcam / RTSP | WebRTC via `inference_sdk.webrtc` against serverless or local — see `roboflow://skills/inference/workflows` ("Video Stream" section). Not a plain HTTP call. |
+| Real-time video / webcam / RTSP | WebRTC via `inference_sdk.webrtc` against serverless or local — see [inference workflows](../inference/workflows.md) ("Video Stream" section). Not a plain HTTP call. |
 
 ## Rate Limits
 
@@ -87,6 +87,6 @@ result = model.predict("image.jpg", confidence=40).json()
 
 ## Related Pages
 
-- `roboflow://skills/api-reference/inference` — inference URL patterns, request/response formats
-- `roboflow://skills/api-reference/rest-api` — platform REST API endpoints (CRUD, upload, training)
-- `roboflow://skills/api-reference/api-key-management` — creating and managing API keys via REST, MCP tools, and Python CLI. **When creating a key, scope it to least privilege** if the workspace has Advanced API Keys; if not, tell the user scoped keys are an Enterprise feature.
+- [inference](./inference.md) — inference URL patterns, request/response formats
+- [rest-api](./rest-api.md) — platform REST API endpoints (CRUD, upload, training)
+- [api-key-management](./api-key-management.md) — creating and managing API keys via REST, MCP tools, and Python CLI. **When creating a key, scope it to least privilege** if the workspace has Advanced API Keys; if not, tell the user scoped keys are an Enterprise feature.

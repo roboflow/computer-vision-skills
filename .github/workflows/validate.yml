@@ -1,0 +1,84 @@
+name: Validate
+
+on:
+  pull_request: {}
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tools
+        run: pip install --quiet ruff pytest
+
+      - name: Validate JSON files
+        run: |
+          set -euo pipefail
+          # jq ships on ubuntu-latest. Every tracked .json must parse.
+          git ls-files '*.json' | while read -r f; do
+            echo "jq: $f"
+            jq empty "$f"
+          done
+
+      - name: Plugin manifest versions must match
+        run: |
+          set -euo pipefail
+          claude=$(jq -r .version .claude-plugin/plugin.json)
+          codex=$(jq -r .version .codex-plugin/plugin.json)
+          echo "claude=$claude codex=$codex"
+          if [ "$claude" != "$codex" ]; then
+            echo "::error::plugin version mismatch: .claude-plugin=$claude vs .codex-plugin=$codex"
+            exit 1
+          fi
+
+      - name: Validate docs (links + frontmatter)
+        run: python scripts/validate_docs.py
+
+      - name: Executable bit matches shebang under bin/
+        run: |
+          set -euo pipefail
+          fail=0
+          # git ls-files -s prints: <mode> <sha> <stage>\t<path>
+          while IFS= read -r line; do
+            mode=${line%% *}
+            file=${line#*$'\t'}
+            [ -z "$file" ] && continue
+            if head -c2 "$file" | grep -q '#!'; then
+              if [ "$mode" != "100755" ]; then
+                echo "::error file=$file::has a shebang but git mode is $mode (expected 100755). Run: git update-index --chmod=+x $file"
+                fail=1
+              fi
+            fi
+          done < <(git ls-files -s 'skills/*/bin/*')
+          exit $fail
+
+      - name: Byte-compile and lint Python
+        run: |
+          set -euo pipefail
+          mapfile -t pyfiles < <(git ls-files 'skills/*/bin/*.py' 'scripts/*.py' 'tests/*.py')
+          if [ ${#pyfiles[@]} -gt 0 ]; then
+            python -m py_compile "${pyfiles[@]}"
+            ruff check "${pyfiles[@]}"
+          fi
+
+      - name: Run tests
+        run: pytest -q

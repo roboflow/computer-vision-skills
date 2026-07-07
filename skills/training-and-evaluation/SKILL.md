@@ -32,19 +32,19 @@ Upload/Annotate Images
 | YOLOv12 | n/s/m/l/x | 640x640 | OD only |
 | YOLOv11 | n/s/m/l/x | 640x640 | Also supports seg + pose |
 | YOLOv8 | n/s/m/l/x | 640x640 | Also supports seg + pose |
-| YOLO-NAS | Small, Medium | 640x640 | |
+| YOLO-NAS | Small, Medium, Large | 640x640 | |
 | YOLOLite CPU | n/s/m/l/x | 640x640 | Edge-optimized, beta |
 | YOLOLite GPU | n/s/m/l/x | 640x640 | Edge-optimized, beta |
 | **Roboflow Instant** | single | N/A (no resize) | Few-shot, free, OD only |
 
 ### Instance Segmentation
 
-| Architecture | Sizes | Default Resolution |
-|---|---|---|
+| Architecture | Sizes | Default Resolution | Notes |
+|---|---|---|---|
 | **RF-DETR Seg** | Nano, Small, Medium, Large, XL, 2XL | 312-768 (varies) | Pico and Base not available for seg |
-| Roboflow 3.0 Seg | Fast, Accurate, Medium, Large, XL | 640x640 |
-| YOLO-seg | v8/v11/v26 (n/s/m/l/x each) | 640x640 |
-| SAM 3 (Segment Anything 3) | Large | 1008x1008 |
+| Roboflow 3.0 Seg | Fast, Accurate, Medium, Large, XL | 640x640 | |
+| YOLO-seg | v8/v11/v26 (n/s/m/l/x each) | 640x640 | |
+| SAM 3 (Segment Anything 3) | Large | 1008x1008 | |
 
 ### Semantic Segmentation
 
@@ -279,5 +279,5 @@ Auto-runs after training. Access: Models > click model version > View Evaluation
 
 ## Related Pages
 
-- `roboflow://skills/training-and-evaluation/improvement-playbook` — diagnostic decision tree, confusion matrix guide, per-class metrics, architecture switching, iterative improvement checklist
-- `roboflow://skills/training-and-evaluation/active-learning` — production feedback loop: Dataset Upload workflow block, confidence-based sampling, review and retrain cycle
+- [improvement-playbook](./improvement-playbook.md) — diagnostic decision tree, confusion matrix guide, per-class metrics, architecture switching, iterative improvement checklist
+- [active-learning](./active-learning.md) — production feedback loop: Dataset Upload workflow block, confidence-based sampling, review and retrain cycle

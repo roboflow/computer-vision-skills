@@ -7,7 +7,9 @@
 # Usage:
 #   curl -fsSL https://repo.roboflow.com/agent-install/agent.sh | bash
 #
-# TODO: install logic.
+# TODO: install logic. Until it lands, fail loudly so a no-op is never mistaken
+# for a successful install.
 set -euo pipefail
 
-echo "Roboflow agent installer — placeholder. Replace with real install logic."
+echo "Roboflow agent installer is not yet available. Nothing was installed." >&2
+exit 1

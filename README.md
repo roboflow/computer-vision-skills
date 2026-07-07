@@ -56,6 +56,8 @@ claude --plugin-dir .
 
 ### Codex
 
+> _Codex's plugin CLI is fast-moving; the flow below is accurate as of 2026-07. If the commands or keystrokes differ, check [Codex's own plugin documentation](https://developers.openai.com/codex) — it is authoritative._
+
 The Codex CLI currently exposes `codex plugin marketplace add`, `upgrade`, and `remove`. It does not expose a direct `codex plugin install` command or a `codex --plugin-dir` flow, so add this repo as a marketplace source and install the plugin from the plugin browser.
 
 Install from GitHub:
@@ -150,13 +152,15 @@ That separation keeps the install model simple:
 **Grab your Roboflow API key** from the Roboflow settings:
 [app.roboflow.com/settings/api](https://app.roboflow.com/settings/api)
 
-The key authenticates the bundled MCP server against `https://mcp.roboflow.com` via the `x-api-key` header.
+The bundled [`.mcp.json`](.mcp.json) maps this key into the `x-api-key` header sent to `https://mcp.roboflow.com` — the config expands `${ROBOFLOW_API_KEY}` from the environment that launches your agent, so the variable must be set before the agent starts. If it is unset, MCP tool calls reach the server unauthenticated and fail.
 
 Export it in the shell that launches your agent:
 
 ```bash
 export ROBOFLOW_API_KEY=your_key
 ```
+
+> Some clients (e.g. Claude Code interactive) can instead sign in to the Roboflow MCP server via OAuth. The `x-api-key` mapping above is the headless / CI path where no interactive sign-in is possible.
 
 For persistence, add the `export` to your shell profile (`~/.zshrc`, `~/.bashrc`) or to a project-local `.env` file loaded by your agent's environment. Per-project isolation is the safer default — keeps separate workspaces and billing accounts from leaking across projects.
 

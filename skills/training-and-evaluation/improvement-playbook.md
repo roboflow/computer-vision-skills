@@ -1,8 +1,3 @@
----
-name: roboflow-model-improvement
-description: Diagnostic playbook for improving trained model accuracy — confusion matrix analysis, per-class metrics, common failure modes, architecture switching, and iterative improvement checklist.
----
-
 # Model Improvement Playbook
 
 > **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:training-and-evaluation`) over fetching `roboflow://skills/training-and-evaluation/improvement-playbook` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
@@ -64,7 +59,7 @@ Model not good enough?
 
 | Action | How in Roboflow |
 |---|---|
-| **Production pipeline (active learning)** | If you have a deployed workflow, add a Dataset Upload block to pipe production images back to your project automatically. Best for capturing real-world distribution. See `roboflow://skills/training-and-evaluation/active-learning` |
+| **Production pipeline (active learning)** | If you have a deployed workflow, add a Dataset Upload block to pipe production images back to your project automatically. Best for capturing real-world distribution. See [active-learning](./active-learning.md) |
 | Fork from Universe | Universe > find similar dataset > fork to your project. Adds labeled images directly |
 | AI Labeling | Upload unlabeled images > use AI-assisted labeling to annotate faster |
 | Augmentation | Version settings > enable flip, rotation, crop, mosaic, etc. to synthetically expand training set |
@@ -144,4 +139,4 @@ Both are mAP@50. Cast to number before comparing.
 
 ## Related Pages
 
-- `roboflow://skills/training-and-evaluation/active-learning` — set up a production feedback loop with the Dataset Upload workflow block
+- [active-learning](./active-learning.md) — set up a production feedback loop with the Dataset Upload workflow block

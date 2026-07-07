@@ -2,7 +2,7 @@
 
 > **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:api-reference`) over fetching `roboflow://skills/api-reference/inference` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
-> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer `models_infer` (single-model) or `workflow_specs_run` / `workflows_run` (chained pipelines with annotated images) over raw HTTP calls — same operations, but auth is handled and responses are typed. The REST patterns below stay relevant if you're not using MCP.
+> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer `models_infer` (single-model) or `workflows_run` (run a saved workflow — chained pipelines with annotated images) over raw HTTP calls — same operations, but auth is handled and responses are typed. `workflow_specs_run` (inline specs) is an exception that requires explicit user authorization; default to `workflows_run`. The REST patterns below stay relevant if you're not using MCP.
 
 ## Serverless Inference (Hosted API v2)
 
@@ -64,7 +64,7 @@ POST https://<deployment-name>.roboflow.cloud/{projectId}/{versionNumber}
 
 ### Visualization
 
-The recommended approach for visualization is **Workflows** — use `workflow_specs_run` with a visualization block (Bounding Box, Label, Mask, etc.). This gives you full control over rendering and works reliably across all model types. See `roboflow://skills/inference/workflows`.
+The recommended approach for visualization is **Workflows** — run a saved workflow with `workflows_run` that includes a visualization block (Bounding Box, Label, Mask, etc.). This gives you full control over rendering and works reliably across all model types. (If you must build the pipeline inline, `workflow_specs_run` is the authorized exception — see the Workflows guidance.) See [workflows](../inference/workflows.md).
 
 ## Response Shapes
 
@@ -206,3 +206,5 @@ curl -X POST "https://serverless.roboflow.com/my-workspace/workflows/my-workflow
 | 403 | Invalid or unauthorized `api_key` |
 | 404 | Model/version not found |
 | 413 | Image too large (max 20 MB) |
+
+> Note: the serverless inference hosts return **403** for a bad/unauthorized `api_key`; the platform REST API (`api.roboflow.com`) returns **401** for the same condition — see [rest-api](./rest-api.md#error-responses).

@@ -11,11 +11,20 @@ Or with an explicit interpreter:
 
 Requires:
     export ROBOFLOW_API_KEY=...
-    pip install inference-cli
+    pip install "inference-cli>=0.9,<0.42"   # pinned: this script imports
+                                             # inference_cli.lib internals
 
 Prints stage transitions and the latest notification message as the job
-progresses. Exits 0 on success, 1 on terminal error, 2 on timeout / missing
-API key, 130 on KeyboardInterrupt.
+progresses. Exit codes:
+
+    0    job reached a terminal state with no error
+    1    job reported a terminal error
+    2    timeout (``--max-wait`` exceeded) or ``ROBOFLOW_API_KEY`` missing
+    3    poller/API error (repeated failures talking to the API)
+    130  interrupted (Ctrl-C)
+
+Exit codes 1 and 3 are deliberately distinct so automation can tell "the job
+failed" (1) from "the poller could not reach the API" (3).
 
 Implementation uses inference_cli's API helpers (no raw HTTP).
 """
@@ -31,6 +40,12 @@ from inference_cli.lib.roboflow_cloud.batch_processing.api_operations import (
     get_batch_job_metadata,
 )
 from inference_cli.lib.roboflow_cloud.common import get_workspace
+
+# Smallest poll interval we allow, so a fat-fingered --interval can't hammer the
+# API in a tight loop.
+MIN_INTERVAL = 5.0
+# Consecutive API failures tolerated (with backoff) before we give up polling.
+MAX_CONSECUTIVE_ERRORS = 5
 
 
 def _summarize_notification(notification: Any) -> str:
@@ -66,17 +81,15 @@ def _output_batches(notification: Any) -> list[Any]:
     return []
 
 
-def main() -> int:
-    """CLI entry point: parse args, poll job until terminal, return exit code.
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse and validate CLI arguments.
 
     Args:
-        None. Reads ``sys.argv`` via ``argparse`` and ``ROBOFLOW_API_KEY`` from
-        the environment.
+        argv: Argument list to parse; defaults to ``sys.argv[1:]``.
 
     Returns:
-        Process exit code: ``0`` on successful terminal state, ``1`` on
-        terminal error reported by the job, ``2`` on timeout or missing
-        ``ROBOFLOW_API_KEY``.
+        Parsed namespace. Exits (via ``parser.error``) when ``--interval`` or
+        ``--max-wait`` is not strictly positive.
     """
     parser = argparse.ArgumentParser(
         description="Poll a Roboflow Batch Processing job until terminal."
@@ -86,7 +99,7 @@ def main() -> int:
         "--interval",
         type=float,
         default=20.0,
-        help="Seconds between polls (default: 20).",
+        help=f"Seconds between polls (default: 20, floor: {MIN_INTERVAL:g}).",
     )
     parser.add_argument(
         "--max-wait",
@@ -94,22 +107,81 @@ def main() -> int:
         default=3600.0,
         help="Give up after this many seconds (default: 3600).",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+
+    if args.interval <= 0:
+        parser.error("--interval must be greater than 0")
+    if args.max_wait <= 0:
+        parser.error("--max-wait must be greater than 0")
+    if args.interval < MIN_INTERVAL:
+        print(
+            f"--interval {args.interval:g}s is below the {MIN_INTERVAL:g}s floor; "
+            f"using {MIN_INTERVAL:g}s.",
+            file=sys.stderr,
+        )
+        args.interval = MIN_INTERVAL
+
+    return args
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI entry point: parse args, poll job until terminal, return exit code.
+
+    Args:
+        argv: Argument list to parse; defaults to ``sys.argv[1:]``. Reads
+            ``ROBOFLOW_API_KEY`` from the environment.
+
+    Returns:
+        Process exit code (see the module docstring for the full table).
+    """
+    args = _parse_args(argv)
 
     api_key = os.environ.get("ROBOFLOW_API_KEY")
     if not api_key:
         print("ROBOFLOW_API_KEY is not set.", file=sys.stderr)
         return 2
 
-    workspace = get_workspace(api_key=api_key)
+    try:
+        workspace = get_workspace(api_key=api_key)
+    except Exception as exc:  # noqa: BLE001 - surface any client/network failure
+        print(f"Could not resolve workspace: {exc}", file=sys.stderr)
+        return 3
     print(f"workspace={workspace} job_id={args.job_id} interval={args.interval}s")
 
     start = time.monotonic()
     last_state = None
+    consecutive_errors = 0
     while True:
-        md = get_batch_job_metadata(
-            workspace=workspace, job_id=args.job_id, api_key=api_key
-        )
+        try:
+            md = get_batch_job_metadata(
+                workspace=workspace, job_id=args.job_id, api_key=api_key
+            )
+        except Exception as exc:  # noqa: BLE001 - transient API/network failures
+            consecutive_errors += 1
+            if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
+                print(
+                    f"Giving up after {consecutive_errors} consecutive poll "
+                    f"failures. Last error: {exc}",
+                    file=sys.stderr,
+                )
+                return 3
+            print(
+                f"Poll failed ({consecutive_errors}/{MAX_CONSECUTIVE_ERRORS}): "
+                f"{exc}. Retrying in {args.interval:g}s.",
+                file=sys.stderr,
+                flush=True,
+            )
+            if time.monotonic() - start > args.max_wait:
+                print(
+                    f"Gave up after {args.max_wait}s without reaching terminal "
+                    "state.",
+                    file=sys.stderr,
+                )
+                return 2
+            time.sleep(args.interval)
+            continue
+
+        consecutive_errors = 0
         notif_msg = _summarize_notification(md.last_notification)
         state = (md.current_stage, md.is_terminal, md.error, notif_msg)
 

@@ -1,8 +1,3 @@
----
-name: roboflow-active-learning
-description: Production feedback loop — collect real-world images from your deployed workflow and pipe them back into Roboflow to improve your model over time.
----
-
 # Active Learning on Roboflow
 
 > **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:training-and-evaluation`) over fetching `roboflow://skills/training-and-evaluation/active-learning` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
@@ -29,7 +24,7 @@ Image Input
 
 If the user is starting a new integration without an existing workflow, this is a natural reason to set one up — the Dataset Upload block drops in as a zero-friction addition when a workflow is already in place.
 
-Use `workflow_blocks_get_schema` (with the manifest key from `workflow_blocks_list`) to get the current block schema; block properties can change so look them up rather than relying on hardcoded names. Follow the Mode A or Mode B authoring flow in `roboflow://skills/inference/SKILL` to create and save the workflow.
+Use `workflow_blocks_get_schema` (with the manifest key from `workflow_blocks_list`) to get the current block schema; block properties can change so look them up rather than relying on hardcoded names. Follow the Mode A or Mode B authoring flow in [the inference skill](../inference/SKILL.md) to create and save the workflow.
 
 ## Filtering What Gets Uploaded
 
@@ -59,7 +54,7 @@ Active learning is most effective when it's targeted, not random. Use the model 
 | Small objects missed | High-resolution images with small instances |
 | Dataset distribution mismatch (new environment) | Random sample from the new deployment context |
 
-See `roboflow://skills/training-and-evaluation/improvement-playbook` for the full diagnostic decision tree.
+See [improvement-playbook](./improvement-playbook.md) for the full diagnostic decision tree.
 
 ## Common Mistakes
 

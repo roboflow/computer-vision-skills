@@ -6,7 +6,9 @@
 # Usage:
 #   iwr -useb https://repo.roboflow.com/agent-install/agent.ps1 | iex
 #
-# TODO: install logic.
+# TODO: install logic. Until it lands, fail loudly so a no-op is never mistaken
+# for a successful install.
 $ErrorActionPreference = "Stop"
 
-Write-Host "Roboflow agent installer - placeholder. Replace with real install logic."
+Write-Error "Roboflow agent installer is not yet available. Nothing was installed."
+exit 1

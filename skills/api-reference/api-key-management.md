@@ -152,7 +152,7 @@ Body fields (all optional — send only the fields you want to change):
 | `protected` | bool | Set to `true` only — unprotect is dashboard-only |
 | `disabled` | bool | Temporarily disable or re-enable. Requires Advanced API Keys |
 
-**The three states of `scopes`** (PATCH replaces, so omitting the field leaves scopes unchanged):
+**The four states of `scopes`** (PATCH replaces, so omitting the field leaves scopes unchanged):
 
 - **Omitted** - the key's existing scopes are left unchanged.
 - **`null`** - the key becomes **full access** (unscoped). Use this to widen a scoped key back to full access; the caller must itself hold full access to grant it.

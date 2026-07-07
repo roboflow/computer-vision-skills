@@ -13,11 +13,11 @@ For current dollar pricing, always direct the user to `roboflow.com/pricing`. Ne
 
 | Plan | Credits | Users | Key Differences |
 |------|---------|-------|-----------------|
-| **Public** (free) | ~$60/mo worth included | 2 | All core features; data/models are public |
-| **Core** ($99/mo or $79/mo annual) | 50/mo base + add-on packs | 3 (extra seats $29/user) | Private data, training analytics, model eval, weight downloads |
+| **Public** (free) | Monthly credit allowance included | 2 | All core features; data/models are public |
+| **Core** (paid) | Monthly base allowance + add-on packs | 3 (paid extra seats) | Private data, training analytics, model eval, weight downloads |
 | **Enterprise** (custom) | Custom | Unlimited | RBAC, priority GPU, dedicated support, SLAs, model monitoring |
 
-Extra credits: prepaid packs ($130–$630/mo) or flex at $6/credit overage. Details at `roboflow.com/pricing`.
+Plan prices, per-seat costs, monthly credit allowances, and extra-credit packs/overage rates all live at `roboflow.com/pricing`. Quote them from there rather than from memory — they change, and this skill is not the source of truth for dollar amounts.
 
 ## Credit Rates (what 1 credit buys)
 

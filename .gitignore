@@ -3,3 +3,9 @@
 
 .claude/state/
 .claude/worktrees/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
