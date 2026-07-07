@@ -272,7 +272,7 @@ Auto-runs after training. Access: Models > click model version > View Evaluation
 | Action | Tool |
 |---|---|
 | Generate version | `versions_generate` |
-| Start training | `trainings_create` (or compatibility alias `models_train`) |
+| Start training | `trainings_create` |
 | Check training status | `models_get_training_status` |
 | Get model info | `models_get` |
 | List models | `models_list` |
