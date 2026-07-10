@@ -35,15 +35,17 @@ environment used for training (it already has `torch` and the matching
 
 1. **Install the SDK**: `pip install "roboflow>=1.3.13"`.
 2. **Handle the API key safely**: never ask the user to paste a private API
-   key into chat. Prefer a key already available on the machine (a
-   `ROBOFLOW_API_KEY` environment variable or an existing gitignored `.env`).
-   Otherwise mint a scoped key with the MCP `api_keys_create` tool — the only
-   `api_keys` tool that returns the secret, and it returns it once
-   (`api_keys_list` / `api_keys_get` return masked metadata) — and write it
-   yourself to a `.gitignore`'d `.env` as `ROBOFLOW_API_KEY`. Writing `.env`
-   does not populate `os.environ`: load it before running, e.g.
-   `set -a; source .env; set +a` in the shell, or `python-dotenv` in the
-   script.
+   key into chat, and never scan dotfiles, shell profiles, or config files
+   hunting for one — permission systems rightly block that. If
+   `ROBOFLOW_API_KEY` is already set in the environment
+   (`test -n "$ROBOFLOW_API_KEY"`) or the working project has a `.env` that
+   defines it, use it. Otherwise mint a scoped key with the MCP
+   `api_keys_create` tool — the only `api_keys` tool that returns the secret,
+   and it returns it once (`api_keys_list` / `api_keys_get` return masked
+   metadata) — and write it yourself to a `.gitignore`'d `.env` as
+   `ROBOFLOW_API_KEY`. Writing `.env` does not populate `os.environ`: load it
+   before running, e.g. `set -a; source .env; set +a` in the shell, or
+   `python-dotenv` in the script.
 3. **Confirm the destination with the user**: registering a model is not
    easily undone. Never infer the target project or version from the
    checkpoint's class count or filename — ask.
