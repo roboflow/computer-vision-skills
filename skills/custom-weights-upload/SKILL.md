@@ -35,10 +35,15 @@ environment used for training (it already has `torch` and the matching
 
 1. **Install the SDK**: `pip install "roboflow>=1.3.13"`.
 2. **Handle the API key safely**: never ask the user to paste a private API
-   key into chat. Retrieve one with the MCP `api_keys_list` / `api_keys_get`
-   tools (or mint a scoped one with `api_keys_create`), write it to a
-   `.gitignore`'d `.env` as `ROBOFLOW_API_KEY`, and read it from the
-   environment.
+   key into chat. Prefer a key already available on the machine (a
+   `ROBOFLOW_API_KEY` environment variable or an existing gitignored `.env`).
+   Otherwise mint a scoped key with the MCP `api_keys_create` tool — the only
+   `api_keys` tool that returns the secret, and it returns it once
+   (`api_keys_list` / `api_keys_get` return masked metadata) — and write it
+   yourself to a `.gitignore`'d `.env` as `ROBOFLOW_API_KEY`. Writing `.env`
+   does not populate `os.environ`: load it before running, e.g.
+   `set -a; source .env; set +a` in the shell, or `python-dotenv` in the
+   script.
 3. **Confirm the destination with the user**: registering a model is not
    easily undone. Never infer the target project or version from the
    checkpoint's class count or filename — ask.
@@ -77,9 +82,14 @@ version.deploy(
 
 `model_type` must name the real architecture (`yolov8n`, `yolov11s`,
 `rfdetr-base`, `rfdetr-seg-medium`, `yolonas`, a supported PaliGemma or
-Florence-2 type). The SDK infers the size or variant from the weights and, on
-a mismatch, raises an error naming the one that fits — fix `model_type`
-rather than passing a guess and hoping server-side conversion sorts it out.
+Florence-2 type). The SDK infers the size or variant from the weights. On a
+dependency or size mismatch, `deploy_model` / `version.deploy` print the
+error (it names the type that fits) and then **interactively prompt**
+"Would you like to continue anyway? y/n" — in a headless run that prompt
+surfaces as an `EOFError` right after the printed mismatch. Either way, treat
+it as "fix `model_type` to the named one and rerun". Never pipe a `y` into
+the prompt to force past a mismatch unless the user has explicitly confirmed
+the override is intentional.
 
 ## Per-family requirements
 
@@ -88,7 +98,9 @@ rather than passing a guess and hoping server-side conversion sorts it out.
   the training environment.
 - **RF-DETR**: needs `torch` to read the checkpoint. If a `class_names.txt`
   (one class per line) sits in `model_path` it is used; otherwise class names
-  come from the checkpoint's `args`. An explicit `filename` that does not
+  come from the checkpoint's `args`. Raw PyTorch-Lightning checkpoints
+  additionally need `rfdetr>=1.8.0` installed (the SDK's error names the
+  exact minimum if yours is older). An explicit `filename` that does not
   exist is a hard error; the default `weights/best.pt` falls back to the
   first top-level `.pt`/`.pth` file, with a warning.
 - **YOLO-NAS**: `model_type="yolonas"` plus an `opt.yaml` in `model_path`
