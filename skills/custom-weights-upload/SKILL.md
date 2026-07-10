@@ -47,8 +47,12 @@ environment used for training (it already has `torch` and the matching
    and it returns it once (`api_keys_list` / `api_keys_get` return masked
    metadata) — and write it yourself to a `.gitignore`'d `.env` as
    `ROBOFLOW_API_KEY`. Writing `.env` does not populate `os.environ`: load it
-   before running, e.g. `set -a; source .env; set +a` in the shell, or
-   `python-dotenv` in the script.
+   before running. For a `.env` you just wrote yourself,
+   `set -a; source .env; set +a` is fine. For a pre-existing `.env`, never
+   `source` it — sourcing executes any shell in the file and exports every
+   other secret it holds into the process. Read only the one key instead,
+   e.g. `python-dotenv` in the script:
+   `os.environ["ROBOFLOW_API_KEY"] = dotenv_values(".env")["ROBOFLOW_API_KEY"]`.
 
    Scope the key for the whole deploy flow, not minimally: the SDK's
    `rf.workspace()` reads the workspace and its project list before
@@ -78,8 +82,8 @@ report every gap at once instead of failing one step at a time:
 2. Required imports load: `torch` for YOLO, RF-DETR, and YOLO-NAS;
    `ultralytics` for YOLO v8/v10/v11/v12/26; `rfdetr>=1.8.0` for raw
    PyTorch-Lightning RF-DETR checkpoints.
-3. The key works and carries enough scope — one cheap call that exercises
-   the same workspace read `deploy_model` needs:
+3. The key is valid and covers the workspace read — one cheap call that
+   exercises the same workspace/project-list read `deploy_model` starts with:
 
    ```python
    import os
@@ -87,6 +91,12 @@ report every gap at once instead of failing one step at a time:
 
    Roboflow(api_key=os.environ["ROBOFLOW_API_KEY"]).workspace()
    ```
+
+   Be honest about the limit of this check: it does not exercise
+   `model:deploy`, which the platform only tests at `models/prepareUpload`,
+   after packaging. That is why step 2 mints the key with the full scope set
+   up front — the preflight catches a bad or under-read key, not a missing
+   deploy scope on an existing key.
 
 Only package and upload after all three pass.
 
