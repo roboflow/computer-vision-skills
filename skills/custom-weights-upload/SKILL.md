@@ -51,15 +51,23 @@ environment used for training (it already has `torch` and the matching
    `set -a; source .env; set +a` is fine. For a pre-existing `.env`, never
    `source` it — sourcing executes any shell in the file and exports every
    other secret it holds into the process. Read only the one key instead,
-   e.g. `python-dotenv` in the script:
-   `os.environ["ROBOFLOW_API_KEY"] = dotenv_values(".env")["ROBOFLOW_API_KEY"]`.
+   e.g. with `python-dotenv` (`pip install python-dotenv`) in the script:
+
+   ```python
+   import os
+   from dotenv import dotenv_values
+
+   os.environ["ROBOFLOW_API_KEY"] = dotenv_values(".env")["ROBOFLOW_API_KEY"]
+   ```
 
    Scope the key for the whole deploy flow, not minimally: the SDK's
    `rf.workspace()` reads the workspace and its project list before
    deploying, so `project:read` plus `model:deploy` alone fails with missing
    permissions. Include `workspace:read`, `project:read`, `model:deploy`,
-   and for a versioned deploy also `version:read` and `version:update`. The
-   preflight below verifies the scopes before anything heavy runs.
+   and for a versioned deploy also `version:read` and `version:update`.
+   Getting the scopes right at mint time is what protects the upload: the
+   preflight below only confirms the key and the workspace read, not the
+   deploy scope.
 
    If the `api_keys_create` call is denied (permission systems may flag
    credential creation during an upload task) or unavailable, do not work
