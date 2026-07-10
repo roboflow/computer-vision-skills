@@ -33,7 +33,10 @@ Run this on the machine that has the weights, ideally in the same Python
 environment used for training (it already has `torch` and the matching
 `ultralytics`).
 
-1. **Install the SDK**: `pip install "roboflow>=1.3.13"`.
+1. **Install the SDK**: both `roboflow>=1.3.13` and `rfdetr` require
+   **Python >= 3.10**; check `python3 --version` first (macOS ships 3.9). If
+   it is too old, create a venv: `uv venv --python 3.12 && source
+   .venv/bin/activate`. Then `pip install "roboflow>=1.3.13"`.
 2. **Handle the API key safely**: never ask the user to paste a private API
    key into chat, and never scan dotfiles, shell profiles, or config files
    hunting for one — permission systems rightly block that. If
@@ -47,15 +50,45 @@ environment used for training (it already has `torch` and the matching
    before running, e.g. `set -a; source .env; set +a` in the shell, or
    `python-dotenv` in the script.
 
+   Scope the key for the whole deploy flow, not minimally: the SDK's
+   `rf.workspace()` reads the workspace and its project list before
+   deploying, so `project:read` plus `model:deploy` alone fails with missing
+   permissions. Include `workspace:read`, `project:read`, `model:deploy`,
+   and for a versioned deploy also `version:read` and `version:update`. The
+   preflight below verifies the scopes before anything heavy runs.
+
    If the `api_keys_create` call is denied (permission systems may flag
    credential creation during an upload task) or unavailable, do not work
    around the denial. Ask the user to choose: (a) explicitly authorize
    minting a temporary scoped key, which you revoke with `api_keys_revoke`
    after the upload; (b) set `ROBOFLOW_API_KEY` themselves in their shell or
    a `.env`; or (c) point you at an existing `.env` that already defines it.
-3. **Confirm the destination with the user**: registering a model is not
-   easily undone. Never infer the target project or version from the
-   checkpoint's class count or filename — ask.
+3. **Confirm the destination and the name with the user**: registering a
+   model is not easily undone. Never infer the target project or version from
+   the checkpoint's class count or filename — ask. The same goes for
+   `model_name` on a workspace upload: ask the user what the model should be
+   called; do not invent a name.
+
+### Preflight before packaging
+
+Packaging plus a 100 MB+ upload is slow; run the cheap checks first and
+report every gap at once instead of failing one step at a time:
+
+1. Python is >= 3.10 (`python3 --version`).
+2. Required imports load: `torch` for YOLO, RF-DETR, and YOLO-NAS;
+   `ultralytics` for YOLO v8/v10/v11/v12/26; `rfdetr>=1.8.0` for raw
+   PyTorch-Lightning RF-DETR checkpoints.
+3. The key works and carries enough scope — one cheap call that exercises
+   the same workspace read `deploy_model` needs:
+
+   ```python
+   import os
+   from roboflow import Roboflow
+
+   Roboflow(api_key=os.environ["ROBOFLOW_API_KEY"]).workspace()
+   ```
+
+Only package and upload after all three pass.
 
 Workspace model upload (no dataset version required):
 
