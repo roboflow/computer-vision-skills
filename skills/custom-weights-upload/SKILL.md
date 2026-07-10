@@ -82,20 +82,34 @@ version.deploy(
 
 `model_type` must name the real architecture (`yolov8n`, `yolov11s`,
 `rfdetr-base`, `rfdetr-seg-medium`, `yolonas`, a supported PaliGemma or
-Florence-2 type). The SDK infers the size or variant from the weights. On a
-dependency or size mismatch, `deploy_model` / `version.deploy` print the
-error (it names the type that fits) and then **interactively prompt**
-"Would you like to continue anyway? y/n" — in a headless run that prompt
-surfaces as an `EOFError` right after the printed mismatch. Either way, treat
-it as "fix `model_type` to the named one and rerun". Never pipe a `y` into
-the prompt to force past a mismatch unless the user has explicitly confirmed
-the override is intentional.
+Florence-2 type). For YOLO families the SDK infers a missing size suffix
+from the weights; RF-DETR accepts no bare `rfdetr` — pass the exact variant,
+which the SDK cross-checks against the checkpoint.
+
+On a size/variant or dependency mismatch, `deploy_model` / `version.deploy`
+print the error and then **interactively prompt** "Would you like to continue
+anyway? y/n" — in a headless run the prompt surfaces as an `EOFError` right
+after the printed error. Recover by error type:
+
+- **Size/variant mismatch**: when the error names the type that fits, fix
+  `model_type` to it and rerun; when it says the size could not be inferred,
+  pass an explicit size.
+- **Dependency mismatch**: the error names a pip pin, not a model type
+  (`yolov8` recommends `ultralytics==8.0.196`, so most current training
+  environments hit this prompt). Install the named version, or — only with
+  the user's explicit confirmation — answer `y` (headless:
+  `printf 'y\n' | python upload.py`) to continue with the installed version.
+
+Never force past either prompt without the user explicitly confirming the
+override is intentional.
 
 ## Per-family requirements
 
-- **YOLO (v5–v12, YOLO26)**: needs `torch` and `ultralytics` importable. The
-  SDK enforces recommended `ultralytics` versions, another reason to run in
-  the training environment.
+- **YOLO v8/v10/v11/v12/YOLO26**: needs `torch` and `ultralytics` importable
+  (`yolov8` recommends `ultralytics==8.0.196`; see the dependency-mismatch
+  note above). **Legacy YOLO v5/v7/v9**: needs `torch` plus an `opt.yaml` in
+  `model_path` with `imgsz` (or `img_size`) and `batch_size`; `ultralytics`
+  is not used. There is no yolov6 support.
 - **RF-DETR**: needs `torch` to read the checkpoint. If a `class_names.txt`
   (one class per line) sits in `model_path` it is used; otherwise class names
   come from the checkpoint's `args`. Raw PyTorch-Lightning checkpoints
