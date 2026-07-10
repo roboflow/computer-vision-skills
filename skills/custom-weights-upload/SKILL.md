@@ -46,6 +46,13 @@ environment used for training (it already has `torch` and the matching
    `ROBOFLOW_API_KEY`. Writing `.env` does not populate `os.environ`: load it
    before running, e.g. `set -a; source .env; set +a` in the shell, or
    `python-dotenv` in the script.
+
+   If the `api_keys_create` call is denied (permission systems may flag
+   credential creation during an upload task) or unavailable, do not work
+   around the denial. Ask the user to choose: (a) explicitly authorize
+   minting a temporary scoped key, which you revoke with `api_keys_revoke`
+   after the upload; (b) set `ROBOFLOW_API_KEY` themselves in their shell or
+   a `.env`; or (c) point you at an existing `.env` that already defines it.
 3. **Confirm the destination with the user**: registering a model is not
    easily undone. Never infer the target project or version from the
    checkpoint's class count or filename — ask.
