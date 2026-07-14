@@ -1,6 +1,6 @@
 ---
 name: roboflow-custom-weights-upload
-description: Use when uploading locally trained model weights (YOLO, RF-DETR, YOLO-NAS, PaliGemma, Florence-2) to Roboflow — choosing between the hosted MCP tool and the client-side Python SDK flow, safe API key handling, per-family packaging requirements, and verifying the upload.
+description: Use when uploading locally trained model weights (YOLO, RF-DETR, YOLO-NAS, PaliGemma, Florence-2) to Roboflow — the client-side Python SDK upload flow, safe API key handling, per-family packaging requirements, and verifying the upload.
 ---
 
 > **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
@@ -10,22 +10,16 @@ description: Use when uploading locally trained model weights (YOLO, RF-DETR, YO
 Register weights from a model trained outside Roboflow (a laptop, a training
 server, Colab) so Roboflow can convert, host, and serve it.
 
-## First decide where the upload must run
+## Where the upload runs
 
-Packaging reads the checkpoint from disk, so it must run on the machine that
-has the weights.
+Packaging reads the checkpoint from disk, so the upload always runs on the
+machine that has the weights — client-side, with the Python SDK flow below.
 
-- The `models_upload_custom_weights` MCP tool reads `model_path` from the
-  **MCP server's filesystem**. When you are connected to the hosted Roboflow
-  MCP server (`mcp.roboflow.com`), it cannot see files on the user's machine.
-  This is the common case: weights on the user's machine plus a hosted server
-  means **do not call the tool** — run the client-side SDK flow below.
-- Call the tool only when the MCP server runs on the same machine as the
-  weights: a locally running dev server, or weights that already live on the
-  server host.
-
-Calling the tool with a path the server cannot see fails with a clear error
-pointing back to this skill; nothing is uploaded.
+The `models_upload_custom_weights` MCP tool is a guide, not an uploader:
+calling it returns this recipe and echoes back the arguments you passed
+(its `upload_mode` field tells you whether they describe a versioned or a
+workspace upload). It never packages or uploads anything, because the MCP
+server cannot read the user's filesystem.
 
 ## Client-side upload with the Python SDK
 
