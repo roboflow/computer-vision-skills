@@ -17,9 +17,10 @@ machine that has the weights — client-side, with the Python SDK flow below.
 
 The `models_upload_custom_weights` MCP tool is a guide, not an uploader:
 calling it returns this recipe and echoes back the arguments you passed
-(its `upload_mode` field tells you whether they describe a versioned or a
-workspace upload). It never packages or uploads anything, because the MCP
-server cannot read the user's filesystem.
+(its `upload_mode` field says whether they describe a versioned or a
+workspace upload, or `undetermined` when they pin down neither). It never
+packages or uploads anything, because the MCP server cannot read the user's
+filesystem.
 
 ## Client-side upload with the Python SDK
 
