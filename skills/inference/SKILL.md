@@ -59,7 +59,7 @@ Project Deployment is not an infrastructure option in this table. It is the proj
 | `models_list` | List trained models for a project |
 | `models_get` | Get details for a trained model |
 | `models_infer` | Run single-model inference on one image via serverless API |
-| `models_train` | Start training a model on a dataset version |
+| `trainings_create` | Start training a model on a dataset version |
 | `models_get_training_status` | Check training progress and metrics |
 | **`workflows_run`** | **Preferred.** Run a saved workflow by `workflow_id` (the workflow URL slug; workspace is inferred from the API key — see [Finding your workspace slug](./workflows.md#finding-your-workspace-slug)). Optional `parameters`. |
 | `workflow_specs_validate` | Validate an inline workflow spec without running it — use before any inline run. |
