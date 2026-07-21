@@ -1,6 +1,6 @@
 ---
 name: roboflow-training-and-evaluation
-description: Use when training Roboflow models, improving accuracy, or setting up a production feedback loop — covers architecture selection, model IDs, checkpoints, evaluation metrics, the iterative improvement playbook, and active learning via the Dataset Upload workflow block.
+description: Use when training Roboflow models, improving accuracy, or setting up a production feedback loop — covers architecture selection, model IDs, checkpoints, evaluation metrics, the iterative improvement playbook, and Active Learning through the Project Model Workflow block.
 ---
 
 > **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
@@ -280,4 +280,4 @@ Auto-runs after training. Access: Models > click model version > View Evaluation
 ## Related Pages
 
 - `roboflow://skills/training-and-evaluation/improvement-playbook` — diagnostic decision tree, confusion matrix guide, per-class metrics, architecture switching, iterative improvement checklist
-- `roboflow://skills/training-and-evaluation/active-learning` — production feedback loop: Dataset Upload workflow block, confidence-based sampling, review and retrain cycle
+- `roboflow://skills/training-and-evaluation/active-learning` — production feedback loop: Project Model Workflow block, Active Learning, review, and retraining
