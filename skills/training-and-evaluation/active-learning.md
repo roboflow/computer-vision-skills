@@ -1,13 +1,13 @@
 ---
 name: roboflow-active-learning
-description: Production feedback loop — use Project Deployment Active Learning to collect real-world inference images for review, annotation, retraining, and model improvement.
+description: Production feedback loop — use the Project Model Workflow block with Active Learning to collect real-world inference images for review, annotation, retraining, and model improvement.
 ---
 
 # Active Learning on Roboflow
 
 > **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:training-and-evaluation`) over fetching `roboflow://skills/training-and-evaluation/active-learning` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
-Active learning closes the gap between your training dataset and the real world. Frame it for users as model improvement from production data: run inference through a stable Project Deployment, collect useful images for review, annotate or correct them, retrain, and switch the deployment to the improved model.
+Active learning closes the gap between your training dataset and the real world. Run production inference through a Project Model block, collect useful images for review, annotate or correct them, retrain, and update the project's model without rebuilding the Workflow.
 
 This is the right answer when a user asks how to:
 - improve their model using end-user or production images
@@ -17,48 +17,21 @@ This is the right answer when a user asks how to:
 
 ## The Core Pattern
 
-Use **Project Deployment Active Learning** as the default path. A Project Deployment is the stable live endpoint for a project; Active Learning attaches production inference data collection to that endpoint so the user can review images before turning them into training data. In a Roboflow Workflow, run that endpoint through a **Project Model block** instead of wiring a regular model block to a standalone Dataset Upload block.
-
-```
-Workflow → Project Model block → Project Deployment endpoint
-  → Default model (trained model, SAM3, or CLIP)
-    → Active Learning collection
-      → Review queues
-        → Annotate/correct
-          → Generate version → train → switch deployment model
-```
-
-If the Roboflow MCP server exposes Project Deployment tools, prefer them over hand-building a Workflow upload path:
-
-| Goal | MCP tool |
-|---|---|
-| Create or prepare the stable endpoint, optionally with SAM3/CLIP and Active Learning | `project_deployment_launch` |
-| Put a trained model, SAM3, or CLIP behind the endpoint | `project_deployment_set_model` |
-| Run inference through the stable endpoint | `project_deployment_run` |
-| Turn production-data collection on | `project_deployment_enable_active_learning` |
-| Tune collection limits or filters | `project_deployment_configure_active_learning` |
-| Inspect collected images waiting for review | `project_deployment_list_review_queues` |
-
-For greenfield prompts like "I want to detect forklifts" where the user has no dataset yet, recommend a Project Deployment with SAM3 for detection/segmentation or CLIP for classification, enable Active Learning, and let production traffic create the reviewable dataset. After review and retraining, switch the same stable endpoint to the trained model.
-
-For existing projects, enable or configure Active Learning on the existing Project Deployment. In Workflows, use the Project Model block so inference participates in that project-level Active Learning configuration without a separate upload step.
-
-## Workflow Path
-
-Use a **Project Model block** in production Workflows. It runs the project's stable endpoint, follows the Project Deployment's default model unless explicitly pinned, and uses the project's Active Learning configuration.
+Use a **Project Model block** in the production Workflow and enable Active Learning for its project. The block runs the project's stable API and follows its default model unless explicitly pinned. Active Learning collects production inference images, with predictions as pre-annotations, into review queues.
 
 ```
 Image Input
   → Project Model Block
     ├→ Predictions → [Other output blocks — visualization, Slack, etc.]
     └→ Project-level Active Learning collection
+      → Review → annotate/correct → generate version → train → update project model
 ```
 
 The Project Model block is managed by the Roboflow Workflow builder rather than exposed as a normal block manifest through `workflow_blocks_list`. Do not substitute a regular model block plus Dataset Upload just because Project Model is absent from that catalog.
 
-Use a **Dataset Upload block** only when the user explicitly needs bespoke collection routing or a target project that Project Deployment Active Learning does not cover. For that exception, use `workflow_blocks_get_schema` with the manifest key from `workflow_blocks_list` instead of relying on hardcoded properties. Follow the Mode A or Mode B authoring flow in `roboflow://skills/inference/SKILL` to create and save the workflow.
+Use a **Dataset Upload block** only when the user explicitly needs bespoke collection routing or a different target project that project-level Active Learning does not cover. For that exception, use `workflow_blocks_get_schema` with the manifest key from `workflow_blocks_list` instead of relying on hardcoded properties. Follow the Mode A or Mode B authoring flow in `roboflow://skills/inference/SKILL` to create and save the Workflow.
 
-## Filtering What Gets Uploaded
+## Filtering What Gets Collected
 
 Collecting every frame is rarely useful. Three common approaches:
 
@@ -68,7 +41,7 @@ Collecting every frame is rarely useful. Three common approaches:
 
 **Class-based filtering** — route images containing specific classes or failing specific conditions. Useful when certain classes are underperforming (see improvement playbook).
 
-## Reviewing and Using Uploaded Images
+## Reviewing and Using Collected Images
 
 1. **Review in Roboflow** — Images land in Active Learning review queues. Saved predictions appear as pre-annotations, so annotation is correction rather than drawing from scratch.
 2. **Annotate** — Accept, correct, or discard pre-annotations. Use AI-assisted labeling for blank images.
@@ -92,7 +65,7 @@ See `roboflow://skills/training-and-evaluation/improvement-playbook` for the ful
 
 | Mistake | Better approach |
 |---|---|
-| Adding a standalone Dataset Upload block next to a regular model block | Use a Project Model block with Project Deployment Active Learning; reserve Dataset Upload for bespoke routing |
+| Adding a standalone Dataset Upload block next to a regular model block | Use a Project Model block with project-level Active Learning; reserve Dataset Upload for bespoke routing |
 | Collecting every frame | Configure Active Learning collection limits and filters |
-| Collecting without predictions | Run through the Project Model block or Project Deployment endpoint so predictions become pre-annotations |
+| Collecting without predictions | Run through the Project Model block so predictions become pre-annotations |
 | Adding production images without reviewing | Pre-annotations are not ground truth — always review before including in a new version |

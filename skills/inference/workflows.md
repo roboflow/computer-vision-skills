@@ -2,7 +2,7 @@
 
 > **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:inference`) over fetching `roboflow://skills/inference/workflows` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
-> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer **Project Deployment** tools for greenfield detect/segment/classify requests without a dataset, especially when Active Learning should collect production images for review. When that project is used inside a Workflow, use the **Project Model block** so it keeps the stable project endpoint and project-level Active Learning behavior. For saved custom Workflows, prefer **`workflows_run`** (saved workflow by `workflow_id` — the workflow URL slug; workspace is inferred from the API key — see [Finding your workspace slug](#finding-your-workspace-slug)) over raw HTTP. `workflow_specs_run` is an inline-spec escape hatch for explicit one-offs only; see "Authoring & Deployment" below.
+> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer **`workflows_run`** (saved workflow by `workflow_id` — the workflow URL slug; workspace is inferred from the API key — see [Finding your workspace slug](#finding-your-workspace-slug)) over raw HTTP. `workflow_specs_run` is an inline-spec escape hatch for explicit one-offs only; see "Authoring & Deployment" below.
 
 ## What Are Workflows
 
@@ -31,13 +31,10 @@ Use `workflow_blocks_list` to get the live catalog. Below are the ~30 most commo
 
 > **Two block identifiers — don't mix them up.** The "Workflow `type`" column below is the value you put in the `type` field of a workflow JSON spec (e.g. `roboflow_core/sam3@v3`). `workflow_blocks_get_schema` does **not** accept this — it requires the long `manifest` key returned by `workflow_blocks_list` (e.g. `inference__core__workflows__core_steps__models__foundation__segment_anything3__v3__BlockManifest`). Same block, two different identifiers for two different APIs.
 
-> **Project Model is a platform-managed exception.** Add it in the Roboflow Workflow builder to run a project's stable endpoint. It does not have a normal manifest key in `workflow_blocks_list`; do not replace it with a regular model block plus Dataset Upload. When Active Learning is enabled for the project, inference through Project Model uses that project-level configuration.
-
 ### Models
 
 | Block | Workflow `type` | What it does                                                                                                                                                    |
 |-------|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Project Model | Platform-managed | Run a project's stable endpoint. Follows its default model unless pinned and uses project-level Active Learning                                                |
 | Object Detection | `roboflow_core/roboflow_object_detection_model@v2` | Run trained detection model. Inputs: `images`, `model_id`                                                                                                       |
 | Instance Segmentation | `roboflow_core/roboflow_instance_segmentation_model@v2` | Detect + pixel masks. Inputs: `images`, `model_id`                                                                                                              |
 | Classification | `roboflow_core/roboflow_classification_model@v2` | Single-label classify. Inputs: `images`, `model_id`                                                                                                             |
@@ -385,8 +382,7 @@ pipeline.join()                       # blocks until video source ends or pipeli
 
 ## When to Use Workflows vs Direct Inference
 
-**Recommend Project Deployment** for greenfield detect/segment/classify requests without a dataset when the user needs a stable endpoint, SAM3/CLIP bootstrapping, and Active Learning data collection.
-**Recommend Workflows** for integration code, production apps, multi-step pipelines, video, and post-processing. Use a Project Model block when the Workflow should follow a project's model and Active Learning configuration; reserve Dataset Upload for bespoke collection routing.
+**Recommend Workflows** for integration code, production apps, multi-step pipelines, video, post-processing, and active learning. Workflows compose model + logic + visualization in one call, benefit from server-side optimizations, and keep active learning and other blocks as a zero-friction addition without changing your API surface.
 **Use `models_infer`** for quick checks or when the user explicitly prefers direct inference.
 
 ## MCP Tools
