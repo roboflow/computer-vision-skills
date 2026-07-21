@@ -279,5 +279,5 @@ Auto-runs after training. Access: Models > click model version > View Evaluation
 
 ## Related Pages
 
-- `roboflow://skills/roboflow-model-improvement/SKILL` — diagnostic decision tree, confusion matrix guide, per-class metrics, architecture switching, iterative improvement checklist
+- `roboflow://skills/training-and-evaluation/improvement-playbook` — diagnostic decision tree, confusion matrix guide, per-class metrics, architecture switching, iterative improvement checklist
 - `roboflow://skills/training-and-evaluation/active-learning` — production feedback loop: Project Deployment Active Learning, confidence-based sampling, review and retrain cycle
