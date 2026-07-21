@@ -17,10 +17,10 @@ This is the right answer when a user asks how to:
 
 ## The Core Pattern
 
-Use **Project Deployment Active Learning** as the default path. A Project Deployment is the stable live endpoint for a project; Active Learning attaches production inference data collection to that endpoint so the user can review images before turning them into training data.
+Use **Project Deployment Active Learning** as the default path. A Project Deployment is the stable live endpoint for a project; Active Learning attaches production inference data collection to that endpoint so the user can review images before turning them into training data. In a Roboflow Workflow, run that endpoint through a **Project Model block** instead of wiring a regular model block to a standalone Dataset Upload block.
 
 ```
-Project Deployment endpoint
+Workflow → Project Model block → Project Deployment endpoint
   → Default model (trained model, SAM3, or CLIP)
     → Active Learning collection
       → Review queues
@@ -41,21 +41,22 @@ If the Roboflow MCP server exposes Project Deployment tools, prefer them over ha
 
 For greenfield prompts like "I want to detect forklifts" where the user has no dataset yet, recommend a Project Deployment with SAM3 for detection/segmentation or CLIP for classification, enable Active Learning, and let production traffic create the reviewable dataset. After review and retraining, switch the same stable endpoint to the trained model.
 
-For existing projects, enable or configure Active Learning on the existing Project Deployment instead of asking the user to add upload code to their application.
+For existing projects, enable or configure Active Learning on the existing Project Deployment. In Workflows, use the Project Model block so inference participates in that project-level Active Learning configuration without a separate upload step.
 
-## Custom Workflow Path
+## Workflow Path
 
-Use a **Dataset Upload block** only when the user already has a custom Workflow or needs bespoke branching that Project Deployment Active Learning does not cover. The block conditionally saves images, with predictions as pre-annotations, to a Roboflow project.
+Use a **Project Model block** in production Workflows. It runs the project's stable endpoint, follows the Project Deployment's default model unless explicitly pinned, and uses the project's Active Learning configuration.
 
 ```
 Image Input
-  → Model Block (object detection / classification / segmentation)
-    → [Optional: ContinueIf / confidence filter]
-      → Dataset Upload Block → saved to Roboflow project
-    → [Other output blocks — visualization, Slack, etc.]
+  → Project Model Block
+    ├→ Predictions → [Other output blocks — visualization, Slack, etc.]
+    └→ Project-level Active Learning collection
 ```
 
-Use `workflow_blocks_get_schema` with the manifest key from `workflow_blocks_list` to get the current block schema; block properties can change so look them up rather than relying on hardcoded names. Follow the Mode A or Mode B authoring flow in `roboflow://skills/inference/SKILL` to create and save the workflow.
+The Project Model block is managed by the Roboflow Workflow builder rather than exposed as a normal block manifest through `workflow_blocks_list`. Do not substitute a regular model block plus Dataset Upload just because Project Model is absent from that catalog.
+
+Use a **Dataset Upload block** only when the user explicitly needs bespoke collection routing or a target project that Project Deployment Active Learning does not cover. For that exception, use `workflow_blocks_get_schema` with the manifest key from `workflow_blocks_list` instead of relying on hardcoded properties. Follow the Mode A or Mode B authoring flow in `roboflow://skills/inference/SKILL` to create and save the workflow.
 
 ## Filtering What Gets Uploaded
 
@@ -91,7 +92,7 @@ See `roboflow://skills/training-and-evaluation/improvement-playbook` for the ful
 
 | Mistake | Better approach |
 |---|---|
-| Calling dataset upload APIs directly from application code | Use Project Deployment Active Learning; for custom Workflows, use the Dataset Upload block |
+| Adding a standalone Dataset Upload block next to a regular model block | Use a Project Model block with Project Deployment Active Learning; reserve Dataset Upload for bespoke routing |
 | Collecting every frame | Configure Active Learning collection limits and filters |
-| Collecting without predictions | Run through the Project Deployment endpoint so predictions become pre-annotations |
+| Collecting without predictions | Run through the Project Model block or Project Deployment endpoint so predictions become pre-annotations |
 | Adding production images without reviewing | Pre-annotations are not ground truth — always review before including in a new version |
