@@ -53,6 +53,37 @@ credentials. Everything after staging is server-side via MCP tools:
 The `batch_processing_guide` MCP tool returns this recipe plus an echo of
 the arguments you pass it; it never touches files or the network.
 
+## The master tool: `batch_processing_run`
+
+Prefer `batch_processing_run(batch_id, workflow_id, ...)` to drive the whole
+flow. Each call inspects the current state, advances what it can, waits up
+to `wait_seconds` (bounded) and returns a status:
+
+- `staging_required` — no batch yet; the response contains the exact CLI
+  commands (already wired to a webhook relay via `--notifications-url`) and
+  cloud-credential env-var guidance. Run them, then call again.
+- `ingest_in_progress` — files still registering; call again.
+- `running` — the job was started (with the relay as its notifications URL)
+  or is still working; includes stage progress and relayed events.
+- `completed` — includes the export batch id and the first result files with
+  signed download URLs.
+- `failed` — includes logs and a restart hint.
+
+Pass the returned `job_id` and `relay_id` back on every follow-up call to
+resume; the server holds no state between calls.
+
+## Webhook events
+
+Jobs and ingests can notify a webhook. `batch_processing_run` wires this
+automatically to the MCP server's relay
+(`/webhooks/batch-processing/<relay_id>`); the platform POSTs job
+success/failure (`roboflow-batch-job-notification-v1`) and ingest-status
+events there. Read them with `batch_processing_events_poll(relay_id)`
+between calls, or just re-call `batch_processing_run`. Events are advisory:
+confirm real state with `batch_processing_job_get`. Users with their own
+webhook receiver can instead pass `notifications_url` to
+`batch_processing_job_start` or `--notifications-url` on CLI commands.
+
 ## 1. Install the CLI
 
 ```bash
@@ -61,9 +92,13 @@ pip install inference-cli
 pip install 'inference-cli[cloud-storage]'
 ```
 
-Cloud credentials are picked up from the standard env chains (AWS
-credentials/profile, `GOOGLE_APPLICATION_CREDENTIALS`, or
-`AZURE_STORAGE_ACCOUNT_NAME` + key/SAS).
+Cloud credentials are picked up from the standard env chains on the machine
+running the CLI: AWS via the default credential chain (`AWS_PROFILE`,
+`AWS_REGION`, `AWS_ENDPOINT_URL` honored; R2/MinIO work via
+`AWS_ENDPOINT_URL`), GCS via `GOOGLE_APPLICATION_CREDENTIALS`, Azure via
+`AZURE_STORAGE_ACCOUNT_NAME` plus `AZURE_STORAGE_ACCOUNT_KEY` or
+`AZURE_STORAGE_SAS_TOKEN`. The CLI generates presigned URLs (24h expiry)
+and hands those to Roboflow; bucket secrets never leave the machine.
 
 ## 2. Stage a batch
 
