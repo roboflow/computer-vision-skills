@@ -201,10 +201,12 @@ candidates** whenever the prerequisites are met — e.g. `rfdetr-medium` vs `yol
 `rfdetr-nas-parent`. Launch one `trainings_create` per candidate and keep each `trainingId`.
 
 Read the NAS arm's output as described under **Reading a run** in the RF-DETR NAS section below. One trap is specific
-to comparison: **pick the representative to match the question, or you will understate NAS.** A
-`recommended` child is chosen to balance accuracy against measured latency, so it is deliberately
-*not* the most accurate model in the run — in one 76-model run the two recommended children
-scored **72.86** and **71.91** mAP50-95 while the best child scored **78.00**, a 5–6 point gap.
+to comparison: **pick the representative to match the question, or you will understate NAS.** The platform picks a
+winner per (metric, hardware) bucket by balancing accuracy against measured latency, and
+`models_list` exposes only the flattened union of those winners as a `recommended` boolean. So a
+flagged child won *some* bucket, which is not the same as being the most accurate: in one
+76-model run the two flagged children scored **72.86** and **71.91** mAP50-95 while the best child
+scored **78.00**, a 5–6 point gap.
 For a pure-accuracy comparison take the highest `metrics.map5095` child. For a deployment
 decision, use the authoritative `recommendedByHardware` entry if the run exposes one; otherwise
 report the candidates' accuracy and latency for the target (reading latency per the shapes under **Reading a run** below),
@@ -218,7 +220,7 @@ finish rather than blocking on NAS.
 
 Instead of picking a single RF-DETR size manually, NAS trains one parent model and mines many architectures out of it, reporting the speed/accuracy frontier so you can pick the one that fits your hardware budget.
 
-- **What:** A NAS run trains a single parent model, then searches the RF-DETR architecture space *within* that trained parent to identify frontier candidates, reporting each one's mAP and measured latency on target hardware (e.g., Jetson, T4 GPU). The output is a set of models on a Pareto frontier, plus an auto-selected "recommended" model per hardware, chosen using Roboflow's current ranking heuristic to balance validation accuracy against measured latency.
+- **What:** A NAS run trains a single parent model, then searches the RF-DETR architecture space *within* that trained parent to identify frontier candidates, reporting each one's mAP and measured latency on target hardware (e.g., Jetson, T4 GPU). The output is a set of models on a Pareto frontier, plus a winner auto-selected per (metric, hardware) bucket using Roboflow's current ranking heuristic to balance validation accuracy against measured latency. Those per-bucket winners are not exposed individually: `models_list` flattens them into one `recommended` boolean per child (see **Picking for a specific hardware target**).
 - **Tasks:** Object Detection (`rfdetr-nas`) and Instance Segmentation (`rfdetr-nas-seg`).
 - **When to use:** When you want the best speed/accuracy tradeoff for a specific deployment target and don't want to A/B-test sizes manually. Especially valuable for edge hardware where latency budgets are tight.
 - **Phases:**
