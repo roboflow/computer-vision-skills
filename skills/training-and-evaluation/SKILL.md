@@ -207,7 +207,7 @@ to comparison: **pick the representative to match the question, or you will unde
 scored **72.86** and **71.91** mAP50-95 while the best child scored **78.00**, a 5–6 point gap.
 For a pure-accuracy comparison take the highest `metrics.map5095` child. For a deployment
 decision, use the authoritative `recommendedByHardware` entry if the run exposes one; otherwise
-report the candidates' accuracy and latency for the target (reading latency per the shape above),
+report the candidates' accuracy and latency for the target (reading latency per the shapes under **Reading a run** below),
 say that no per-hardware recommendation is exposed, and let the user pick the tradeoff. The run's own `nasFamily: "baseline"` children are a useful
 check on whether the search actually beat stock RF-DETR.
 
