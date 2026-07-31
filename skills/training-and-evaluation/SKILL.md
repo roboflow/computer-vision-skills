@@ -200,13 +200,25 @@ candidates** whenever the prerequisites are met — e.g. `rfdetr-medium` vs `yol
 Two things make the NAS arm different from the others, and getting them wrong will make NAS look
 worse than it is:
 
-- **It produces many models, not one.** Resolve the arm with
-  `trainings_get` → `modelGroup` → `models_list(group=<modelGroup>)`.
-- **Pick the right representative for the question being asked.** The `recommended` flag marks a
-  model chosen to balance accuracy *and* measured latency, so it is deliberately not the
-  highest-mAP model in the run. For a pure-accuracy comparison, take the highest
-  `train.results.map5095` child in the group; for a deployment decision, take `recommended` and
-  compare `train.results.latency` alongside mAP.
+- **It produces many models, not one** — a real run on a 289-image dataset returned **76**. Get
+  `modelGroup` from `trainings_get`, then page the children with
+  `models_list(group=<modelGroup>, version_number=…, limit=…, offset=…)`. Don't read the model
+  list out of `trainings_get`: it inlines every child, so the response is enormous.
+- **Each child carries `metrics: {map50, map5095, latency, paretoOptimalFor}`.** `latency` is a
+  map keyed by target hardware (e.g. `{"AI1": 6.69, "T4": 1.98}`), not a single number, and
+  `paretoOptimalFor` holds `"<hardware>:<metric>"` entries such as `"T4:map_50_95"`.
+- **`recommended` is per hardware, so several children carry it.** In the run above two were
+  flagged — one Pareto-optimal for `T4:map_50`, one for `AI1:map_50`. "The recommended model" is
+  ambiguous until you know the user's target hardware: ask, or report per hardware.
+- **Pick the representative to match the question, or you will understate NAS.** A `recommended`
+  child balances accuracy against measured latency, so it is deliberately *not* the most accurate
+  model in the run. In the run above the two recommended children scored **72.86** and **71.91**
+  mAP50-95 while the best child scored **78.00** — a 5–6 point gap. For a pure-accuracy
+  comparison take the highest `metrics.map5095` child; for a deployment decision take the
+  `recommended` child for the target hardware and compare `metrics.latency[hardware]` too.
+- **The run ships its own baselines.** Children with `nasFamily: "baseline"` are stock RF-DETR
+  models trained on the same data; they carry no `paretoOptimalFor` and are never `recommended`.
+  They are a free within-run reference point worth reporting alongside the searched children.
 
 Also tell the user the NAS arm runs much longer and costs more than a single fine-tune (it mines
 architectures, then trains every frontier candidate). Report the named-model arms as they finish
