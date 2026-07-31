@@ -84,7 +84,7 @@ Follow this flowchart to pick the right model. Start at Step 1.
 1. **Task type?** OD / Instance Seg / Keypoint → Step 2. Classification / Semantic Seg / VLM → use specialized block directly.
 2. **Target classes in COCO 80?** Yes → Step 3. No → Step 6.
 3. **Real-time?** No (images/recorded video) → Step 4. Yes (live video) → Step 5.
-4. **Non-real-time, COCO** — OD / Inst Seg → prefer **RF-DETR NAS** (see that section; falls back to RF-DETR / RF-DETR Seg at Medium, Small for constrained HW, XL for accuracy-first). Keypoint → YOLO26 pose. **Done.**
+4. **Non-real-time, COCO** — OD / Inst Seg → prefer **RF-DETR NAS**; if unavailable, RF-DETR (detection) or RF-DETR Seg (instance segmentation) at Medium, Small for constrained HW, XL for accuracy-first. Keypoint → YOLO26 pose. **Done.**
 5. **Real-time, COCO** — Same, and NAS is the strongest option here because it reports measured latency per target hardware. Without it, same families at Nano–Small. **Done.**
 6. **Non-COCO, which sub-task?** OD → Step 7. Inst Seg → Step 8. Keypoint → Step 9.
 7. **OD, non-COCO** — Check Rapid exclusions (see below). If excluded → Step 13. Otherwise → recommend **Roboflow Rapid** (default) or SAM3 zero-shot as secondary option → Step 10.
@@ -94,7 +94,7 @@ Follow this flowchart to pick the right model. Start at Step 1.
 11. **Non-real-time trial** — User confirms works → **Done.** Poor results → Step 13.
 12. **Real-time trial** — User confirms works → **Done.** Poor results → Step 13.
 13. **Universe Model Search** — search community models on Roboflow Universe. Good match → **Done.** No match → Step 14.
-14. **Custom Training** — OD / Inst Seg → prefer **RF-DETR NAS**; otherwise fine-tune RF-DETR, sized by HW constraints. **Done.**
+14. **Custom Training** — OD / Inst Seg → prefer **RF-DETR NAS**. If NAS is unavailable, fine-tune RF-DETR (detection) or RF-DETR Seg (instance segmentation), sized by HW constraints. **Done.**
 
 ## Model ID Reference
 
@@ -169,11 +169,15 @@ person, bicycle, car, motorcycle, airplane, bus, train, truck, boat, traffic lig
 
 ## Model Selection Quick Guide
 
-**Start with NAS for detection and instance segmentation.** Neural Architecture Search searches
-the RF-DETR space against the user's own data and reports a speed/accuracy frontier, so it is the
-option most likely to land on the best model for that dataset. Reach for a single named
-architecture when NAS is unavailable (see prerequisites below), when the user asks for a specific
-one, or when a quick throwaway baseline is all that's wanted.
+**When you are training a model on the user's data for detection or instance segmentation, start
+with NAS.** Neural Architecture Search searches the RF-DETR space against that data and reports a
+speed/accuracy frontier, so it is the option most likely to land on the best model for it. Reach
+for a single named architecture when NAS is unavailable (see prerequisites below), when the user
+asks for a specific one, or when a quick throwaway baseline is all that's wanted.
+
+This summarises the training branches of the decision tree above; it does not override it. The
+tree may route a non-COCO request to Roboflow Rapid or SAM3 zero-shot first, neither of which
+trains a model — NAS only applies once custom training is the chosen path.
 
 | Goal | Recommended |
 |---|---|
@@ -222,10 +226,11 @@ Instead of picking a single RF-DETR size manually, NAS trains one parent model a
 - **Model IDs:** `rfdetr-nas-parent` (Standard — use this by default), `rfdetr-nas-pecoret-parent` (Fast), `rfdetr-nas-base-parent` (Plus) for object detection; `rfdetr-nas-seg-parent` for instance segmentation.
 - **Prerequisites — check both before offering NAS:**
   1. **≥15 validation images.** `versions_get` returns `splits.valid`; below 15 the train call fails with `insufficient_validation_images_for_nas`, and waiting will not help — the user must generate a version with a larger validation split.
-  2. **Plan entitlement.** NAS is included on Core and Growth plans; any other plan needs it granted on the workspace. Basic/starter/sandbox/research/trial need to upgrade; enterprise/legacy need to contact sales. Entitlement is not readable from the MCP, so this cannot be checked up front — a non-entitled workspace finds out when `trainings_create` rejects the run with code `nas_not_available_for_plan`. Treat that as a plan limit, not a transient error: do not retry it. Fall back to the recommended named model for the task — `rfdetr-medium` (detection) or `rfdetr-seg-medium` (segmentation) — and tell the user NAS needs a plan upgrade. Do **not** fall back to a hyperparameter sweep.
+  2. **Plan entitlement.** NAS is included on Core and Growth plans; any other plan needs it granted on the workspace. Basic/starter/sandbox/research/trial need to upgrade; enterprise/legacy need to contact sales. Entitlement is not readable from the MCP, so this cannot be checked up front — a non-entitled workspace finds out when `trainings_create` rejects the run with code `nas_not_available_for_plan`. Treat that as a plan limit, not a transient error: do not retry it. Fall back to the named model for the task — `rfdetr-medium` (detection) or `rfdetr-seg-medium` (segmentation) — and say NAS is unavailable on the current plan and may need an upgrade or workspace enablement, using the `plan` on the error to tell which. Do **not** fall back to a hyperparameter sweep.
 - **Start a run:** `trainings_create(project_id, version_number, model_type="rfdetr-nas-parent")`. NAS launches through the normal training tool; there is no separate engine parameter. (The UI equivalent is the Train page with `?engine=nas`.) Results land at `/{workspace}/{project}/nas-runs/{versionId}`.
 - **Nothing to hand-tune:** a NAS parent's whole hyperparameter surface is `epochs` (default 200, range 100–300). There are no learning-rate or loss-weight knobs, because the architecture search *is* the sweep.
-- **Reading a run:** a run returns a frontier of models, not one — a 289-image dataset produced **76**. Get `modelGroup` from `trainings_get`, then page the children with `models_list(group=<modelGroup>, version_number=…, limit=…, offset=…)`; don't read the list out of `trainings_get`, which inlines every child. Each child carries `metrics: {map50, map5095, latency, paretoOptimalFor}`, where `latency` is a map keyed by target hardware (e.g. `{"AI1": 6.69, "T4": 1.98}`) rather than a single number, and `paretoOptimalFor` holds `"<hardware>:<metric>"` entries such as `"T4:map_50_95"`. `recommended` is per hardware, so several children carry it — that run flagged two, one optimal for `T4:map_50` and one for `AI1:map_50` — which means "the recommended model" is ambiguous until you know the user's target hardware. Children with `nasFamily: "baseline"` are stock RF-DETR models trained on the same data; they carry no `paretoOptimalFor`, are never `recommended`, and are a free within-run reference.
+- **Reading a run:** a run returns a frontier of models, not one — a 289-image dataset produced **76**. Get `modelGroup` from `trainings_list`, which returns it without child metrics, then page the children with `models_list(group=<modelGroup>, version_number=…, limit=…, offset=…)`. Don't use `trainings_get` for this: it inlines every child, which is the payload the paging exists to avoid. Each child carries `metrics: {map50, map5095, latency, paretoOptimalFor}`, where `latency` is a map keyed by target hardware (e.g. `{"AI1": 6.69, "T4": 1.98}`) rather than a single number. Children with `nasFamily: "baseline"` are stock RF-DETR models trained on the same data; they are never `recommended` and are a free within-run reference.
+- **Picking for a specific hardware target needs the authoritative map.** The platform scores a separate winner per hardware, but `models_list` flattens that into one `recommended` boolean, true if the child won *any* bucket — so it cannot tell you which hardware, and `paretoOptimalFor` is unrelated frontier metadata, not the recommendation. The exact mapping is `recommendedByHardware` from `trainings_get`, which costs the full child list. That is the tradeoff: bounded listing or exact per-hardware lookup, not both. If `recommendedByHardware` is absent, do not infer it — report the candidates per hardware and ask which target matters.
 - **Deploy:** Each NAS-produced model deploys like any other — pick one (typically the `recommended` child for the user's target hardware) and use it as a normal Roboflow model. Inference type is `rfdetr-nas` / `rfdetr-nas-seg`, but it's served through the standard inference paths.
 - **References:** [RF-DETR paper (arxiv)](https://arxiv.org/html/2511.09554v2), [ICLR 2026](https://openreview.net/forum?id=qHm5GePxTh), [What is NAS? (blog)](https://blog.roboflow.com/neural-architecture-search/).
 
