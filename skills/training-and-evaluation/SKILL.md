@@ -179,7 +179,6 @@ one, or when a quick throwaway baseline is all that's wanted.
 |---|---|
 | **Object detection — no strong prior** | **RF-DETR NAS** (`rfdetr-nas-parent`) |
 | **Instance segmentation — no strong prior** | **RF-DETR NAS Seg** (`rfdetr-nas-seg-parent`) |
-| Best speed/accuracy tradeoff for specific hardware | RF-DETR NAS (see section below) |
 | Best accuracy, object detection, NAS unavailable | RF-DETR (Large or XL) |
 | Fast inference, object detection, NAS unavailable | RF-DETR Nano or YOLOv11n |
 | Best accuracy, instance segmentation, NAS unavailable | RF-DETR Seg |
@@ -222,9 +221,7 @@ worse than it is:
 
 Also tell the user the NAS arm takes longer than a single fine-tune: it trains one parent model
 and then mines architectures out of it, so it is roughly one training plus a search-and-evaluate
-pass — not one training per candidate, however many models come back. Report the named-model arms
-as they finish
-rather than blocking on NAS.
+pass — not one training per candidate, however many models come back. Report the named-model arms as they finish rather than blocking on NAS.
 
 ## RF-DETR NAS (Neural Architecture Search)
 
