@@ -196,32 +196,18 @@ If you are comparing architectures rather than picking one, **include a NAS pare
 candidates** whenever the prerequisites are met — e.g. `rfdetr-medium` vs `yolo26m` vs
 `rfdetr-nas-parent`. Launch one `trainings_create` per candidate and keep each `trainingId`.
 
-Two things make the NAS arm different from the others, and getting them wrong will make NAS look
-worse than it is:
+Read the NAS arm's output as described under **Reading a run** in the RF-DETR NAS section below. One trap is specific
+to comparison: **pick the representative to match the question, or you will understate NAS.** A
+`recommended` child is chosen to balance accuracy against measured latency, so it is deliberately
+*not* the most accurate model in the run — in one 76-model run the two recommended children
+scored **72.86** and **71.91** mAP50-95 while the best child scored **78.00**, a 5–6 point gap.
+For a pure-accuracy comparison take the highest `metrics.map5095` child; for a deployment
+decision take the `recommended` child for the target hardware and compare
+`metrics.latency[hardware]` too. The run's own `nasFamily: "baseline"` children are a useful
+check on whether the search actually beat stock RF-DETR.
 
-- **It produces many models, not one** — a real run on a 289-image dataset returned **76**. Get
-  `modelGroup` from `trainings_get`, then page the children with
-  `models_list(group=<modelGroup>, version_number=…, limit=…, offset=…)`. Don't read the model
-  list out of `trainings_get`: it inlines every child, so the response is enormous.
-- **Each child carries `metrics: {map50, map5095, latency, paretoOptimalFor}`.** `latency` is a
-  map keyed by target hardware (e.g. `{"AI1": 6.69, "T4": 1.98}`), not a single number, and
-  `paretoOptimalFor` holds `"<hardware>:<metric>"` entries such as `"T4:map_50_95"`.
-- **`recommended` is per hardware, so several children carry it.** In the run above two were
-  flagged — one Pareto-optimal for `T4:map_50`, one for `AI1:map_50`. "The recommended model" is
-  ambiguous until you know the user's target hardware: ask, or report per hardware.
-- **Pick the representative to match the question, or you will understate NAS.** A `recommended`
-  child balances accuracy against measured latency, so it is deliberately *not* the most accurate
-  model in the run. In the run above the two recommended children scored **72.86** and **71.91**
-  mAP50-95 while the best child scored **78.00** — a 5–6 point gap. For a pure-accuracy
-  comparison take the highest `metrics.map5095` child; for a deployment decision take the
-  `recommended` child for the target hardware and compare `metrics.latency[hardware]` too.
-- **The run ships its own baselines.** Children with `nasFamily: "baseline"` are stock RF-DETR
-  models trained on the same data; they carry no `paretoOptimalFor` and are never `recommended`.
-  They are a free within-run reference point worth reporting alongside the searched children.
-
-Also tell the user the NAS arm takes longer than a single fine-tune: it trains one parent model
-and then mines architectures out of it, so it is roughly one training plus a search-and-evaluate
-pass — not one training per candidate, however many models come back. Report the named-model arms as they finish rather than blocking on NAS.
+The NAS arm also takes longer than a single fine-tune, so report the named-model arms as they
+finish rather than blocking on NAS.
 
 ## RF-DETR NAS (Neural Architecture Search)
 
@@ -236,10 +222,11 @@ Instead of picking a single RF-DETR size manually, NAS trains one parent model a
 - **Model IDs:** `rfdetr-nas-parent` (Standard — use this by default), `rfdetr-nas-pecoret-parent` (Fast), `rfdetr-nas-base-parent` (Plus) for object detection; `rfdetr-nas-seg-parent` for instance segmentation.
 - **Prerequisites — check both before offering NAS:**
   1. **≥15 validation images.** `versions_get` returns `splits.valid`; below 15 the train call fails with `insufficient_validation_images_for_nas`, and waiting will not help — the user must generate a version with a larger validation split.
-  2. **Plan entitlement.** NAS requires the workspace to have both `canTrainNas` and `canTrainNewRFDETR`. Self-serve plans (basic/starter/sandbox/research/trial) need to upgrade; enterprise/legacy need to contact sales. Neither flag is readable from the MCP, so this cannot be checked up front — a non-entitled workspace finds out when `trainings_create` rejects the run. Treat that rejection as a plan limit, not a transient error: do not retry it. Fall back to the recommended named model for the task — `rfdetr-medium` (detection) or `rfdetr-seg-medium` (segmentation) — and tell the user NAS needs a plan upgrade. Do **not** fall back to a hyperparameter sweep.
+  2. **Plan entitlement.** NAS requires the workspace to have both `canTrainNas` and `canTrainNewRFDETR`. Self-serve plans (basic/starter/sandbox/research/trial) need to upgrade; enterprise/legacy need to contact sales. Neither flag is readable from the MCP, so this cannot be checked up front — a non-entitled workspace finds out when `trainings_create` rejects the run with code `nas_not_available_for_plan`. Treat that as a plan limit, not a transient error: do not retry it. Fall back to the recommended named model for the task — `rfdetr-medium` (detection) or `rfdetr-seg-medium` (segmentation) — and tell the user NAS needs a plan upgrade. Do **not** fall back to a hyperparameter sweep.
 - **Start a run:** `trainings_create(project_id, version_number, model_type="rfdetr-nas-parent")`. NAS launches through the normal training tool; there is no separate engine parameter. (The UI equivalent is the Train page with `?engine=nas`.) Results land at `/{workspace}/{project}/nas-runs/{versionId}`.
 - **Nothing to hand-tune:** a NAS parent's whole hyperparameter surface is `epochs` (default 200, range 100–300). There are no learning-rate or loss-weight knobs, because the architecture search *is* the sweep.
-- **Deploy:** Each NAS-produced model deploys like any other — pick one (typically the `recommended` model for the user's target hardware; there is one per hardware, not one per run) and use it as a normal Roboflow model. Inference type is `rfdetr-nas` / `rfdetr-nas-seg`, but it's served through the standard inference paths.
+- **Reading a run:** a run returns a frontier of models, not one — a 289-image dataset produced **76**. Get `modelGroup` from `trainings_get`, then page the children with `models_list(group=<modelGroup>, version_number=…, limit=…, offset=…)`; don't read the list out of `trainings_get`, which inlines every child. Each child carries `metrics: {map50, map5095, latency, paretoOptimalFor}`, where `latency` is a map keyed by target hardware (e.g. `{"AI1": 6.69, "T4": 1.98}`) rather than a single number, and `paretoOptimalFor` holds `"<hardware>:<metric>"` entries such as `"T4:map_50_95"`. `recommended` is per hardware, so several children carry it — that run flagged two, one optimal for `T4:map_50` and one for `AI1:map_50` — which means "the recommended model" is ambiguous until you know the user's target hardware. Children with `nasFamily: "baseline"` are stock RF-DETR models trained on the same data; they carry no `paretoOptimalFor`, are never `recommended`, and are a free within-run reference.
+- **Deploy:** Each NAS-produced model deploys like any other — pick one (typically the `recommended` child for the user's target hardware) and use it as a normal Roboflow model. Inference type is `rfdetr-nas` / `rfdetr-nas-seg`, but it's served through the standard inference paths.
 - **References:** [RF-DETR paper (arxiv)](https://arxiv.org/html/2511.09554v2), [ICLR 2026](https://openreview.net/forum?id=qHm5GePxTh), [What is NAS? (blog)](https://blog.roboflow.com/neural-architecture-search/).
 
 ## Roboflow Instant / Rapid
