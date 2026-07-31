@@ -26,7 +26,7 @@ Upload/Annotate Images
 
 | Architecture | Sizes | Default Resolution | Notes |
 |---|---|---|---|
-| **RF-DETR** | Pico, Nano, Small, Base, Medium, Large, XL, 2XL | 384-880 (varies by size) | Best accuracy, recommended default |
+| **RF-DETR** | Pico, Nano, Small, Base, Medium, Large, XL, 2XL | 384-880 (varies by size) | Best accuracy among named sizes; see RF-DETR NAS |
 | Roboflow 3.0 | Fast, Accurate, Medium, Large, XL | 640x640 | YOLOv8-based. Medium+ require paid plan |
 | YOLO26 | n/s/m/l/x | 640x640 | Also supports seg + pose |
 | YOLOv12 | n/s/m/l/x | 640x640 | OD only |
@@ -84,8 +84,8 @@ Follow this flowchart to pick the right model. Start at Step 1.
 1. **Task type?** OD / Instance Seg / Keypoint → Step 2. Classification / Semantic Seg / VLM → use specialized block directly.
 2. **Target classes in COCO 80?** Yes → Step 3. No → Step 6.
 3. **Real-time?** No (images/recorded video) → Step 4. Yes (live video) → Step 5.
-4. **Non-real-time, COCO** — Pick model family by task, default Medium size (Small for constrained HW, XL for accuracy-first): OD → RF-DETR, Inst Seg → RF-DETR Seg, Keypoint → YOLO26 pose. **Done.**
-5. **Real-time, COCO** — Same families, pick Nano–Small, prioritize latency. **Done.**
+4. **Non-real-time, COCO** — OD / Inst Seg → prefer **RF-DETR NAS** (see that section; falls back to RF-DETR / RF-DETR Seg at Medium, Small for constrained HW, XL for accuracy-first). Keypoint → YOLO26 pose. **Done.**
+5. **Real-time, COCO** — Same, and NAS is the strongest option here because it reports measured latency per target hardware. Without it, same families at Nano–Small. **Done.**
 6. **Non-COCO, which sub-task?** OD → Step 7. Inst Seg → Step 8. Keypoint → Step 9.
 7. **OD, non-COCO** — Check Rapid exclusions (see below). If excluded → Step 13. Otherwise → recommend **Roboflow Rapid** (default) or SAM3 zero-shot as secondary option → Step 10.
 8. **Inst Seg, non-COCO** — SAM3 zero-shot (`sam3/sam3_final`, set `class_names`). Rapid does not support segmentation → Step 10.
@@ -94,7 +94,7 @@ Follow this flowchart to pick the right model. Start at Step 1.
 11. **Non-real-time trial** — User confirms works → **Done.** Poor results → Step 13.
 12. **Real-time trial** — User confirms works → **Done.** Poor results → Step 13.
 13. **Universe Model Search** — search community models on Roboflow Universe. Good match → **Done.** No match → Step 14.
-14. **Custom Training** — Fine-tune RF-DETR on user data. Size by HW constraints. **Done.**
+14. **Custom Training** — OD / Inst Seg → prefer **RF-DETR NAS**; otherwise fine-tune RF-DETR, sized by HW constraints. **Done.**
 
 ## Model ID Reference
 
@@ -104,7 +104,7 @@ Use these exact `model_id` values. Do not guess — wrong IDs cause training fai
 
 | Family | model_id values |
 |---|---|
-| **RF-DETR** (recommended) | `rfdetr-pico`, `rfdetr-nano`, `rfdetr-small`, `rfdetr-base`, `rfdetr-medium`, `rfdetr-large`, `rfdetr-xlarge`, `rfdetr-2xlarge` |
+| **RF-DETR** (named-model default) | `rfdetr-pico`, `rfdetr-nano`, `rfdetr-small`, `rfdetr-base`, `rfdetr-medium`, `rfdetr-large`, `rfdetr-xlarge`, `rfdetr-2xlarge` |
 | YOLO26 | `yolo26n`, `yolo26s`, `yolo26m`, `yolo26l`, `yolo26x` |
 | YOLOv12 | `yolov12n`, `yolov12s`, `yolov12m`, `yolov12l`, `yolov12x` |
 | YOLOv11 | `yolov11n`, `yolov11s`, `yolov11m`, `yolov11l`, `yolov11x` |
@@ -117,7 +117,7 @@ Use these exact `model_id` values. Do not guess — wrong IDs cause training fai
 
 | Family | model_id values |
 |---|---|
-| **RF-DETR Seg** (recommended) | `rfdetr-seg-nano`, `rfdetr-seg-small`, `rfdetr-seg-medium`, `rfdetr-seg-large`, `rfdetr-seg-xlarge`, `rfdetr-seg-2xlarge` |
+| **RF-DETR Seg** (named-model default) | `rfdetr-seg-nano`, `rfdetr-seg-small`, `rfdetr-seg-medium`, `rfdetr-seg-large`, `rfdetr-seg-xlarge`, `rfdetr-seg-2xlarge` |
 | YOLO26 Seg | `yolo26n-seg`, `yolo26s-seg`, `yolo26m-seg`, `yolo26l-seg`, `yolo26x-seg` |
 | YOLOv11 Seg | `yolov11n-seg`, `yolov11s-seg`, `yolov11m-seg`, `yolov11l-seg`, `yolov11x-seg` |
 | YOLOv8 Seg | `yolov8n-seg`, `yolov8s-seg`, `yolov8m-seg`, `yolov8l-seg`, `yolov8x-seg` |
