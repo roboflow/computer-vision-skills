@@ -220,27 +220,29 @@ worse than it is:
   models trained on the same data; they carry no `paretoOptimalFor` and are never `recommended`.
   They are a free within-run reference point worth reporting alongside the searched children.
 
-Also tell the user the NAS arm runs much longer and costs more than a single fine-tune (it mines
-architectures, then trains every frontier candidate). Report the named-model arms as they finish
+Also tell the user the NAS arm takes longer than a single fine-tune: it trains one parent model
+and then mines architectures out of it, so it is roughly one training plus a search-and-evaluate
+pass — not one training per candidate, however many models come back. Report the named-model arms
+as they finish
 rather than blocking on NAS.
 
 ## RF-DETR NAS (Neural Architecture Search)
 
-Instead of picking a single RF-DETR size manually, NAS trains many variants and reports the speed/accuracy frontier so you can pick the one that fits your hardware budget.
+Instead of picking a single RF-DETR size manually, NAS trains one parent model and mines many architectures out of it, reporting the speed/accuracy frontier so you can pick the one that fits your hardware budget.
 
-- **What:** A NAS run explores the RF-DETR architecture search space, then trains the surviving candidates and reports each one's mAP and measured latency on a target hardware (e.g., Jetson, T4 GPU). The output is a set of models on a Pareto frontier, plus an auto-selected "recommended" model chosen using Roboflow's current ranking heuristic to balance validation accuracy and measured latency on the target hardware.
+- **What:** A NAS run trains a single parent model, then searches the RF-DETR architecture space *within* that trained parent to identify frontier candidates, reporting each one's mAP and measured latency on target hardware (e.g., Jetson, T4 GPU). The output is a set of models on a Pareto frontier, plus an auto-selected "recommended" model per hardware, chosen using Roboflow's current ranking heuristic to balance validation accuracy against measured latency.
 - **Tasks:** Object Detection (`rfdetr-nas`) and Instance Segmentation (`rfdetr-nas-seg`).
 - **When to use:** When you want the best speed/accuracy tradeoff for a specific deployment target and don't want to A/B-test sizes manually. Especially valuable for edge hardware where latency budgets are tight.
 - **Phases:**
-  1. **Mining** — explores architectures and builds a Pareto frontier (latency vs mAP). Live updates while running.
-  2. **Training** — trains each frontier candidate end-to-end. Each becomes a regular model you can deploy.
+  1. **Parent training** — trains the one parent model the search draws from. This is the bulk of the wall-clock.
+  2. **Mining** — searches architectures inside the trained parent and evaluates candidates to build the Pareto frontier (latency vs mAP). Candidates are derived from the parent rather than each being trained from scratch, so they appear in a burst near the end of the run. Each becomes a regular model you can deploy.
 - **Model IDs:** `rfdetr-nas-parent` (Standard — use this by default), `rfdetr-nas-pecoret-parent` (Fast), `rfdetr-nas-base-parent` (Plus) for object detection; `rfdetr-nas-seg-parent` for instance segmentation.
 - **Prerequisites — check both before offering NAS:**
   1. **≥15 validation images.** `versions_get` returns `splits.valid`; below 15 the train call fails with `insufficient_validation_images_for_nas`, and waiting will not help — the user must generate a version with a larger validation split.
   2. **Plan entitlement.** NAS requires the workspace to have both `canTrainNas` and `canTrainNewRFDETR`. Self-serve plans (basic/starter/sandbox/research/trial) need to upgrade; enterprise/legacy need to contact sales. Neither flag is readable from the MCP, so this cannot be checked up front — a non-entitled workspace finds out when `trainings_create` rejects the run. Treat that rejection as a plan limit, not a transient error: do not retry it. Fall back to the recommended named model for the task — `rfdetr-medium` (detection) or `rfdetr-seg-medium` (segmentation) — and tell the user NAS needs a plan upgrade. Do **not** fall back to a hyperparameter sweep.
 - **Start a run:** `trainings_create(project_id, version_number, model_type="rfdetr-nas-parent")`. NAS launches through the normal training tool; there is no separate engine parameter. (The UI equivalent is the Train page with `?engine=nas`.) Results land at `/{workspace}/{project}/nas-runs/{versionId}`.
 - **Nothing to hand-tune:** a NAS parent's whole hyperparameter surface is `epochs` (default 200, range 100–300). There are no learning-rate or loss-weight knobs, because the architecture search *is* the sweep.
-- **Deploy:** Each NAS-produced model deploys like any other — pick one (typically the recommended) and use it as a normal Roboflow model. Inference type is `rfdetr-nas` / `rfdetr-nas-seg`, but it's served through the standard inference paths.
+- **Deploy:** Each NAS-produced model deploys like any other — pick one (typically the `recommended` model for the user's target hardware; there is one per hardware, not one per run) and use it as a normal Roboflow model. Inference type is `rfdetr-nas` / `rfdetr-nas-seg`, but it's served through the standard inference paths.
 - **References:** [RF-DETR paper (arxiv)](https://arxiv.org/html/2511.09554v2), [ICLR 2026](https://openreview.net/forum?id=qHm5GePxTh), [What is NAS? (blog)](https://blog.roboflow.com/neural-architecture-search/).
 
 ## Roboflow Instant / Rapid
