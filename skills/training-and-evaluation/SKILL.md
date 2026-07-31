@@ -263,7 +263,7 @@ Instead of picking a single RF-DETR size manually, NAS trains one parent model a
 | Fine-grained visual distinctions (correct vs incorrect orientation, pass/fail, subtle defects) | SAM3 cannot differentiate nearly identical objects; fine-tuned model needed |
 | High-precision measurement / metrology (distances, dimensions, tolerances) | SAM3 auto-labeling annotation precision insufficient for calibrated measurement |
 
-When Rapid is excluded → recommend custom training with RF-DETR fine-tuning.
+When Rapid is excluded → resume the decision tree at Step 13: Universe model search first, then custom training, which starts with **RF-DETR NAS** and falls back to named RF-DETR when its prerequisites are not met.
 
 ## Checkpoint Training
 
