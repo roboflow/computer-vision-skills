@@ -1,6 +1,6 @@
 {
   "name": "roboflow",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Roboflow computer vision skills and MCP tools for datasets, annotation, training, workflows, inference, and deployment.",
   "author": {
     "name": "Roboflow",

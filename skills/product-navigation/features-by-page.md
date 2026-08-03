@@ -10,8 +10,9 @@ Base URL: `https://app.roboflow.com`
 
 | Intent | Web URL | Alternatives |
 |--------|---------|-------------|
-| Upload images/videos | `/{ws}/{proj}/upload` | Python SDK: `project.upload(path)`, MCP: `image_upload` + `image_upload_status` |
+| Upload images/videos from your computer (local files) | `/{ws}/{proj}/upload` | Python SDK: `project.upload(path)`, MCP: `image_upload` + `image_upload_status` |
 | Import from S3/GCS/Azure | `/{ws}/{proj}/upload` -> Cloud Import tab | Python SDK with cloud URLs |
+| Import images from cloud storage (S3 / GCS bucket mirror) | `/{ws}/settings/datasources` | MCP: `connect_cloud_storage`; see `roboflow://skills/cloud-storage/SKILL` |
 | Import from Universe | `/{ws}/{proj}/upload` -> Universe tab | MCP: `universe_search` then fork |
 | Upload pre-annotated data | `/{ws}/{proj}/upload` (drag folder with annotations) | Python SDK: `project.upload(path)` auto-detects annotations |
 
@@ -56,10 +57,10 @@ Base URL: `https://app.roboflow.com`
 
 | Intent | Web URL | Alternatives |
 |--------|---------|-------------|
-| Train a model | `/{ws}/{proj}/train` | MCP: `models_train` |
-| Choose model architecture | `/{ws}/{proj}/train` -> architecture step | MCP: `models_train` (model param) |
-| Train from checkpoint | `/{ws}/{proj}/train` -> checkpoint step | MCP: `models_train` |
-| Train specific version | `/{ws}/{proj}/{version}/train` | MCP: `models_train` |
+| Train a model | `/{ws}/{proj}/train` | MCP: `trainings_create` |
+| Choose model architecture | `/{ws}/{proj}/train` -> architecture step | MCP: `trainings_create` (model param) |
+| Train from checkpoint | `/{ws}/{proj}/train` -> checkpoint step | MCP: `trainings_create` |
+| Train specific version | `/{ws}/{proj}/{version}/train` | MCP: `trainings_create` |
 | Check training status | `/{ws}/{proj}/{version}` (shows progress bar) | MCP: `models_get_training_status` |
 | View training results (mAP, etc.) | `/{ws}/{proj}/{version}/train/results` | MCP: `models_get` |
 | Cancel training | `/{ws}/{proj}/{version}` -> Cancel button | -- |
