@@ -41,48 +41,67 @@ Rule of thumb: "process and give me the outputs" → batch processing;
   `api_keys_create` MCP tool). Never have the user paste a private key into
   chat.
 
-## Where each step runs
+## Where each step runs, and why
 
-Staging uploads run client-side with the inference-cli, on the machine that
-can reach the files (local disk) or with the user's cloud credentials
-(bucket sources). The MCP server cannot read the user's filesystem or cloud
-credentials. Everything after staging is server-side via MCP tools:
-`batch_processing_job_start`, `_job_get`, `_job_logs`, `_job_abort`,
-`_job_restart`, `batch_processing_staging_*`.
+Two steps are inference-cli only, because the MCP server can neither read nor
+write the user's disk:
 
-The `batch_processing_guide` MCP tool returns this recipe plus an echo of
-the arguments you pass it; it never touches files or the network.
+- **Staging** runs on the machine that can reach the files (local disk) or
+  with the user's cloud credentials (bucket sources).
+- **Exporting results** (`export-batch`) downloads into a local directory.
+
+Everything in between needs only an API key, so it works either way: the MCP
+tools (`batch_processing_run`, `_job_start`, `_job_get`, `_job_logs`,
+`_job_abort`, `_job_restart`, `batch_processing_staging_*`) or the equivalent
+CLI commands. Prefer the MCP tools when the host has no shell or the user has
+no local `inference-cli`; prefer the CLI when the user is already in a
+terminal. The full command set for both content types is in sections 1-5.
+
+The `batch_processing_guide` MCP tool routes a request: it settles the batch
+id, picks the staging source, and returns the exact ordered commands. It
+never touches files or the network, and it does not repeat this document.
 
 ## The master tool: `batch_processing_run`
 
-Prefer `batch_processing_run(batch_id, workflow_id, ...)` to drive the whole
-flow. Each call inspects the current state, advances what it can, waits up
-to `wait_seconds` (bounded) and returns a status:
+Prefer `batch_processing_run(batch_id, workflow_id, content_type, ...)` to
+drive the flow. Each call reads current state, advances what it can, and
+returns immediately with a status:
 
-- `staging_required` — no batch yet; the response contains the exact CLI
-  commands (already wired to a webhook relay via `--notifications-url`) and
-  cloud-credential env-var guidance. Run them, then call again.
-- `ingest_in_progress` — files still registering; call again.
-- `running` — the job was started (with the relay as its notifications URL)
-  or is still working; includes stage progress and relayed events.
+- `staging_required` — no batch yet; the response contains the CLI commands
+  for the whole run plus cloud-credential guidance. Run them, then call again.
+- `ingest_in_progress` — files still registering.
+- `running` — the job was started or is still working; includes stage progress.
 - `completed` — includes the export batch id and the first result files with
   signed download URLs.
 - `failed` — includes logs and a restart hint.
 
-Pass the returned `job_id` and `relay_id` back on every follow-up call to
-resume; the server holds no state between calls.
+**The server never waits on your behalf.** Non-terminal responses carry
+`retryAfterSeconds`; sleep that long on your side, then call again with the
+returned `job_id` to resume. The server holds no state between calls.
 
-## Webhook events
+The job is started under an id derived from (workspace, batch, workflow), so
+retrying after a lost response re-registers the same job instead of paying for
+a second run. A 409 means that id already exists with genuinely different
+settings: either re-call with the original settings, or pass an explicit
+`job_id` for a separate run.
 
-Jobs and ingests can notify a webhook. `batch_processing_run` wires this
-automatically to the MCP server's relay
-(`/webhooks/batch-processing/<relay_id>`); the platform POSTs job
-success/failure (`roboflow-batch-job-notification-v1`) and ingest-status
-events there. Read them with `batch_processing_events_poll(relay_id)`
-between calls, or just re-call `batch_processing_run`. Events are advisory:
-confirm real state with `batch_processing_job_get`. Users with their own
-webhook receiver can instead pass `notifications_url` to
-`batch_processing_job_start` or `--notifications-url` on CLI commands.
+For the advanced knobs (`max_runtime_seconds`, `max_parallel_tasks`,
+`max_image_failure_rate`, `image_outputs_to_save`, `part_name`) use
+`batch_processing_job_start` directly.
+
+## Webhooks
+
+Roboflow will POST job and ingest notifications to a URL you control. There is
+no MCP-side relay: pass `notifications_url` to `batch_processing_job_start`, or
+`--notifications-url` on the CLI commands, pointing at your own receiver. The
+POST carries an `Authorization` header with your publishable key.
+
+Caveat: local **video** staging does not support `--notifications-url` (the CLI
+prints a warning and drops it). Local image, cloud-storage and references-file
+ingests all support it.
+
+If you have no receiver, just poll `batch_processing_job_get` (or
+`batch_processing_run`, which reports progress on each call).
 
 ## 1. Install the CLI
 
@@ -114,21 +133,37 @@ inference rf-cloud data-staging create-batch-of-images \
 inference rf-cloud data-staging create-batch-of-videos \
   --batch-id my-batch --videos-dir ./videos
 
-# Cloud bucket (S3/GCS/Azure; glob over object paths)
+# Cloud bucket (S3/GCS/Azure; glob over object paths).
+# Videos work exactly the same way: create-batch-of-videos.
 inference rf-cloud data-staging create-batch-of-images \
   --batch-id my-batch --data-source cloud-storage \
   --bucket-path 's3://my-bucket/images/**/*.jpg'
+
+inference rf-cloud data-staging create-batch-of-videos \
+  --batch-id my-batch --data-source cloud-storage \
+  --bucket-path 's3://my-bucket/videos/**/*.mp4'
 
 # References file: JSONL lines of {"name": ..., "url": "https://..."}
 inference rf-cloud data-staging create-batch-of-images \
   --batch-id my-batch --data-source references-file --references refs.jsonl
 ```
 
+Images vs videos is a choice you make, not something inferred from the path:
+`create-batch-of-images` and `create-batch-of-videos` both accept every data
+source. Pick the one matching the content.
+
 Sharded, cloud-storage, and references ingests are asynchronous. Wait until
-the batch is fully ingested before starting a job: poll the
-`batch_processing_staging_batch_get` MCP tool (file count plus per-shard
-ingest statuses), or `inference rf-cloud data-staging show-batch-details -b
-my-batch` / `list-ingest-details` from the CLI.
+the batch is fully ingested before starting a job:
+
+```bash
+inference rf-cloud data-staging show-batch-details --batch-id my-batch
+inference rf-cloud data-staging list-ingest-details --batch-id my-batch
+```
+
+or the `batch_processing_staging_batch_get` MCP tool, which returns the file
+count plus an `ingest` block with `pending` and `failed` flags. Do not start a
+job while `pending` is true or `failed` is true: the job costs credits and
+would run over incomplete input.
 
 Practical limits: up to 20,000 references per ingest request (auto-chunked),
 ~1,000 videos per batch suggested, image formats jpg/png/webp/bmp/jp2,
@@ -136,26 +171,58 @@ video formats mp4/mov/avi/mkv/flv/wmv/m4v.
 
 ## 3. Start the job
 
-Prefer the MCP tool:
+CLI, images:
+
+```bash
+inference rf-cloud batch-processing process-images-with-workflow \
+  --batch-id my-batch --workflow-id my-workflow --machine-type gpu
+```
+
+CLI, videos:
+
+```bash
+inference rf-cloud batch-processing process-videos-with-workflow \
+  --batch-id my-batch --workflow-id my-workflow --machine-type gpu \
+  --max-video-fps 5
+```
+
+Shared optional flags: `--workers-per-machine 1|2|4|8`,
+`--aggregation-format jsonl|csv`, `--save-image-outputs`,
+`--image-outputs-to-save <name>`, `--image-input-name <name>`,
+`--workflow-params params.json`, `--max-runtime-seconds <n>`,
+`--max-parallel-tasks <n>`, `--job-id <id>`, `--job-name <name>`,
+`--notifications-url <url>`, `--part-name <part>`.
+
+Images only: `--max-image-failure-rate 0.0-1.0` (the server rejects it on
+video jobs). Videos only: `--max-video-fps <n>`.
+
+MCP equivalent:
 
 ```
 batch_processing_job_start(
   batch_id="my-batch", workflow_id="my-workflow",
   content_type="images",            # or "videos"
   machine_type="gpu",               # cpu|gpu, optional
-  workers_per_machine=4,            # 1/2/4/8, optional
+  workers_per_machine=4,            # 1, 2, 4 or 8, optional
   aggregation_format="jsonl",       # or "csv"
   save_image_outputs=True,          # persist crops/visualizations
   max_video_fps=5,                  # videos only: prediction subsampling
 )
 ```
 
-CLI equivalent: `inference rf-cloud batch-processing
-process-images-with-workflow -b my-batch -w my-workflow -mt gpu` (or
-`process-videos-with-workflow`). Same job_id + identical definition is
-idempotent; a divergent definition is rejected with a 409.
+Default compute is CPU; use GPU for multiple or large models. Same job_id plus
+an identical definition is idempotent; a divergent one is rejected with a 409.
 
 ## 4. Monitor
+
+```bash
+inference rf-cloud batch-processing show-job-details --job-id my-job
+inference rf-cloud batch-processing fetch-logs --job-id my-job
+inference rf-cloud batch-processing abort-job --job-id my-job
+inference rf-cloud batch-processing restart-job --job-id my-job
+```
+
+MCP equivalents, which return JSON rather than a rendered table:
 
 - `batch_processing_job_get(job_id)` — status, current/planned stages,
   per-stage progress, output batches; `job.isTerminal` + `job.error` are the
@@ -171,11 +238,21 @@ Results land in Data Staging as platform-generated batches:
 `<job-id>-processing` (raw per-shard outputs) and `<job-id>-export`
 (packaged, downloadable archives).
 
-- List with `batch_processing_staging_batch_files_list(batch_id="<job-id>-export")`;
-  entries carry signed `downloadURL`s (~24h expiry). Archives (`.tar` /
-  `.tar.gz`) must be unpacked after download.
-- Listings are capped at 10,000 entries per call. Past that scale, download
-  with the CLI instead (`inference rf-cloud data-staging export-batch -b
-  <job-id>-export -t ./results`, resumable), or import the source data into
-  the workspace with datasources (ELT) and work inside Roboflow.
-- Do this within 7 days: staged inputs and results expire.
+Downloading writes to disk, so this step is CLI only:
+
+```bash
+inference rf-cloud data-staging export-batch \
+  --batch-id my-job-export --target-dir ./results
+```
+
+It is resumable; add `--override-existing` to re-pull content already
+exported, and `--part-name <part>` to fetch one part of a multipart batch.
+
+The MCP tool `batch_processing_staging_batch_files_list(batch_id="<job-id>-export")`
+lists the same files with signed `downloadURL`s (~24h expiry) so a host with no
+shell can still fetch them. Archives (`.tar` / `.tar.gz`) must be unpacked
+after download, and listings are capped at 10,000 entries per call — past that
+scale use `export-batch`, or import the source data into the workspace with
+datasources (ELT) and work inside Roboflow.
+
+Do this within 7 days: staged inputs and results expire.
