@@ -19,6 +19,10 @@ in automatically. Two pieces work together:
 > Imports land at the **workspace** level. The datasource API cannot target a
 > specific project/dataset today.
 
+> Only want to run a model/Workflow over the files and collect the outputs,
+> without importing anything into Roboflow? That is batch processing (ETL) —
+> see the `roboflow-batch-processing` skill instead.
+
 ## Fast path — one call
 
 `connect_cloud_storage` does the whole flow in one shot: (optionally) create a

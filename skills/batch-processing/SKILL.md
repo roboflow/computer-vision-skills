@@ -51,9 +51,9 @@ write the user's disk:
 - **Exporting results** (`export-batch`) downloads into a local directory.
 
 Everything in between needs only an API key, so it works either way: the MCP
-tools (`batch_processing_run`, `_job_start`, `_job_get`, `_job_logs`,
-`_job_abort`, `_job_restart`, `batch_processing_staging_*`) or the equivalent
-CLI commands. Prefer the MCP tools when the host has no shell or the user has
+tools (`batch_processing_run`, `_job_start`, `_job_get`, `_jobs_list`,
+`_job_logs`, `_job_abort`, `_job_restart`, `batch_processing_staging_*`) or
+the equivalent CLI commands. Prefer the MCP tools when the host has no shell or the user has
 no local `inference-cli`; prefer the CLI when the user is already in a
 terminal. The full command set for both content types is in sections 1-5.
 
@@ -81,9 +81,10 @@ returned `job_id` to resume. The server holds no state between calls.
 
 The job is started under an id derived from (workspace, batch, workflow), so
 retrying after a lost response re-registers the same job instead of paying for
-a second run. A 409 means that id already exists with genuinely different
-settings: either re-call with the original settings, or pass an explicit
-`job_id` for a separate run.
+a second run. (The platform checks credits before that idempotency comparison,
+so a retry can still see a 429 first.) A 409 means that id already exists with
+genuinely different settings: either re-call with the original settings, or
+pass an explicit `job_id` for a separate run.
 
 For the advanced knobs (`max_runtime_seconds`, `max_parallel_tasks`,
 `max_image_failure_rate`, `image_outputs_to_save`, `part_name`) use
@@ -97,8 +98,9 @@ no MCP-side relay: pass `notifications_url` to `batch_processing_job_start`, or
 POST carries an `Authorization` header with your publishable key.
 
 Caveat: local **video** staging does not support `--notifications-url` (the CLI
-prints a warning and drops it). Local image, cloud-storage and references-file
-ingests all support it.
+prints a warning and drops it), and a small local **image** batch (32 files or
+fewer stages as a simple batch) ignores it too. Sharded local image,
+cloud-storage and references-file ingests all support it.
 
 If you have no receiver, just poll `batch_processing_job_get` (or
 `batch_processing_run`, which reports progress on each call).
@@ -112,12 +114,14 @@ pip install 'inference-cli[cloud-storage]'
 ```
 
 Cloud credentials are picked up from the standard env chains on the machine
-running the CLI: AWS via the default credential chain (`AWS_PROFILE`,
-`AWS_REGION`, `AWS_ENDPOINT_URL` honored; R2/MinIO work via
-`AWS_ENDPOINT_URL`), GCS via `GOOGLE_APPLICATION_CREDENTIALS`, Azure via
+running the CLI: AWS via the default credential chain (`AWS_PROFILE` honored;
+R2/MinIO work via `AWS_ENDPOINT_URL`, with `AWS_REGION` applied alongside it),
+GCS via `GOOGLE_APPLICATION_CREDENTIALS`, Azure via
 `AZURE_STORAGE_ACCOUNT_NAME` plus `AZURE_STORAGE_ACCOUNT_KEY` or
-`AZURE_STORAGE_SAS_TOKEN`. The CLI generates presigned URLs (24h expiry)
-and hands those to Roboflow; bucket secrets never leave the machine.
+`AZURE_STORAGE_SAS_TOKEN`. For S3/GCS the CLI generates presigned URLs (24h
+expiry); for Azure it appends your SAS token, so those URLs stay valid as long
+as the token does. Either way the URLs are handed to Roboflow and bucket
+secrets never leave the machine.
 
 ## 2. Stage a batch
 
@@ -165,9 +169,11 @@ count plus an `ingest` block with `pending` and `failed` flags. Do not start a
 job while `pending` is true or `failed` is true: the job costs credits and
 would run over incomplete input.
 
-Practical limits: up to 20,000 references per ingest request (auto-chunked),
+Practical limits: up to 20,000 image references per ingest request
+(auto-chunked; video references cap at 5,000 per request and are not chunked),
 ~1,000 videos per batch suggested, image formats jpg/png/webp/bmp/jp2,
-video formats mp4/mov/avi/mkv/flv/wmv/m4v.
+video formats mp4/mov/avi/mkv/flv/wmv/m4v. `batch_processing_staging_batches_list`
+shows every staged batch in the workspace (inputs and job results).
 
 ## 3. Start the job
 
@@ -206,9 +212,12 @@ batch_processing_job_start(
   workers_per_machine=4,            # 1, 2, 4 or 8, optional
   aggregation_format="jsonl",       # or "csv"
   save_image_outputs=True,          # persist crops/visualizations
-  max_video_fps=5,                  # videos only: prediction subsampling
 )
 ```
+
+For videos, set `content_type="videos"` and optionally `max_video_fps=5`
+(prediction subsampling). The tool rejects `max_video_fps` on image jobs and
+`max_image_failure_rate` on video jobs, matching the platform.
 
 Default compute is CPU; use GPU for multiple or large models. Same job_id plus
 an identical definition is idempotent; a divergent one is rejected with a 409.
@@ -231,6 +240,8 @@ MCP equivalents, which return JSON rather than a rendered table:
 - `batch_processing_job_abort(job_id)` / `batch_processing_job_restart(job_id)`
   — stop a run, or retry a failed one (optionally overriding machine type,
   workers, timeout).
+- `batch_processing_jobs_list()` — the workspace's recent jobs, for finding a
+  job id you did not keep.
 
 ## 5. Download results
 
@@ -250,9 +261,11 @@ exported, and `--part-name <part>` to fetch one part of a multipart batch.
 
 The MCP tool `batch_processing_staging_batch_files_list(batch_id="<job-id>-export")`
 lists the same files with signed `downloadURL`s (~24h expiry) so a host with no
-shell can still fetch them. Archives (`.tar` / `.tar.gz`) must be unpacked
-after download, and listings are capped at 10,000 entries per call — past that
-scale use `export-batch`, or import the source data into the workspace with
-datasources (ELT) and work inside Roboflow.
+shell can still fetch them. Export batches are multipart: the tool selects the
+part automatically when there is exactly one, and otherwise asks you to pass
+`part_name` (the parts are in `batch_processing_staging_batch_get`). Archives
+(`.tar` / `.tar.gz`) must be unpacked after download, and listings are capped
+at 10,000 entries per call — past that scale use `export-batch`, or import the
+source data into the workspace with datasources (ELT) and work inside Roboflow.
 
 Do this within 7 days: staged inputs and results expire.
