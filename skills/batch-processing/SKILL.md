@@ -37,9 +37,12 @@ Rule of thumb: "process and give me the outputs" → batch processing;
 - The Workflow must already exist in the workspace (`workflows_list`,
   `workflows_create`). Jobs reference it by `workflow_id`; there is no
   inline-spec option.
-- API key: set `ROBOFLOW_API_KEY` in the environment (mint one with the
-  `api_keys_create` MCP tool). Never have the user paste a private key into
-  chat.
+- API key: the inference-cli reads `ROBOFLOW_API_KEY` from the environment,
+  and every command also accepts `--api-key=<key>`. A key stored by
+  `roboflow login` (`~/.config/roboflow/config.json`) is NOT picked up by
+  the inference-cli: export it or pass `--api-key` explicitly. Mint one with
+  the `api_keys_create` MCP tool. Never have the user paste a private key
+  into chat.
 
 ## Where each step runs, and why
 
@@ -112,6 +115,9 @@ pip install inference-cli
 # For s3:// gs:// az:// sources:
 pip install 'inference-cli[cloud-storage]'
 ```
+
+Every `inference rf-cloud` command below authenticates via `ROBOFLOW_API_KEY`
+from the environment, or `--api-key=<key>` on the command itself.
 
 Cloud credentials are picked up from the standard env chains on the machine
 running the CLI: AWS via the default credential chain (`AWS_PROFILE` honored;
