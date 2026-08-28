@@ -225,8 +225,27 @@ For videos, set `content_type="videos"` and optionally `max_video_fps=5`
 (prediction subsampling). The tool rejects `max_video_fps` on image jobs and
 `max_image_failure_rate` on video jobs, matching the platform.
 
-Default compute is CPU; use GPU for multiple or large models. Same job_id plus
-an identical definition is idempotent; a divergent one is rejected with a 409.
+### Choosing cpu vs gpu (`machine_type`)
+
+Default compute is CPU. Decide with two quick checks before starting a paid
+job over the whole batch:
+
+1. **Test-run the Workflow on one representative image** (`workflows_run` MCP
+   tool, or the hosted API) and measure the wall time. Run it twice and time
+   the second call (the first may cold-start). If a single image takes more
+   than about a second of model time, CPU workers will crawl through a large
+   batch: take `gpu`.
+2. **Inspect the Workflow spec** (`workflows_get`): count the model steps and
+   note their sizes. One small fine-tuned detector/classifier: `cpu` is the
+   cheapest and usually enough. Several models chained, or any large
+   foundation model (SAM family, CLIP, OCR, VLM blocks): `gpu`.
+
+Videos multiply per-frame work with `--max-video-fps`, so lean `gpu` there
+too. `workers_per_machine` (1/2/4/8) then scales throughput on one machine:
+more workers means better utilization but a higher OOM risk.
+
+Same job_id plus an identical definition is idempotent; a divergent one is
+rejected with a 409.
 
 ## 4. Monitor
 
