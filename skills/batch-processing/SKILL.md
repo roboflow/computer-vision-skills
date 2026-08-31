@@ -97,14 +97,17 @@ returns immediately with a status:
 
 **The server never waits on your behalf.** Non-terminal responses carry
 `retryAfterSeconds`; sleep that long on your side, then call again with the
-returned `job_id` to resume. The server holds no state between calls.
+returned `job_id` and the same `batch_id` to resume. Omit optional creation
+settings on a read-only resume: the paid job's stored definition is
+authoritative. The server holds no state between calls.
 
 The job is started under an id derived from (workspace, batch, workflow), so
 retrying after a lost response re-registers the same job instead of paying for
 a second run. (The platform checks credits before that idempotency comparison,
 so a retry can still see a 429 first.) A 409 means that id already exists with
-genuinely different settings: either re-call with the original settings, or
-pass an explicit `job_id` for a separate run.
+different batch/Workflow identity or conflicts with an optional setting you
+explicitly supplied. Inspect the job, omit optional settings to monitor it as
+stored, or pass a new explicit `job_id` for a separate run.
 
 For the advanced knobs (`max_runtime_seconds`, `max_parallel_tasks`,
 `max_image_failure_rate`, `image_outputs_to_save`) use
