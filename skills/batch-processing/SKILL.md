@@ -1,6 +1,6 @@
 ---
 name: roboflow-batch-processing
-description: Use when processing a huge number of images or videos with a Roboflow Workflow WITHOUT importing them into Roboflow — staging local or cloud files with the inference-cli, starting and monitoring batch processing jobs, downloading results, and choosing between batch processing (ETL) and datasource bucket mirroring (ELT).
+description: Use when processing many Asset Library images or external images/videos with a Roboflow Workflow, including selecting Asset Library inputs, staging local or cloud files with the inference-cli, monitoring jobs, downloading results, and choosing between batch processing (ETL) and datasource bucket mirroring (ELT).
 ---
 
 > **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
@@ -8,9 +8,23 @@ description: Use when processing a huge number of images or videos with a Robofl
 # Batch Processing
 
 Run a Roboflow Workflow over a very large set of images or videos on
-Roboflow's autoscaling compute, without importing anything into the
-workspace. Files are staged into temporary Data Staging batches, a job
-processes them, and results are exported back to staging for download.
+Roboflow's autoscaling compute. Existing Asset Library images use the
+platform-owned selection and staging pipeline. External files are staged into
+temporary Data Staging batches, processed, and exported back to staging for
+download without importing them into the workspace.
+
+## Choose the input path first
+
+- **Asset Library images:** call
+  `batch_processing_asset_library_job_create` with a stable idempotency key and
+  exactly one selection: `image_ids`, `query`, or `all_images=true`. The
+  platform performs access checks, selects the files, stages them, verifies
+  Workflow compatibility, bills, and registers the durable job. Poll the
+  returned `taskId` with `batch_processing_asset_library_task_get` until the
+  task is terminal; then monitor its `jobId` with `batch_processing_job_get`.
+- **Local, cloud, or reference-file inputs:** use
+  `batch_processing_guide` and `batch_processing_run` as described below. File
+  staging and result export must run on the machine that can access the files.
 
 ## Batch processing vs datasources (ETL vs ELT)
 
@@ -55,7 +69,8 @@ write the user's disk:
 
 Everything in between needs only an API key, so it works either way: the MCP
 tools (`batch_processing_run`, `_job_start`, `_job_get`, `_jobs_list`,
-`_job_logs`, `_job_abort`, `_job_restart`, `batch_processing_staging_*`) or
+`_job_logs`, `_job_abort`, `_job_restart`,
+`batch_processing_asset_library_*`, `batch_processing_staging_*`) or
 the equivalent CLI commands. Prefer the MCP tools when the host has no shell or the user has
 no local `inference-cli`; prefer the CLI when the user is already in a
 terminal. The full command set for both content types is in sections 1-5.
@@ -73,6 +88,8 @@ returns immediately with a status:
 - `staging_required` — no batch yet; the response contains the CLI commands
   for the whole run plus cloud-credential guidance. Run them, then call again.
 - `ingest_in_progress` — files still registering.
+- `ingest_failed` — ingest failed or returned an unknown shard state; no paid
+  job was started.
 - `running` — the job was started or is still working; includes stage progress.
 - `completed` — includes the export batch id and the first result files with
   signed download URLs.
@@ -90,7 +107,7 @@ genuinely different settings: either re-call with the original settings, or
 pass an explicit `job_id` for a separate run.
 
 For the advanced knobs (`max_runtime_seconds`, `max_parallel_tasks`,
-`max_image_failure_rate`, `image_outputs_to_save`, `part_name`) use
+`max_image_failure_rate`, `image_outputs_to_save`) use
 `batch_processing_job_start` directly.
 
 ## Webhooks
@@ -212,6 +229,7 @@ MCP equivalent:
 
 ```
 batch_processing_job_start(
+  job_id="my-stable-job-id",           # required; reuse for retries
   batch_id="my-batch", workflow_id="my-workflow",
   content_type="images",            # or "videos"
   machine_type="gpu",               # cpu|gpu, optional
@@ -245,7 +263,11 @@ too. `workers_per_machine` (1/2/4/8) then scales throughput on one machine:
 more workers means better utilization but a higher OOM risk.
 
 Same job_id plus an identical definition is idempotent; a divergent one is
-rejected with a 409.
+rejected with a 409. The tool checks that ingest is complete before the paid
+registration call. For a multipart input, pass `part_name`; it is also
+supported by `batch_processing_run`. Both tools default to the current
+`inference-models` backend; use `inference_backend="old-inference"` only for a
+known compatibility requirement.
 
 ## 4. Monitor
 
@@ -265,8 +287,9 @@ MCP equivalents, which return JSON rather than a rendered table:
 - `batch_processing_job_abort(job_id)` / `batch_processing_job_restart(job_id)`
   — stop a run, or retry a failed one (optionally overriding machine type,
   workers, timeout).
-- `batch_processing_jobs_list()` — the workspace's recent jobs, for finding a
-  job id you did not keep.
+- `batch_processing_jobs_list(search=...)` — the workspace's recent Workflow
+  jobs, for finding a job id you did not keep. Internal TensorRT compilation
+  jobs are excluded.
 
 ## 5. Download results
 
