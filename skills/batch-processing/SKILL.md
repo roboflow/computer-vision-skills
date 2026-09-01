@@ -1,6 +1,6 @@
 ---
 name: roboflow-batch-processing
-description: Use when processing many Asset Library images or external images/videos with a Roboflow Workflow, including selecting Asset Library inputs, staging local or cloud files with the inference-cli, monitoring jobs, downloading results, and choosing between batch processing (ETL) and datasource bucket mirroring (ELT).
+description: Use when running a Roboflow Workflow over many images or videos with batch processing — Asset Library jobs (the platform stages workspace images for you) or staged jobs (you stage external local/cloud files with the inference-cli), plus monitoring jobs, downloading results, and routing imports to datasources (bucket mirror) instead.
 ---
 
 > **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
@@ -8,39 +8,40 @@ description: Use when processing many Asset Library images or external images/vi
 # Batch Processing
 
 Run a Roboflow Workflow over a very large set of images or videos on
-Roboflow's autoscaling compute. Existing Asset Library images use the
-platform-owned selection and staging pipeline. External files are staged into
-temporary Data Staging batches, processed, and exported back to staging for
-download without importing them into the workspace.
+Roboflow's autoscaling compute. Every job processes a temporary Data Staging
+batch; the two input paths differ only in **who fills that batch**:
 
-## Choose the input path first
+- **Asset Library job** — the files are already in Roboflow. You hand the
+  platform a selection and it selects and stages them for you.
+- **Staged job** — the files are outside Roboflow (local disk, cloud bucket,
+  references file), so you stage them yourself with the inference-cli: only
+  your machine and credentials can reach them. Nothing is imported into the
+  workspace, and staged data expires after ~7 days.
 
-- **Asset Library images:** call
-  `batch_processing_asset_library_job_create` with a stable idempotency key and
-  exactly one selection: `image_ids`, `query`, or `all_images=true`. The
-  platform performs access checks, selects the files, stages them, verifies
-  Workflow compatibility, bills, and registers the durable job. Poll the
-  returned `taskId` with `batch_processing_asset_library_task_get` until the
-  task is terminal; then monitor its `jobId` with `batch_processing_job_get`.
-- **Local, cloud, or reference-file inputs:** use
-  `batch_processing_guide` and `batch_processing_run` as described below. File
-  staging and result export must run on the machine that can access the files.
+## Which path? Three questions
 
-## Batch processing vs datasources (ETL vs ELT)
+1. **Are the files already in Roboflow (Asset Library)?** Call
+   `batch_processing_asset_library_job_create` with a stable idempotency key
+   and exactly one selection: `image_ids`, `query`, or `all_images=true`. The
+   platform performs access checks, selects the files, stages them, verifies
+   Workflow compatibility, bills, and registers the durable job. Poll the
+   returned `taskId` with `batch_processing_asset_library_task_get` until the
+   task is terminal; then monitor its `jobId` with `batch_processing_job_get`.
+2. **Files outside Roboflow, and you only want the outputs?** Stage them
+   yourself and drive the run with `batch_processing_guide` +
+   `batch_processing_run` as described below (the classic ETL shape: nothing
+   lands in the workspace). Staging and result export must run on the machine
+   that can access the files.
+3. **Files outside Roboflow that you want INSIDE it** (labeling, curation,
+   training)? That is an import, not a batch processing job: mirror the
+   bucket with a datasource (`connect_cloud_storage`, see the `cloud-storage`
+   skill). Once mirrored, the files are Asset Library images, so if you also
+   want bulk predictions, run an Asset Library job over them (the classic ELT
+   shape: load first, then transform).
 
-Two pipelines exist for "I have a ton of files in a bucket/on disk". Pick by
-what the user wants to end up with:
-
-- **Batch processing (this skill, ETL):** run a model/Workflow over the
-  files and get the results out. Nothing lands in the Roboflow workspace;
-  staged data expires after ~7 days. Best for one-off or recurring bulk
-  inference over local disks or cloud buckets.
-- **Datasources / bucket mirror (ELT, see the `cloud-storage` skill):**
-  import the files INTO the workspace first for labeling, curation, and
-  training, then work on them inside Roboflow.
-
-Rule of thumb: "process and give me the outputs" → batch processing;
-"get these into Roboflow" → datasources (`connect_cloud_storage`).
+"Datasource" and "bucket mirror" are one thing: a datasource is the
+user-facing name for a bucket-mirror config, the importer that fills the
+Asset Library. It never runs Workflows itself.
 
 ## Prerequisites
 
@@ -68,7 +69,7 @@ write the user's disk:
 - **Exporting results** (`export-batch`) downloads into a local directory.
 
 Everything in between needs only an API key, so it works either way: the MCP
-tools (`batch_processing_run`, `batch_processing_job_start`,
+tools (`batch_processing_run`, `batch_processing_staged_job_start`,
 `batch_processing_job_get`, `batch_processing_jobs_list`,
 `batch_processing_job_logs`, `batch_processing_job_abort`,
 `batch_processing_job_restart`, plus the
@@ -113,12 +114,12 @@ stored, or pass a new explicit `job_id` for a separate run.
 
 For the advanced knobs (`max_runtime_seconds`, `max_parallel_tasks`,
 `max_image_failure_rate`, `image_outputs_to_save`) use
-`batch_processing_job_start` directly.
+`batch_processing_staged_job_start` directly.
 
 ## Webhooks
 
 Roboflow will POST job and ingest notifications to a URL you control. There is
-no MCP-side relay: pass `notifications_url` to `batch_processing_job_start`, or
+no MCP-side relay: pass `notifications_url` to `batch_processing_staged_job_start`, or
 `--notifications-url` on the CLI commands, pointing at your own receiver. The
 POST carries an `Authorization` header with your publishable key.
 
@@ -233,7 +234,7 @@ video jobs). Videos only: `--max-video-fps <n>`.
 MCP equivalent:
 
 ```
-batch_processing_job_start(
+batch_processing_staged_job_start(
   job_id="my-stable-job-id",           # required; reuse for retries
   batch_id="my-batch", workflow_id="my-workflow",
   content_type="images",            # or "videos"
@@ -294,7 +295,9 @@ MCP equivalents, which return JSON rather than a rendered table:
   workers, timeout).
 - `batch_processing_jobs_list(search=...)` — the workspace's recent Workflow
   jobs, for finding a job id you did not keep. Internal TensorRT compilation
-  jobs are excluded.
+  jobs are excluded. Both this tool and `batch_processing_job_get` label each
+  job with `inputSource`: `asset-library` (platform-staged selection) or
+  `staged-batch` (a batch you staged yourself).
 
 ## 5. Download results
 

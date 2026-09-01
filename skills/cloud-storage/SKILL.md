@@ -20,8 +20,10 @@ in automatically. Two pieces work together:
 > specific project/dataset today.
 
 > Only want to run a model/Workflow over the files and collect the outputs,
-> without importing anything into Roboflow? That is batch processing (ETL) —
-> see the `roboflow-batch-processing` skill instead.
+> without importing anything into Roboflow? That is batch processing — see the
+> `roboflow-batch-processing` skill. Mirroring composes with it too: imported
+> files become Asset Library images, and bulk predictions over them run as
+> Asset Library batch processing jobs (same skill).
 
 ## Fast path — one call
 

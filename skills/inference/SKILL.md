@@ -95,7 +95,7 @@ Surfaces: Roboflow web UI, `inference rf-cloud` CLI, and REST API.
 ### Flow
 
 1. Have a saved Workflow in your workspace.
-2. Stage inputs as a Data Staging batch (local directory, JSONL of signed URLs, or cloud-storage path on S3 / GCS / Azure).
+2. Provide inputs: an Asset Library selection (the platform stages it for you), or stage external files yourself as a Data Staging batch (local directory, JSONL of signed URLs, or cloud-storage path on S3 / GCS / Azure).
 3. Submit a job referencing the Workflow + input batch; choose CPU or GPU.
 4. Monitor — poll job status or register a webhook.
 5. Export the output batch as JSON.
