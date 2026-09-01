@@ -43,6 +43,10 @@ batch; the two input paths differ only in **who fills that batch**:
 user-facing name for a bucket-mirror config, the importer that fills the
 Asset Library. It never runs Workflows itself.
 
+In pipeline terms: a staged job is the T of an ETL flow (no load ever
+happens), and an Asset Library job is the T of an ELT flow — the load
+already happened, via uploads or a datasource mirror.
+
 ## Prerequisites
 
 - The workspace needs the batch-processing feature. Gated calls fail with a
