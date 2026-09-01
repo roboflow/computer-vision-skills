@@ -86,11 +86,12 @@ The `batch_processing_guide` MCP tool routes a request: it settles the batch
 id, picks the staging source, and returns the exact ordered commands. It
 never touches files or the network, and it does not repeat this document.
 
-## The master tool: `batch_processing_run`
+## The master tool for staged batches: `batch_processing_run`
 
 Prefer `batch_processing_run(batch_id, workflow_id, content_type, ...)` to
-drive the flow. Each call reads current state, advances what it can, and
-returns immediately with a status:
+drive the flow over a staging batch you name (for Asset Library selections,
+use `batch_processing_asset_library_job_create` instead). Each call reads
+current state, advances what it can, and returns immediately with a status:
 
 - `staging_required` — no batch yet; the response contains the CLI commands
   for the whole run plus cloud-credential guidance. Run them, then call again.
