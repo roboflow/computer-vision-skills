@@ -82,6 +82,8 @@ Mitigation strategies:
 
 ## Batch Processing
 
+> For the full recipe (staging, jobs, monitoring, results, MCP tools), see the `roboflow-batch-processing` skill; this section is only the deployment comparison.
+
 **What it is.** A Roboflow-managed cloud service that runs a Workflow over a batch of images or videos asynchronously, provisioning the infrastructure for you. *"Ideal for asynchronously processing large amounts of data."* — [Roboflow docs](https://docs.roboflow.com/deploy/batch-processing).
 
 **Problem it solves.** Bulk inference over thousands to millions of files without standing up your own GPUs, queues, or autoscaler. You hand Roboflow a Workflow plus a batch of inputs, pay per job, and get JSON results back when the job finishes.

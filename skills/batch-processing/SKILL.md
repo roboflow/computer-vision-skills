@@ -68,10 +68,12 @@ write the user's disk:
 - **Exporting results** (`export-batch`) downloads into a local directory.
 
 Everything in between needs only an API key, so it works either way: the MCP
-tools (`batch_processing_run`, `_job_start`, `_job_get`, `_jobs_list`,
-`_job_logs`, `_job_abort`, `_job_restart`,
-`batch_processing_asset_library_*`, `batch_processing_staging_*`) or
-the equivalent CLI commands. Prefer the MCP tools when the host has no shell or the user has
+tools (`batch_processing_run`, `batch_processing_job_start`,
+`batch_processing_job_get`, `batch_processing_jobs_list`,
+`batch_processing_job_logs`, `batch_processing_job_abort`,
+`batch_processing_job_restart`, plus the
+`batch_processing_asset_library_*` and `batch_processing_staging_*`
+families) or the equivalent CLI commands. Prefer the MCP tools when the host has no shell or the user has
 no local `inference-cli`; prefer the CLI when the user is already in a
 terminal. The full command set for both content types is in sections 1-5.
 
@@ -316,7 +318,8 @@ shell can still fetch them. Export batches are multipart: the tool selects the
 part automatically when there is exactly one, and otherwise asks you to pass
 `part_name` (the parts are in `batch_processing_staging_batch_get`). Archives
 (`.tar` / `.tar.gz`) must be unpacked after download, and listings are capped
-at 10,000 entries per call — past that scale use `export-batch`, or import the
-source data into the workspace with datasources (ELT) and work inside Roboflow.
+at 10,000 entries per call — past that scale keep paginating with
+`nextPageToken` and per-part `part_name` listings, or pull everything with the
+resumable `export-batch`.
 
 Do this within 7 days: staged inputs and results expire.
