@@ -19,6 +19,12 @@ in automatically. Two pieces work together:
 > Imports land at the **workspace** level. The datasource API cannot target a
 > specific project/dataset today.
 
+> Only want to run a model/Workflow over the files and collect the outputs,
+> without importing anything into Roboflow? That is batch processing — see the
+> `roboflow-batch-processing` skill. Mirroring composes with it too: imported
+> files become Asset Library images, and bulk predictions over them run as
+> Asset Library batch processing jobs (same skill).
+
 ## Fast path — one call
 
 `connect_cloud_storage` does the whole flow in one shot: (optionally) create a

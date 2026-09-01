@@ -82,6 +82,8 @@ Mitigation strategies:
 
 ## Batch Processing
 
+> For the full recipe (staging, jobs, monitoring, results, MCP tools), see the `roboflow-batch-processing` skill; this section is only the deployment comparison.
+
 **What it is.** A Roboflow-managed cloud service that runs a Workflow over a batch of images or videos asynchronously, provisioning the infrastructure for you. *"Ideal for asynchronously processing large amounts of data."* — [Roboflow docs](https://docs.roboflow.com/deploy/batch-processing).
 
 **Problem it solves.** Bulk inference over thousands to millions of files without standing up your own GPUs, queues, or autoscaler. You hand Roboflow a Workflow plus a batch of inputs, pay per job, and get JSON results back when the job finishes.
@@ -93,7 +95,7 @@ Surfaces: Roboflow web UI, `inference rf-cloud` CLI, and REST API.
 ### Flow
 
 1. Have a saved Workflow in your workspace.
-2. Stage inputs as a Data Staging batch (local directory, JSONL of signed URLs, or cloud-storage path on S3 / GCS / Azure).
+2. Provide inputs: an Asset Library selection (the platform stages it for you), or stage external files yourself as a Data Staging batch (local directory, JSONL of signed URLs, or cloud-storage path on S3 / GCS / Azure).
 3. Submit a job referencing the Workflow + input batch; choose CPU or GPU.
 4. Monitor — poll job status or register a webhook.
 5. Export the output batch as JSON.
