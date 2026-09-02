@@ -10,7 +10,7 @@ Base URLs:
 
 **Auth for management endpoints:** pass the API key via `?api_key=` query parameter or `Authorization: Bearer` header. The workspace publishable key (`rf_<workspaceId>`) is NOT accepted — you must use a private API key (or a scoped key that includes `api-key:read` / `api-key:create` / etc.).
 
-Keys are addressed by their non-secret `keyId` field. Secret key values are **never returned** by any list or get endpoint — they are shown exactly once, in the 201 response from the create endpoint.
+Keys are addressed by their non-secret `keyId` field. Secret key values are **never returned** by any list or get endpoint — they are shown exactly once, in the response from the create endpoint (or from the roll endpoint, which mints a replacement).
 
 ## Publishable vs. Private Keys
 
@@ -18,7 +18,7 @@ Keys are addressed by their non-secret `keyId` field. Secret key values are **ne
 |---|---|---|
 | Format | `rf_<workspaceId>` | opaque secret string |
 | Secret? | No — safe to expose in client-side / browser code | Yes — treat like a password |
-| Retrieval | `GET /:workspace/api-keys/publishable` | Created via POST; secret shown once |
+| Retrieval | `GET /:workspace/api-keys/publishable` | Created via POST (or rolled); secret shown once |
 | Lifecycle | Fixed per workspace; cannot be created or revoked | Can be created, disabled, and revoked |
 | Capabilities | Inference and model download on workspace models only | Full API access (scoped by the key's own scopes) |
 | Typical use | Browser/edge inference via `roboflow.js` / inferencejs | Server-side automation, CI/CD, MCP tools |
@@ -185,6 +185,22 @@ Response: `{ "status": "revoked", "keyId": "abc123" }`
 
 Revocation is permanent. If you might need to re-enable the key later, use `PATCH` with `disabled: true` instead.
 
+Disable and revoke both fail with `409` on a key that backs a dedicated deployment, because the deployment would be paused. Roll the key instead.
+
+### Roll a Key
+
+```
+POST /:workspace/api-keys/:keyId/roll
+```
+
+```bash
+curl -X POST "https://api.roboflow.com/my-workspace/api-keys/abc123/roll?api_key=KEY"
+```
+
+Response: `{ "keyId": "def456", "key": "<new secret, shown once>", "name": "...", "scopes": null, "folderIds": [], "protected": false, "disabled": false, "revokedKeyId": "abc123" }`
+
+Rolling revokes the key and mints a replacement with the same name, scopes, folders, protection and disabled state in one step; only the secret changes. Any dedicated deployment anchored on the old key is moved onto the replacement automatically, so this is the rotation path for a leaked key. Requires both `api-key:revoke` and `api-key:create`. Protected keys cannot be rolled.
+
 ## OAuth Scopes for Key Management
 
 When using a scoped key or OAuth token to manage other keys, the caller's token needs one or more of these scopes:
@@ -194,7 +210,7 @@ When using a scoped key or OAuth token to manage other keys, the caller's token 
 | `api-key:read` | List and get key metadata |
 | `api-key:create` | Create new keys |
 | `api-key:update` | Rename, scope, disable keys |
-| `api-key:revoke` | Delete keys permanently |
+| `api-key:revoke` | Delete keys permanently; with `api-key:create`, roll them |
 
 ## MCP Tools
 
@@ -210,6 +226,7 @@ If you're using the Roboflow MCP server, prefer these tools over raw REST calls:
 | `api_keys_protect` | Mark a key as protected (no unprotect tool by design) |
 | `api_keys_disable` | Temporarily disable a key (reversible) |
 | `api_keys_revoke` | Permanently revoke a key |
+| `api_keys_roll` | Rotate a key: revoke it and mint a same-identity replacement (returns the one-time secret) |
 
 There is intentionally no `api_keys_unprotect` tool — removing the protected flag requires a deliberate dashboard action to prevent accidental exposure.
 
@@ -269,7 +286,7 @@ roboflow api-key protect KEY_ID
 
 ### Never commit secrets
 
-Store the API key in a `.gitignore`'d `.env` file or a secrets manager. The key value is returned only once (at creation time) — if you miss it, you must create a new key.
+Store the API key in a `.gitignore`'d `.env` file or a secrets manager. The key value is returned only once (when the key is created or rolled) — if you miss it, you must create a new key or roll this one.
 
 ```bash
 # .env (never commit this file)
@@ -285,10 +302,12 @@ ROBOFLOW_API_KEY=rf_...
 
 This zero-downtime rotation avoids service interruptions.
 
+If the key has leaked, speed matters more than zero downtime: roll it (`POST .../api-keys/:keyId/roll` or `api_keys_roll`). The old secret stops working immediately, the replacement carries the same identity, and any dedicated deployment on the key follows it.
+
 ### Prefer disable over revoke when unsure
 
 `PATCH { "disabled": true }` is reversible. `DELETE` is permanent. If you're not certain a key is safe to remove (e.g. you're not sure all consumers have been updated), disable first and revoke after confirming.
 
 ### The secret is shown exactly once
 
-The `key` field in the create response is the only time the plaintext secret appears. Copy it to your secrets manager immediately. There is no "show secret again" endpoint — if you lose it, create a new key and revoke the old one.
+The `key` field in the create response, and in the roll response, is the only time the plaintext secret appears. Copy it to your secrets manager immediately. There is no "show secret again" endpoint — if you lose it, create a new key and revoke the old one, or roll it.

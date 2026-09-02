@@ -38,9 +38,9 @@ environment used for training (it already has `torch` and the matching
    `ROBOFLOW_API_KEY` is already set in the environment
    (`test -n "$ROBOFLOW_API_KEY"`) or the working project has a `.env` that
    defines it, use it. Otherwise mint a scoped key with the MCP
-   `api_keys_create` tool — the only `api_keys` tool that returns the secret,
-   and it returns it once (`api_keys_list` / `api_keys_get` return masked
-   metadata) — and write it yourself to a `.gitignore`'d `.env` as
+   `api_keys_create` tool — it returns the secret once (`api_keys_roll` is
+   the only other tool that does; `api_keys_list` / `api_keys_get` return
+   masked metadata) — and write it yourself to a `.gitignore`'d `.env` as
    `ROBOFLOW_API_KEY`. Writing `.env` does not populate `os.environ`: load it
    before running. For a `.env` you just wrote yourself,
    `set -a; source .env; set +a` is fine. For a pre-existing `.env`, never
