@@ -1,6 +1,6 @@
 # Roboflow API Key Management
 
-> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:api-reference`) over fetching `roboflow://skills/api-reference/api-key-management` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-api-reference`) over fetching `roboflow://skills/roboflow-api-reference/api-key-management` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
 > **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its `api_keys_*` tools over raw REST calls — they handle auth and typed responses for you. The REST patterns below stay relevant if you're not using MCP.
 

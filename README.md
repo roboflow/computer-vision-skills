@@ -116,7 +116,7 @@ npx skills add roboflow/computer-vision-skills
 Install a single skill:
 
 ```bash
-npx skills add roboflow/computer-vision-skills --skill inference
+npx skills add roboflow/computer-vision-skills --skill roboflow-inference
 ```
 
 By default this installs into `./.claude/skills/` for the current project. Pass `-g` for `~/.claude/skills/` (global).
@@ -125,14 +125,14 @@ The `npx skills` CLI works with any agent that reads `SKILL.md` files from `.cla
 
 ## Available skills
 
-- **api-reference**: REST API and inference API references
-- **cloud-storage**: connecting S3/GCS buckets to mirror images into a workspace
-- **data-management**: uploading images, labeling, dataset organization
-- **inference**: running inference, workflows, workflow templates
-- **plans-and-pricing**: Roboflow plans and credit usage
-- **product-navigation**: where features live in the Roboflow product
-- **training-and-evaluation**: training models and improving accuracy
-- **universe**: searching and using Roboflow Universe
+- **roboflow-api-reference**: REST API and inference API references
+- **roboflow-cloud-storage**: connecting S3/GCS buckets to mirror images into a workspace
+- **roboflow-data-management**: uploading images, labeling, dataset organization
+- **roboflow-inference**: running inference, workflows, workflow templates
+- **roboflow-plans-and-pricing**: Roboflow plans and credit usage
+- **roboflow-product-navigation**: where features live in the Roboflow product
+- **roboflow-training-and-evaluation**: training models and improving accuracy
+- **roboflow-universe**: searching and using Roboflow Universe
 
 ## MCP and skills
 

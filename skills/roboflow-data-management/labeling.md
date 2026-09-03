@@ -5,7 +5,7 @@ description: Annotation tools, AI labeling features (Label Assist, Smart Polygon
 
 # Labeling & Annotation on Roboflow
 
-> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:data-management`) over fetching `roboflow://skills/data-management/labeling` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-data-management`) over fetching `roboflow://skills/roboflow-data-management/labeling` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
 ## Annotation Tools
 

@@ -1,6 +1,6 @@
 # Workflow Templates
 
-> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:inference`) over fetching `roboflow://skills/inference/workflow-templates` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-inference`) over fetching `roboflow://skills/roboflow-inference/workflow-templates` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
 Quick-reference catalog of built-in workflow templates. Use these as starting points when building workflows via the editor or `workflow_specs_run`.
 

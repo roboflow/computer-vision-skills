@@ -123,4 +123,4 @@ When creating a project, choose one (cannot be changed later):
 
 ## Related Pages
 
-- `roboflow://skills/product-navigation/features-by-page` — intent-to-URL lookup table ("I want to do X → go here")
+- `roboflow://skills/roboflow-product-navigation/features-by-page` — intent-to-URL lookup table ("I want to do X → go here")

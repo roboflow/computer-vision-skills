@@ -5,7 +5,7 @@ description: Production feedback loop — use the Project Model Workflow block w
 
 # Active Learning on Roboflow
 
-> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:training-and-evaluation`) over fetching `roboflow://skills/training-and-evaluation/active-learning` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-training-and-evaluation`) over fetching `roboflow://skills/roboflow-training-and-evaluation/active-learning` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
 Active learning closes the gap between your training dataset and the real world. Run production inference through a Project Model block, collect useful images for review, annotate or correct them, retrain, and update the project's model without rebuilding the Workflow.
 
@@ -29,7 +29,7 @@ Image Input
 
 The Project Model block is managed by the Roboflow Workflow builder rather than exposed as a normal block manifest through `workflow_blocks_list`. Do not substitute a regular model block plus Dataset Upload just because Project Model is absent from that catalog.
 
-Use a **Dataset Upload block** only when the user explicitly needs bespoke collection routing or a different target project that project-level Active Learning does not cover. For that exception, use `workflow_blocks_get_schema` with the manifest key from `workflow_blocks_list` instead of relying on hardcoded properties. Follow the Mode A or Mode B authoring flow in `roboflow://skills/inference/SKILL` to create and save the Workflow.
+Use a **Dataset Upload block** only when the user explicitly needs bespoke collection routing or a different target project that project-level Active Learning does not cover. For that exception, use `workflow_blocks_get_schema` with the manifest key from `workflow_blocks_list` instead of relying on hardcoded properties. Follow the Mode A or Mode B authoring flow in `roboflow://skills/roboflow-inference/SKILL` to create and save the Workflow.
 
 ## Filtering What Gets Collected
 
@@ -59,7 +59,7 @@ Active learning is most effective when it's targeted, not random. Use the model 
 | Small objects missed | High-resolution images with small instances |
 | Dataset distribution mismatch (new environment) | Random sample from the new deployment context |
 
-See `roboflow://skills/training-and-evaluation/improvement-playbook` for the full diagnostic decision tree.
+See `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` for the full diagnostic decision tree.
 
 ## Common Mistakes
 

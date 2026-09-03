@@ -135,5 +135,5 @@ fail.
 
 ## Related Pages
 
-- `roboflow://skills/data-management/SKILL` — what to do with the images once mirrored (tags, splits, versions, search)
-- `roboflow://skills/product-navigation/SKILL` — the app's `settings/datasources` page
+- `roboflow://skills/roboflow-data-management/SKILL` — what to do with the images once mirrored (tags, splits, versions, search)
+- `roboflow://skills/roboflow-product-navigation/SKILL` — the app's `settings/datasources` page
