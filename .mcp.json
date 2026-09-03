@@ -3,7 +3,7 @@
     "roboflow": {
       "type": "http",
       "url": "https://mcp.roboflow.com/mcp",
-      "note": "Official Roboflow MCP server. Set ROBOFLOW_API_KEY in the agent environment so plugin-managed MCP requests can authenticate."
+      "note": "Official Roboflow MCP server. Auth defaults to OAuth via Dynamic Client Registration — you'll be prompted to sign in to Roboflow on first use, no key required. For headless/CLI environments that can't complete an OAuth redirect, set ROBOFLOW_API_KEY in the agent environment as a fallback."
     }
   }
 }
