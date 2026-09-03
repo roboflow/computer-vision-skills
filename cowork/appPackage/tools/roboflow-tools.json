@@ -55,11 +55,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -89,11 +84,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -156,11 +146,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -195,11 +180,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -229,11 +209,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -266,11 +241,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -343,11 +313,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -382,11 +347,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -416,11 +376,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -450,11 +405,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -501,11 +451,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -559,11 +504,6 @@
         "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -593,11 +533,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -740,11 +675,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -780,11 +710,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -833,11 +758,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -867,11 +787,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -901,11 +816,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -969,11 +879,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1101,11 +1006,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1184,11 +1084,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1218,11 +1113,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1310,11 +1200,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1348,11 +1233,6 @@
         "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1412,11 +1292,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1572,11 +1447,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1621,11 +1491,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1676,11 +1541,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1724,11 +1584,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1775,11 +1630,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1830,11 +1680,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1920,11 +1765,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -1946,11 +1786,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2023,11 +1858,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2179,11 +2009,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2213,11 +2038,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2291,11 +2111,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2337,11 +2152,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2376,11 +2186,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2432,11 +2237,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2471,11 +2271,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2527,11 +2322,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2586,11 +2376,6 @@
         "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2633,11 +2418,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2677,11 +2457,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2733,11 +2508,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2772,11 +2542,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2828,11 +2593,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2913,11 +2673,6 @@
         "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -2996,11 +2751,6 @@
         "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3043,11 +2793,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3118,11 +2863,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3157,11 +2897,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3208,11 +2943,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3263,11 +2993,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3323,11 +3048,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3416,11 +3136,6 @@
         "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3455,11 +3170,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3494,11 +3204,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3566,11 +3271,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3605,11 +3305,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3644,11 +3339,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3688,11 +3378,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3770,11 +3455,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3804,11 +3484,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3853,11 +3528,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -3897,11 +3567,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4013,11 +3678,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4103,11 +3763,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4154,11 +3809,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4205,11 +3855,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4261,11 +3906,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4312,11 +3952,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4356,11 +3991,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4395,11 +4025,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4487,11 +4112,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4521,11 +4141,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4555,11 +4170,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4589,11 +4199,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4640,11 +4245,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4704,11 +4304,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4750,11 +4345,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4838,11 +4428,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4872,11 +4457,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4909,11 +4489,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4943,11 +4518,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -4995,11 +4565,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5040,11 +4605,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5074,11 +4634,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5139,11 +4694,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5173,11 +4723,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5208,11 +4753,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5273,11 +4813,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5327,11 +4862,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5419,11 +4949,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5453,11 +4978,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5561,11 +5081,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5612,11 +5127,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5646,11 +5156,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5716,11 +5221,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5779,11 +5279,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -5813,11 +5308,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6048,11 +5538,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6082,11 +5567,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6180,11 +5660,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6226,11 +5701,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6414,11 +5884,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6452,11 +5917,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6549,11 +6009,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6583,11 +6038,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6617,11 +6067,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6643,11 +6088,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6683,11 +6123,6 @@
         "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6741,11 +6176,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6787,11 +6217,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6826,11 +6251,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6932,11 +6352,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -6996,11 +6411,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7066,11 +6476,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7153,11 +6558,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7187,11 +6587,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7333,11 +6728,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7426,11 +6816,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7477,11 +6862,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7528,11 +6908,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7590,11 +6965,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7627,11 +6997,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7661,11 +7026,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7687,11 +7047,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7769,11 +7124,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7855,11 +7205,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7889,11 +7234,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7928,11 +7268,6 @@
         "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7962,11 +7297,6 @@
         "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -7996,11 +7326,6 @@
         "destructiveHint": true,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8142,11 +7467,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8181,11 +7501,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8215,11 +7530,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8249,11 +7559,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8288,11 +7593,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8322,11 +7622,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8356,11 +7651,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8416,11 +7706,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8442,11 +7727,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8476,11 +7756,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8510,11 +7785,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8549,11 +7819,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8652,11 +7917,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8802,11 +8062,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8836,11 +8091,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -8870,11 +8120,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -9025,11 +8270,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -9051,11 +8291,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -9085,11 +8320,6 @@
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -9140,11 +8370,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -9166,11 +8391,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -9200,11 +8420,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -9239,11 +8454,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -9273,11 +8483,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -9307,11 +8512,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -9341,11 +8541,6 @@
         "destructiveHint": false,
         "idempotentHint": true,
         "openWorldHint": false
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     },
     {
@@ -9398,11 +8593,6 @@
         "destructiveHint": false,
         "idempotentHint": false,
         "openWorldHint": true
-      },
-      "_meta": {
-        "fastmcp": {
-          "tags": []
-        }
       }
     }
   ]

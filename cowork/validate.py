@@ -26,8 +26,13 @@ def png_size(path: Path) -> tuple[int, int]:
 
 def frontmatter_value(path: Path, field: str) -> str:
     text = path.read_text()
-    match = re.search(rf"(?m)^{re.escape(field)}:\s*(.+?)\s*$", text)
-    if not text.startswith("---\n") or not match:
+    if not text.startswith("---\n"):
+        fail(f"{path} has no YAML frontmatter")
+    parts = text.split("---", 2)
+    if len(parts) != 3:
+        fail(f"{path} has unterminated YAML frontmatter")
+    match = re.search(rf"(?m)^{re.escape(field)}:\s*(.+?)\s*$", parts[1])
+    if not match:
         fail(f"{path} has no valid {field} frontmatter field")
     return match.group(1)
 
