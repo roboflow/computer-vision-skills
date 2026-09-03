@@ -1,6 +1,6 @@
 # Roboflow: Feature Lookup by Intent
 
-> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:product-navigation`) over fetching `roboflow://skills/product-navigation/features-by-page` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-product-navigation`) over fetching `roboflow://skills/roboflow-product-navigation/features-by-page` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
 "I want to do X" -> go here / use this tool.
 
@@ -12,7 +12,7 @@ Base URL: `https://app.roboflow.com`
 |--------|---------|-------------|
 | Upload images/videos from your computer (local files) | `/{ws}/{proj}/upload` | Python SDK: `project.upload(path)`, MCP: `image_upload` + `image_upload_status` |
 | Import from S3/GCS/Azure | `/{ws}/{proj}/upload` -> Cloud Import tab | Python SDK with cloud URLs |
-| Import images from cloud storage (S3 / GCS bucket mirror) | `/{ws}/settings/datasources` | MCP: `connect_cloud_storage`; see `roboflow://skills/cloud-storage/SKILL` |
+| Import images from cloud storage (S3 / GCS bucket mirror) | `/{ws}/settings/datasources` | MCP: `connect_cloud_storage`; see `roboflow://skills/roboflow-cloud-storage/SKILL` |
 | Import from Universe | `/{ws}/{proj}/upload` -> Universe tab | MCP: `universe_search` then fork |
 | Upload pre-annotated data | `/{ws}/{proj}/upload` (drag folder with annotations) | Python SDK: `project.upload(path)` auto-detects annotations |
 
@@ -116,4 +116,4 @@ Base URL: `https://app.roboflow.com`
 | Configure SSO | `/{ws}/settings/plan` (Enterprise) | -- |
 | View audit logs | `/{ws}/settings/audit-logs` (Enterprise) | -- |
 
-For plans, credits, and cost estimation, see `roboflow://skills/plans-and-pricing/SKILL`.
+For plans, credits, and cost estimation, see `roboflow://skills/roboflow-plans-and-pricing/SKILL`.

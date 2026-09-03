@@ -1,6 +1,6 @@
 # Roboflow Inference API Reference
 
-> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:api-reference`) over fetching `roboflow://skills/api-reference/inference` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-api-reference`) over fetching `roboflow://skills/roboflow-api-reference/inference` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
 > **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer `models_infer` (single-model) or `workflow_specs_run` / `workflows_run` (chained pipelines with annotated images) over raw HTTP calls — same operations, but auth is handled and responses are typed. The REST patterns below stay relevant if you're not using MCP.
 
@@ -64,7 +64,7 @@ POST https://<deployment-name>.roboflow.cloud/{projectId}/{versionNumber}
 
 ### Visualization
 
-The recommended approach for visualization is **Workflows** — use `workflow_specs_run` with a visualization block (Bounding Box, Label, Mask, etc.). This gives you full control over rendering and works reliably across all model types. See `roboflow://skills/inference/workflows`.
+The recommended approach for visualization is **Workflows** — use `workflow_specs_run` with a visualization block (Bounding Box, Label, Mask, etc.). This gives you full control over rendering and works reliably across all model types. See `roboflow://skills/roboflow-inference/workflows`.
 
 ## Response Shapes
 

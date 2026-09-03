@@ -5,7 +5,7 @@ description: Diagnostic playbook for improving trained model accuracy — confus
 
 # Model Improvement Playbook
 
-> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:training-and-evaluation`) over fetching `roboflow://skills/training-and-evaluation/improvement-playbook` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-training-and-evaluation`) over fetching `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
 ## Diagnostic Decision Tree
 
@@ -64,7 +64,7 @@ Model not good enough?
 
 | Action | How in Roboflow |
 |---|---|
-| **Production pipeline (active learning)** | Use a Project Model block with Active Learning so production inference images become reviewable data for annotation, retraining, and model improvement. Best for capturing real-world distribution. See `roboflow://skills/training-and-evaluation/active-learning` |
+| **Production pipeline (active learning)** | Use a Project Model block with Active Learning so production inference images become reviewable data for annotation, retraining, and model improvement. Best for capturing real-world distribution. See `roboflow://skills/roboflow-training-and-evaluation/active-learning` |
 | Fork from Universe | Universe > find similar dataset > fork to your project. Adds labeled images directly |
 | AI Labeling | Upload unlabeled images > use AI-assisted labeling to annotate faster |
 | Augmentation | Version settings > enable flip, rotation, crop, mosaic, etc. to synthetically expand training set |
@@ -144,4 +144,4 @@ Both are mAP@50. Cast to number before comparing.
 
 ## Related Pages
 
-- `roboflow://skills/training-and-evaluation/active-learning` — set up a production feedback loop with a Project Model block and Active Learning
+- `roboflow://skills/roboflow-training-and-evaluation/active-learning` — set up a production feedback loop with a Project Model block and Active Learning

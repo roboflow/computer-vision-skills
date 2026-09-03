@@ -322,5 +322,5 @@ Auto-runs after training. Access: Models > click model version > View Evaluation
 
 ## Related Pages
 
-- `roboflow://skills/training-and-evaluation/improvement-playbook` — diagnostic decision tree, confusion matrix guide, per-class metrics, architecture switching, iterative improvement checklist
-- `roboflow://skills/training-and-evaluation/active-learning` — production feedback loop: Project Model Workflow block, Active Learning, review, and retraining
+- `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` — diagnostic decision tree, confusion matrix guide, per-class metrics, architecture switching, iterative improvement checklist
+- `roboflow://skills/roboflow-training-and-evaluation/active-learning` — production feedback loop: Project Model Workflow block, Active Learning, review, and retraining
