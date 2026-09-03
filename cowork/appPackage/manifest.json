@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.28/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.28",
+  "version": "1.0.0",
+  "id": "a2158cf0-5901-5f4a-8f67-3dc812b0f650",
+  "developer": {
+    "name": "Roboflow",
+    "websiteUrl": "https://roboflow.com/",
+    "privacyUrl": "https://roboflow.com/privacy",
+    "termsOfUseUrl": "https://roboflow.com/terms"
+  },
+  "name": {
+    "short": "Roboflow",
+    "full": "Roboflow for Copilot Cowork"
+  },
+  "description": {
+    "short": "Build and operate computer vision projects with Roboflow.",
+    "full": "Roboflow skills and authenticated tools for managing computer vision datasets, annotations, models, training, Workflows, inference, and deployments in Copilot Cowork."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#6706CE",
+  "agentSkills": [
+    { "folder": "./skills/roboflow-api-reference" },
+    { "folder": "./skills/roboflow-batch-processing" },
+    { "folder": "./skills/roboflow-cloud-storage" },
+    { "folder": "./skills/roboflow-custom-weights-upload" },
+    { "folder": "./skills/roboflow-data-management" },
+    { "folder": "./skills/roboflow-inference" },
+    { "folder": "./skills/roboflow-plans-and-pricing" },
+    { "folder": "./skills/roboflow-product-navigation" },
+    { "folder": "./skills/roboflow-training-and-evaluation" },
+    { "folder": "./skills/roboflow-universe" }
+  ],
+  "agentConnectors": [
+    {
+      "id": "roboflow",
+      "displayName": "Roboflow",
+      "description": "Authenticated access to Roboflow computer vision tools.",
+      "toolSource": {
+        "remoteMcpServer": {
+          "mcpServerUrl": "https://mcp.roboflow.com/mcp",
+          "mcpToolDescription": {
+            "file": "tools/roboflow-tools.json"
+          }
+        }
+      }
+    }
+  ]
+}
