@@ -1,6 +1,6 @@
 ---
 name: roboflow-training-and-evaluation
-description: Use when training Roboflow models, improving accuracy, or setting up a production feedback loop — covers architecture selection, model IDs, checkpoints, evaluation metrics, the iterative improvement playbook, and Active Learning through the Project Model Workflow block.
+description: Use when training Roboflow models, diagnosing why a model underperforms, improving accuracy, or setting up a production feedback loop — covers architecture selection, model IDs, checkpoints, Model Evaluation (confusion matrix, per-class metrics, MCP eval tools), the diagnosis-first improvement playbook, and Active Learning through the Project Model Workflow block.
 ---
 
 > **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
@@ -304,6 +304,24 @@ Auto-runs after training. Access: Models > click model version > View Evaluation
 | **Confusion Matrix** | Ground truth vs predictions grid; click cells to see specific images; adjustable confidence threshold |
 | **Vector Explorer** | Interactive embedding clusters showing where model succeeds/fails |
 
+Deep link: `https://app.roboflow.com/{workspace}/{project}/evaluation/{versionId}`.
+
+**When a user asks why a model is bad or how to improve it, start with `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`.** It maps every evaluation panel to a root cause (taxonomy, mislabeled data, inconsistent label standards, coverage gaps, too little data, bad data) and says which data to add next. The improvement playbook holds the compact decision tree and the training-side fixes (architecture, size, augmentation, overfitting).
+
+The MCP server exposes every evaluation panel. All require the `model-eval:read` scope and return `409 model_eval_not_done` while an evaluation is still running.
+
+| Panel | Tool |
+|---|---|
+| Find an evaluation | `model_evals_list` (filter by `project_id`, `version_number`, or `model_id`; one at a time) |
+| Headline mAP / precision / recall + `app_url` | `model_evals_get` |
+| Model Improvement Recommendations | `model_evals_get_recommendations` (`{"generated": false}` when never produced) |
+| Performance by Class | `model_evals_get_performance_by_class` (`split` = train/valid/test) |
+| mAP@50 / @50-95 / @75 per split, by object size and per class | `model_evals_get_map_results` |
+| Confusion Matrix | `model_evals_get_confusion_matrix` (`split`, `confidence` 0-100; defaults to the optimal threshold) |
+| Production Metrics Explorer | `model_evals_get_confidence_sweep` |
+| Vector Explorer | `model_evals_get_vector_analysis`, then `model_evals_get_image_predictions` for per-image TP/FP/FN and cluster ids |
+| Dataset Health Check | `projects_health` (`regenerate=True` to recompute; first run can take minutes) |
+
 ## Viewing & Comparing Models
 
 - **Models page:** Project sidebar > Models. Shows all Instant + fine-tuned models with metrics, architecture, license, dataset version used.
@@ -319,8 +337,18 @@ Auto-runs after training. Access: Models > click model version > View Evaluation
 | Check training status | `models_get_training_status` |
 | Get model info | `models_get` |
 | List models | `models_list` |
+| Find evaluations | `model_evals_list` |
+| Evaluation summary | `model_evals_get` |
+| Evaluation recommendations | `model_evals_get_recommendations` |
+| Per-class metrics | `model_evals_get_performance_by_class` |
+| mAP by split / object size / class | `model_evals_get_map_results` |
+| Confusion matrix | `model_evals_get_confusion_matrix` |
+| Confidence sweep | `model_evals_get_confidence_sweep` |
+| Vector analysis / per-image predictions | `model_evals_get_vector_analysis`, `model_evals_get_image_predictions` |
+| Dataset health check | `projects_health` |
 
 ## Related Pages
 
-- `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` — diagnostic decision tree, confusion matrix guide, per-class metrics, architecture switching, iterative improvement checklist
+- `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis` — start here for "why is my model bad / how do I improve it": run Model Evaluation, read each panel, map symptoms to root causes, decide which data to add
+- `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` — diagnostic decision tree, confusion matrix and per-class metric guide, recommendation types, architecture switching, augmentation, overfitting, iterative checklist
 - `roboflow://skills/roboflow-training-and-evaluation/active-learning` — production feedback loop: Project Model Workflow block, Active Learning, review, and retraining
