@@ -1,62 +1,26 @@
 ---
 name: roboflow-model-improvement
-description: Diagnostic playbook for improving trained model accuracy — confusion matrix analysis, per-class metrics, common failure modes, architecture switching, and iterative improvement checklist.
+description: Model-side levers for improving trained model accuracy once the data has been diagnosed — insufficient data, class imbalance, augmentation mistakes, overfitting, architecture switching, Instant vs full training, and the iterative improvement checklist.
 ---
 
 # Model Improvement Playbook
 
 > **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-training-and-evaluation`) over fetching `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
-## Diagnostic Decision Tree
+## Diagnose First
 
-```
-Model not good enough?
-├─ mAP/accuracy very low (<30%)?
-│  ├─ Too few images → Add more data (target 500+ per class)
-│  ├─ Labeling errors → Audit annotations, use AI labeling for consistency
-│  └─ Wrong model type → Verify project type matches task (OD vs seg vs cls)
-│
-├─ High false positives (model sees objects that aren't there)?
-│  ├─ Check confusion matrix → Which classes are confused?
-│  │  ├─ Two classes confused → Visually similar? Merge or add distinguishing examples
-│  │  └─ Background false positives → Add null/negative examples (images with no objects)
-│  └─ Raise confidence threshold → Use Production Metrics Explorer optimal threshold
-│
-├─ High false negatives (model misses real objects)?
-│  ├─ Check per-class metrics → Which classes underperform?
-│  │  ├─ Specific class weak → Add more examples of that class
-│  │  └─ Small objects missed → Increase training resolution, add small-object examples
-│  └─ Lower confidence threshold → Trade precision for recall
-│
-├─ Some classes good, others bad?
-│  ├─ Class imbalance → Check class distribution, add underrepresented classes
-│  └─ Inconsistent labeling on weak classes → Re-label with tighter guidelines
-│
-└─ Plateaued after several versions?
-   ├─ Try different architecture → Switch YOLO to RF-DETR or vice versa
-   ├─ Try larger model size → Nano→Small, Small→Medium
-   ├─ Use Universe checkpoint → Transfer learn from domain-similar model
-   └─ Review augmentations → Over-augmentation can hurt; simplify
-```
+Do not start here. Most "bad model" reports are data problems — mislabeled images, labelers applying different standards, a taxonomy that overlaps, conditions the dataset never shows, too few examples of a class, or leaked frames across splits — and no training setting fixes those. Run Model Evaluation and work through `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis` first: it covers the confusion matrix, per-class metrics, mAP@50 vs mAP@50-95, object-size breakdown, confidence sweep, vector explorer, the recommendation types, and which data to add for each finding.
 
-## Reading the Confusion Matrix
+Come back to this page when the diagnosis points at the model itself:
 
-| Cell position | Meaning | Action |
-|---|---|---|
-| Diagonal (dark) | Correct predictions | Goal: maximize these |
-| Off-diagonal row | Model predicted class X but ground truth is class Y | Classes look similar — add distinguishing examples or merge |
-| "False Positive" column | Model detected object where none exists | Add negative/background images |
-| "False Negative" row | Model missed a real object | Add more examples, lower confidence, check label quality |
-
-**Tip:** Click any cell to see the actual images. Toggle between Ground Truth and Model Predictions to understand the failure mode.
-
-## Reading Per-Class Metrics
-
-| Metric | Low value means | Fix |
-|---|---|---|
-| Precision (class) | Too many false positives for this class | Add negative examples, improve label boundaries |
-| Recall (class) | Too many missed detections | Add more positive examples, check label completeness |
-| Both low | Class is fundamentally hard for model | More data, bigger model, or re-evaluate class definition |
+| Finding from diagnosis | Lever on this page |
+|---|---|
+| Labels consistent, coverage adequate, still low mAP on a small dataset | Insufficient Data (below), then a Universe checkpoint |
+| Train metrics high, test metrics low, no leakage | Overfitting |
+| mAP dropped after adding augmentation, or orientation/color-sensitive classes | Wrong Augmentation |
+| Plateaued across several clean data batches | Architecture Switching, larger model size |
+| Small-object mAP low at adequate resolution | Larger model or higher training resolution; Tile preprocessing (see data-management) |
+| Need results in minutes for a proof of concept | Roboflow Instant vs Full Training |
 
 ## Common Issues & Roboflow-Specific Fixes
 
@@ -133,10 +97,10 @@ Both are mAP@50. Cast to number before comparing.
 
 ## Iterative Improvement Checklist
 
-1. **Check evaluation** -- Open Model Evaluation, review confusion matrix and per-class metrics
-2. **Identify weakest classes** -- Sort by lowest recall/precision
-3. **Diagnose root cause** -- Use decision tree above
-4. **Take action** -- Add data, fix labels, adjust augmentation, or switch architecture
+1. **Check evaluation** -- Open Model Evaluation (or run the MCP recipe in `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`), review recommendations, confusion matrix, and per-class metrics
+2. **Identify weakest classes** -- Sort by lowest recall/precision; click the cells and look at the images
+3. **Diagnose root cause** -- Use the symptom table in the diagnosis page: labels, taxonomy, coverage, volume, bad data, or model
+4. **Take action** -- Fix labels or taxonomy first; then add the specific data the diagnosis calls for; then adjust augmentation or switch architecture
 5. **Generate new version** -- New preprocessing/augmentation settings if needed
 6. **Train new model** -- Use previous version as checkpoint if prior model was decent
 7. **Compare** -- Check if mAP/precision/recall improved vs previous version
@@ -144,4 +108,5 @@ Both are mAP@50. Cast to number before comparing.
 
 ## Related Pages
 
+- `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis` — diagnose first: evaluation panels, symptom → root cause → action, which data to add
 - `roboflow://skills/roboflow-training-and-evaluation/active-learning` — set up a production feedback loop with a Project Model block and Active Learning

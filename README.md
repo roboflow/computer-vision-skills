@@ -131,7 +131,7 @@ The `npx skills` CLI works with any agent that reads `SKILL.md` files from `.cla
 - **roboflow-inference**: running inference, workflows, workflow templates
 - **roboflow-plans-and-pricing**: Roboflow plans and credit usage
 - **roboflow-product-navigation**: where features live in the Roboflow product
-- **roboflow-training-and-evaluation**: training models and improving accuracy
+- **roboflow-training-and-evaluation**: training models, diagnosing why a model underperforms, and improving accuracy
 - **roboflow-universe**: searching and using Roboflow Universe
 
 ## MCP and skills
