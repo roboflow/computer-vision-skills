@@ -14,7 +14,7 @@ Two rules:
 1. **Diagnose before you change anything.** Run Model Evaluation, find the single biggest failure, and confirm its cause by looking at the images behind it.
 2. **More data is usually the right answer, but the diagnosis decides *which* data.** Adding images labeled to a bad standard, or to a taxonomy that overlaps, makes the model worse and the problem harder to see.
 
-This page is the entry point when a user asks "why is my model bad" or "how do I improve it". Once the cause is model-side (architecture, size, resolution, augmentation, overfitting), continue in `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook`.
+This page is the entry point when a user asks "why is my model bad" or "how do I improve it". The companion `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` has the compact decision tree and the training-side fixes (architecture, size, resolution, augmentation, overfitting); this page is the long form behind each branch.
 
 ## Quick Reference: Symptom → Cause → First Action
 
@@ -257,7 +257,7 @@ Use the diagnosis to decide what goes into the next batch. "More of the same" on
 
 ## Related Pages
 
-- `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` — model-side levers: architecture switching, model size, augmentation, overfitting, Instant vs full training
+- `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` — compact decision tree, confusion matrix and per-class tables, architecture switching, augmentation, overfitting, Instant vs full training
 - `roboflow://skills/roboflow-training-and-evaluation/active-learning` — collect the missing conditions from production with a Project Model block and Active Learning
 - `roboflow://skills/roboflow-data-management/labeling` — annotation tools, Label Assist, Smart Polygon, labeling instructions, jobs and review
 - `roboflow://skills/roboflow-data-management/SKILL` — RoboQL search, tags, Modify Classes, Filter Null, Tile and Resize preprocessing, Dataset Analytics
