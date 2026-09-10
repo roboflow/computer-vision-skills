@@ -15,13 +15,13 @@ Both manifests load skills from [`skills/`](skills/) and bundle the Roboflow MCP
 
 ### Microsoft Copilot Cowork
 
-The [`cowork/`](cowork/) directory contains a Microsoft 365 app manifest, the public MCP tool description, validation, and a repeatable package build. It uses Roboflow's OAuth Dynamic Client Registration flow and produces a v1.28 package ready for tenant sideloading.
+The [`cowork/`](cowork/) directory contains a Microsoft 365 app manifest, validation, and a repeatable package build that generates the public MCP tool description from a pinned server revision. It uses Roboflow's OAuth Dynamic Client Registration flow and produces a v1.28 package ready for tenant sideloading.
 
 ```bash
 ./cowork/build.sh
 ```
 
-See [`cowork/README.md`](cowork/README.md) for tool-description refresh and installation instructions.
+See [`cowork/README.md`](cowork/README.md) for build, revision-update, and installation instructions.
 
 ### Claude Code
 

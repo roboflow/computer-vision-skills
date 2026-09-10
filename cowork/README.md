@@ -6,26 +6,25 @@ The v1.28 manifest intentionally omits `authorization`. Roboflow publishes OAuth
 
 The package icons are derived directly from the official [Roboflow brand kit](https://roboflow.com/brand), without recoloring the supplied artwork. `color.png` places the official color logomark on the required opaque light background; `outline.png` uses the official white logomark on transparency.
 
-## Refresh the MCP tool description
-
-The checked-in tool description is the public `tools/list` contract from `roboflow-mcp`. After changing the public MCP tool surface, refresh it from a sibling checkout:
-
-```bash
-cd ../roboflow-mcp
-UV_CACHE_DIR=/tmp/roboflow-mcp-uv-cache uv run python \
-  dev/export_cowork_tools.py \
-  ../computer-vision-skills/cowork/appPackage/tools/roboflow-tools.json
-```
-
-The exporter runs the server's public tool-list middleware, so employee-only tools are excluded.
-
 ## Build
 
-Node.js and npm are required. The build script uses the pinned Microsoft 365 Agents Toolkit CLI to import the existing plugin into a temporary project, replaces the generated development manifest and icons with the reviewed Cowork v1.28 overlay, and packages the result. Toolkit environment and provisioning files exist only in that temporary directory.
+Install Git, Python 3, uv (with Python 3.12 available or automatic downloads enabled), Node.js, and npm. Network access to GitHub and the Python/npm registries is required.
 
 ```bash
 ./cowork/build.sh
 ```
+
+The build fetches the exact `roboflow-mcp` commit in `mcp-revision.txt` into a temporary checkout, installs its locked dependencies, and runs `dev/export_public_tools.py`. The exporter uses the public tool-list middleware, excluding employee-only tools. The generated catalog is validated in the staged package and included at `tools/roboflow-tools.json`; it is never checked into this repository.
+
+The pinned Microsoft 365 Agents Toolkit CLI imports the existing plugin into a temporary project. The build applies the reviewed v1.28 manifest and icons, replaces the imported tool description with the generated catalog, and packages the result. Fetch, export, and validation failures stop the build without replacing previous successful outputs.
+
+`cowork/build/roboflow-cowork.provenance.json` records the MCP commit and SHA-256 hashes of the catalog and ZIP. Both outputs are ignored by Git. A package is a snapshot: rebuilding with the same MCP pin does not adopt newer tool definitions.
+
+## Update the MCP catalog revision
+
+Set `cowork/mcp-revision.txt` to a full, reviewed 40-character commit SHA from `roboflow/roboflow-mcp` that contains `dev/export_public_tools.py`. Rebuild, validate the package, and commit only the pin change. Do not add a generated catalog to source control or substitute a moving branch name. The initial pin uses the exporter PR commit; after [MCP PR #163](https://github.com/roboflow/roboflow-mcp/pull/163) merges, replace it with the final merged commit and rebuild before distribution.
+
+## Install
 
 The uploadable package is written to `cowork/build/roboflow-cowork.zip`. In Cowork, open **Customize > Plugins**, select **Upload plugin**, and choose the ZIP. The **Skills** uploader is only for a single standalone skill and will reject this complete plugin package.
 

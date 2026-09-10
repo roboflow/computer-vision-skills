@@ -1,7 +1,8 @@
-"""Validate the checked-in source for the Copilot Cowork app package."""
+"""Validate the staged Copilot Cowork app package, including generated tools."""
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import struct
@@ -37,8 +38,8 @@ def frontmatter_value(path: Path, field: str) -> str:
     return match.group(1)
 
 
-def validate() -> None:
-    manifest = json.loads((PACKAGE / "manifest.json").read_text())
+def validate(package: Path = PACKAGE, skills_root: Path = ROOT) -> None:
+    manifest = json.loads((package / "manifest.json").read_text())
     if manifest.get("manifestVersion") != "1.28":
         fail("Cowork manifest must use version 1.28")
     if int(manifest.get("version", "0").split(".", 1)[0]) < 1:
@@ -50,7 +51,7 @@ def validate() -> None:
     if not remote["mcpServerUrl"].startswith("https://"):
         fail("Cowork MCP endpoint must use HTTPS")
 
-    tool_path = PACKAGE / remote["mcpToolDescription"]["file"].removeprefix("./")
+    tool_path = package / remote["mcpToolDescription"]["file"].removeprefix("./")
     tools = json.loads(tool_path.read_text()).get("tools", [])
     if not tools:
         fail("mcpToolDescription must contain at least one tool")
@@ -72,7 +73,7 @@ def validate() -> None:
     if len(skills) > 20:
         fail("Cowork supports at most 20 skills per package")
     for entry in skills:
-        folder = ROOT / entry["folder"].removeprefix("./")
+        folder = skills_root / entry["folder"].removeprefix("./")
         skill_file = folder / "SKILL.md"
         name = frontmatter_value(skill_file, "name")
         description = frontmatter_value(skill_file, "description")
@@ -92,7 +93,7 @@ def validate() -> None:
 
     expected_icons = {"color.png": (192, 192), "outline.png": (32, 32)}
     for filename, expected in expected_icons.items():
-        actual = png_size(PACKAGE / filename)
+        actual = png_size(package / filename)
         if actual != expected:
             fail(f"{filename} must be {expected[0]}x{expected[1]}, got {actual}")
 
@@ -100,8 +101,12 @@ def validate() -> None:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--package-dir", type=Path, default=PACKAGE)
+    parser.add_argument("--skills-root", type=Path, default=ROOT)
+    args = parser.parse_args()
     try:
-        validate()
+        validate(args.package_dir, args.skills_root)
     except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError) as error:
         print(f"Cowork validation failed: {error}", file=sys.stderr)
         raise SystemExit(1) from error
