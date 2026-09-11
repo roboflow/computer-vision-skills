@@ -13,6 +13,16 @@ The repo ships both plugin manifests pointing at the same skill content and MCP 
 
 Both manifests load skills from [`skills/`](skills/) and bundle the Roboflow MCP server config from [`.mcp.json`](.mcp.json).
 
+### Microsoft Copilot Cowork
+
+The [`cowork/`](cowork/) directory contains a Microsoft 365 app manifest, validation, and a repeatable package build that generates the public MCP tool description from a pinned server revision. It uses Roboflow's OAuth Dynamic Client Registration flow and produces a v1.28 package ready for tenant sideloading.
+
+```bash
+./cowork/build.sh
+```
+
+See [`cowork/README.md`](cowork/README.md) for build, revision-update, and installation instructions.
+
 ### Claude Code
 
 Install from GitHub — no clone required:
