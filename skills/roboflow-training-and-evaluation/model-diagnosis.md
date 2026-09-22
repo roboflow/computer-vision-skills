@@ -14,24 +14,24 @@ Two rules:
 1. **Diagnose before you change anything.** Run Model Evaluation, find the single biggest failure, and confirm its cause by looking at the images behind it.
 2. **More data is usually the right answer, but the diagnosis decides *which* data.** Adding images labeled to a bad standard, or to a taxonomy that overlaps, makes the model worse and the problem harder to see.
 
-This page is the entry point when a user asks "why is my model bad" or "how do I improve it". The companion `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` has the compact decision tree and the training-side fixes (architecture, size, resolution, augmentation, overfitting); this page is the long form behind each branch.
+This page is the entry point when a user asks "why is my model bad" or "how do I improve it". The companion `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` is the compact version: a decision tree for a fast answer, the short tables for reading an evaluation, and the training-side fixes (Insufficient Data, Class Imbalance, Wrong Augmentation, Overfitting, Architecture Switching, Instant vs Full Training). This page is the long form behind each branch of that tree; sections below name the playbook section that holds the fix.
 
 ## Quick Reference: Symptom → Cause → First Action
 
 | Symptom | Check first | Most likely cause | First action |
 |---|---|---|---|
 | Overall mAP very low (< 30%) | Dataset Health: image + annotation counts, missing annotations; project type | Too little data, broken/missing labels, wrong project type, resize destroying small objects | Fix labels and counts before any training change (see **Not enough data**, **Mislabeled data**) |
-| Train split metrics high, test low | `map-results` per split; how splits were made | Overfitting, or test set from a different distribution, or the reverse: train leaked into test | Check for duplicate/near-duplicate frames across splits; if clean, see **Overfitting** in the playbook |
+| Train split metrics high, test low | `map-results` per split; how splits were made | Overfitting, or test set from a different distribution, or the reverse: train leaked into test | Check for duplicate/near-duplicate frames across splits (**Step 3 — Bad data**); if clean, see **Overfitting** in the playbook |
 | mAP@50 fine, mAP@50-95 / mAP@75 poor | `map-results` `map50` vs `map50_95`; box tightness on clicked cells | Inconsistent box extents between labelers, low training resolution, crop augmentation | Write a box-extent rule, relabel the weakest class, raise resolution (see **Improve localization / IoU**) |
 | One class has low recall | Performance by Class; `missed_detection` recommendation | Too few examples, small objects, high visual variety, occlusion | Add that class specifically under the conditions where it is missed |
 | Two classes confused both ways | Confusion matrix off-diagonal pair; `wrong_class` | Taxonomy overlap or labeler disagreement | Test a merge with version-level Modify Classes; or write a boundary rule and relabel |
 | Background false-positive column full | Click the cell, toggle Ground Truth vs Predictions; `overconfident_fp` | **Unlabeled real objects in ground truth** (most common), no negative images, threshold too low | If the "false positives" are real objects: label them. Otherwise add null and hard-negative images |
-| Small-object bucket low | `map-results` `byObjectSize.small` | Objects too small at training resolution, resize mode, crop | Tile preprocessing, higher resolution, dynamic crop, capture closer |
+| Small-object bucket low | `map-results` `byObjectSize.small` | Objects too small at training resolution, resize mode, crop | Tile preprocessing, higher resolution, dynamic crop, capture closer; check **Wrong Augmentation** in the playbook if crop is on |
 | One vector cluster has low F1 | Vector Explorer; sample the cluster | A condition (lighting, camera, angle, background) the dataset under-covers | Name the condition, tag those images, collect more of exactly that |
 | Precision/recall swing hard with threshold | Confidence sweep | Threshold left at a default rather than the F1-optimal value | Deploy at the optimal threshold (global or per class); this is a deployment fix, not a data fix |
 | `dataset_health` recommendation | Split sizes on the version | Test or valid split too small to trust any metric | Regenerate the version with a bigger held-out split before iterating |
 | Great in evaluation, bad in production | Compare production images to the test set | Test set does not represent deployment (camera, lighting, distance, resolution) | Turn on Active Learning, review a random production sample, add it to all splits |
-| Metrics barely move version to version | What changed between versions | Several variables changed at once, or the bottleneck is labels not data | Change one thing per version; audit labels of the weakest class |
+| Metrics barely move version to version | What changed between versions | Several variables changed at once, or the bottleneck is labels not data | Change one thing per version; audit labels of the weakest class; only then the playbook's **Architecture Switching Guide** |
 
 ## Step 0 — Decide What "Better" Means and Trust the Test Set
 
@@ -76,7 +76,7 @@ Model Evaluation runs automatically for paid workspaces after every training (an
 
 Panel tools return `409 model_eval_not_done` while the evaluation is still running; wait and retry rather than concluding the data is missing. Evaluation is a paid-plan feature: if `model_evals_list` returns nothing for a trained model on a free workspace, say so and fall back to the training-page metrics plus Dataset Health.
 
-**How to report it.** Lead with the one biggest problem and the numbers behind it (for example: "`helmet` recall is 0.41; 63 of 107 test instances are missed, and 40 of those are in the low-light cluster"). Name the likely cause, say how you confirmed it (which cell you looked at), and propose one change for the next version. Do not list every panel.
+**How to report it.** Lead with the one biggest problem and the numbers behind it (for example: "`helmet` recall is 0.41; 63 of 107 test instances are missed, and 40 of those are in the low-light cluster"). Name the likely cause, say how you confirmed it (which cell you looked at), and propose one change for the next version. Do not list every panel. When the change is training-side, take it from the matching section of `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook`.
 
 ## Step 2 — Read Each Panel
 
@@ -88,7 +88,7 @@ The engine currently emits five recommendation types. The triggers are current p
 |---|---|---|---|
 | `missed_detection` | The class with the most false negatives | Too few or too varied examples of that class; small or occluded instances; or labels that mark objects the model was never shown enough of | Click the false-negative cell for the class. If the misses share a condition, collect that condition. If they look like the training data, add more of the class |
 | `wrong_class` | The most common off-diagonal pair (correct location, wrong class) | Taxonomy overlap or labeler disagreement between the two classes, far more often than model capacity | Check whether the confusion is symmetric. If both directions are populated, the classes are not separable as defined: merge, redefine, or write a boundary rule |
-| `class_imbalance` | A class with fewer than `max(30, 0.05 × √total instances)` instances, or under 25% of the median class count | The model has not seen enough of the class to learn it | Add images of that class specifically; augmentation does not fix imbalance |
+| `class_imbalance` | A class with fewer than `max(30, 0.05 × √total instances)` instances, or under 25% of the median class count | The model has not seen enough of the class to learn it | Add images of that class specifically; augmentation does not fix imbalance (playbook: **Class Imbalance**) |
 | `overconfident_fp` | A class with ≥ 30 predictions, ≥ 30 false positives, and precision under 65% | Very often **real objects that were never labeled** (the model is right, the ground truth is wrong); otherwise missing negative examples or a threshold that is too low | Open the background false-positive cell and toggle Ground Truth vs Predictions before doing anything else |
 | `dataset_health` | Test < 50 images, or test < 5% / valid < 10% on unaugmented versions | The metrics are too noisy to act on | Regenerate with a larger held-out split, then re-evaluate |
 
@@ -132,7 +132,7 @@ Drag the confidence slider (or pass `confidence` to the MCP tool) to see whether
 | Labelers draw boxes differently (tight vs padded, include vs exclude shadows/handles/occluded parts) | Click diagonal cells and compare box edges across images labeled in different jobs (`job:<id>` search) | Write an explicit box-extent rule; relabel the class with the widest variation |
 | Training resolution too low for the object size | `byObjectSize.small` far below medium/large | Raise the model's training resolution; use Tile preprocessing for high-resolution sources; Dynamic Crop around a parent class |
 | Resize mode distorts aspect ratio | Dimension Insights shows wide aspect ratios; "Stretch to" resize in the version | Use "Fit within" or a letterbox resize |
-| Crop or aggressive augmentation cuts objects | mAP@50-95 dropped after adding augmentation | Reduce crop, disable it for small objects, compare against a version without it |
+| Crop or aggressive augmentation cuts objects | mAP@50-95 dropped after adding augmentation | Reduce crop, disable it for small objects, compare against a version without it (playbook: **Wrong Augmentation**) |
 | Mixed annotation types (polygons converted to boxes vs hand-drawn boxes) | Some boxes hug the object, others do not | Standardize on one annotation method for the class |
 | Objects genuinely tiny in frame | Small-object bucket low even at high resolution | Capture closer or with a longer lens; the model cannot localize what it cannot see |
 
@@ -214,7 +214,7 @@ The dataset never shows the model what it fails on.
 |---|---|
 | **Signs** | Low mAP across all classes; `class_imbalance` recommendations; large gap between train and test metrics; the model improves every time data is added |
 | **Heuristics** | Order-of-magnitude rules only: roughly 100–200 well-labeled instances per class before a class is learnable at all; 500+ per class for robust results; 1,000+ images before a larger model size pays off. Instances matter more than images for rare classes |
-| **Fix** | Add real images of the weak classes. Augmentation multiplies what you have but does not add new information, so it cannot fix imbalance or coverage. Fork a domain-similar Universe dataset, then check it matches your cameras and labeling standard. Use Roboflow Rapid or Instant to bootstrap a labeler for your own images. Use the previous model as the checkpoint when retraining |
+| **Fix** | Add real images of the weak classes. Augmentation multiplies what you have but does not add new information, so it cannot fix imbalance or coverage. Fork a domain-similar Universe dataset, then check it matches your cameras and labeling standard. Use Roboflow Rapid or Instant to bootstrap a labeler for your own images (playbook: **Roboflow Instant vs Full Training**). Use the previous model as the checkpoint when retraining. Roboflow-specific ways to get more data are tabulated under **Insufficient Data** in the playbook |
 
 ### Bad data
 
@@ -222,11 +222,21 @@ The dataset never shows the model what it fails on.
 |---|---|
 | **Signs** | Metrics that look too good (leakage); a test set that is a copy of train; blurry or tiny images; off-domain Universe images mixed in; frames from one video in every split |
 | **Confirm** | Search `like-image:<id>` on a test image and see whether near-duplicates appear in train. Check Dimension Insights for outlier sizes. Compare a random test sample to production frames |
-| **Fix** | Keep all frames from one video or session in one split. Lower the frame rate on video upload. Remove off-domain images or keep them in train only. Use Random Sample in version generation to thin dense near-duplicate sets. Drop images below the resolution the model will see in production |
+| **Fix** | Keep all frames from one video or session in one split. Lower the frame rate on video upload. Remove off-domain images or keep them in train only. Use Random Sample in version generation to thin dense near-duplicate sets. Drop images below the resolution the model will see in production. If metrics were high only because of leakage, the model may also be overfitting once the splits are fixed (playbook: **Overfitting**) |
 
 ### Model-side causes
 
-If labels are consistent, coverage is adequate, and the class list is learnable, the remaining levers are the model's: architecture family, size, training resolution, checkpoint, epochs, and augmentation. Those live in `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook`. Reach for them after the data checks above, not before, because they cost credits and cannot fix a data problem.
+If labels are consistent, coverage is adequate, and the class list is learnable, the remaining levers are the model's. Each has a section in `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook`:
+
+| Lever | Playbook section |
+|---|---|
+| mAP dropped after augmentation; orientation- or color-sensitive classes; small objects cropped away | **Wrong Augmentation** |
+| Train high, test low, no leakage | **Overfitting** |
+| Plateaued on clean data; need more accuracy or more speed | **Architecture Switching Guide** |
+| Proof of concept in minutes vs production training | **Roboflow Instant vs Full Training** |
+| Small dataset, otherwise healthy | **Insufficient Data** (Universe fork, AI labeling, augmentation) |
+
+Reach for them after the data checks above, not before, because they cost credits and cannot fix a data problem.
 
 ## Step 4 — Which Data to Add
 
@@ -252,12 +262,12 @@ Use the diagnosis to decide what goes into the next batch. "More of the same" on
 3. **Keep the exam fixed.** Same test-split membership, same metric, same split, same threshold policy when comparing.
 4. **Retrain from the previous checkpoint** when the prior model was decent and the data change is incremental; start from a public checkpoint after large taxonomy or labeling changes.
 5. **Re-evaluate and compare.** Did the targeted class or cluster move? Did anything else regress?
-6. **Stop when** the metric meets the use-case target from Step 0, or when three consecutive data batches move it by less than the run-to-run noise. Then switch to model-side levers, or accept the model and tune the threshold.
+6. **Stop when** the metric meets the use-case target from Step 0, or when three consecutive data batches move it by less than the run-to-run noise. Then switch to model-side levers (playbook: **Architecture Switching Guide**, **Wrong Augmentation**), or accept the model and tune the threshold.
 7. **Hand the loop to production.** Once the model is deployed, Active Learning keeps supplying the conditions it still fails on. Filter collection by low confidence or by the weak classes rather than sampling everything.
 
 ## Related Pages
 
-- `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` — compact decision tree, confusion matrix and per-class tables, architecture switching, augmentation, overfitting, Instant vs full training
+- `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` — the compact companion: decision tree, confusion matrix and per-class tables, and the training-side fixes referenced throughout this page (Insufficient Data, Class Imbalance, Wrong Augmentation, Overfitting, Architecture Switching Guide, Instant vs Full Training)
 - `roboflow://skills/roboflow-training-and-evaluation/active-learning` — collect the missing conditions from production with a Project Model block and Active Learning
 - `roboflow://skills/roboflow-data-management/labeling` — annotation tools, Label Assist, Smart Polygon, labeling instructions, jobs and review
 - `roboflow://skills/roboflow-data-management/SKILL` — RoboQL search, tags, Modify Classes, Filter Null, Tile and Resize preprocessing, Dataset Analytics
