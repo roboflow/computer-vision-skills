@@ -1,0 +1,33 @@
+name: Test Cowork package
+
+on:
+  pull_request:
+    paths:
+      - "cowork/**"
+      - "skills/**"
+      - ".github/workflows/test-cowork.yml"
+  push:
+    branches: [main]
+    paths:
+      - "cowork/**"
+      - "skills/**"
+      - ".github/workflows/test-cowork.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Test build and failure handling
+        run: python -m unittest discover -s cowork -p "test_*.py"
+      - name: Build customer ZIP
+        run: python cowork/build.py

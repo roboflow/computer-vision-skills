@@ -133,18 +133,7 @@ If you are comparing architectures rather than picking one, **include a NAS pare
 candidates** whenever the prerequisites are met — e.g. `rfdetr-medium` vs `yolo26m` vs
 `rfdetr-nas-parent`. Launch one `trainings_create` per candidate and keep each `trainingId`.
 
-Read the NAS arm's output as described under **Reading a run** in the RF-DETR NAS section below. One trap is specific
-to comparison: **pick the representative to match the question, or you will understate NAS.** The platform picks a
-winner per (metric, hardware) bucket by balancing accuracy against measured latency, and
-`models_list` exposes only the flattened union of those winners as a `recommended` boolean. So a
-flagged child won *some* bucket, which is not the same as being the most accurate: in one
-76-model run the two flagged children scored **72.86** and **71.91** mAP50-95 while the best child
-scored **78.00**, a 5–6 point gap.
-For a pure-accuracy comparison take the highest `metrics.map5095` child. For a deployment
-decision, use the authoritative `recommendedByHardware` entry if the run exposes one; otherwise
-report the candidates' accuracy and latency for the target (reading latency per the shapes under **Reading a run** below),
-say that no per-hardware recommendation is exposed, and let the user pick the tradeoff. The run's own `nasFamily: "baseline"` children are a useful
-check on whether the search actually beat stock RF-DETR.
+Before comparing results, read [NAS results](./nas-results.md). It explains why a `recommended` child is not necessarily the highest-accuracy child and how to choose a fair comparison.
 
 The NAS arm also takes longer than a single fine-tune, so report the named-model arms as they
 finish rather than blocking on NAS.
@@ -165,8 +154,7 @@ Instead of picking a single RF-DETR size manually, NAS trains one parent model a
   2. **Plan entitlement.** NAS is included on Core and Growth plans; any other plan needs it granted on the workspace. Basic/starter/sandbox/research/trial need to upgrade; enterprise/legacy need to contact sales. Entitlement is not readable from the MCP, so this cannot be checked up front — a non-entitled workspace finds out when `trainings_create` rejects the run with code `nas_not_available_for_plan`. Treat that as a plan limit, not a transient error: do not retry it. Fall back to the named model for the task — `rfdetr-medium` (detection) or `rfdetr-seg-medium` (segmentation) — and say NAS is unavailable on the current plan and may need an upgrade or workspace enablement, using the `plan` on the error to tell which. Do **not** fall back to a hyperparameter sweep.
 - **Start a run:** `trainings_create(project_id, version_number, model_type="rfdetr-nas-parent")`. NAS launches through the normal training tool; there is no separate engine parameter. (The UI equivalent is the Train page with `?engine=nas`.) Results land at `/{workspace}/{project}/nas-runs/{versionId}`.
 - **Nothing to hand-tune:** a NAS parent's whole hyperparameter surface is `epochs` (default 200, range 100–300). There are no learning-rate or loss-weight knobs, because the architecture search *is* the sweep.
-- **Reading a run:** a run returns a frontier of models, not one — a 289-image dataset produced **76**. Get `modelGroup` from `trainings_list`, which returns it without child metrics, then page the children with `models_list(group=<modelGroup>, version_number=…, limit=…, offset=…)`. Don't use `trainings_get` for this: it inlines every child, which is the payload the paging exists to avoid. Each child carries a sparse `metrics` object. `latency` and `paretoOptimalFor` come from NAS mining, so they are on NAS children only - an ordinary training carries accuracy alone (e.g. `map50`, `precision`, `recall`, `f1`), and `metrics` can be null. Two shapes are in the data: newer runs report `latency` as a map keyed by hardware (e.g. `{"AI1": 6.69, "T4": 1.98}`) with `paretoOptimalFor` entries like `"T4:map_50_95"`, older ones a scalar `latency` with a sibling `metrics.hardware` (e.g. `"gpu"`) and bare entries like `"map_50"`. Branch on the type rather than indexing. Children with `nasFamily: "baseline"` are stock RF-DETR models trained on the same data; they are never `recommended` and are a free within-run reference.
-- **Picking for a specific hardware target needs the authoritative map.** The platform scores a separate winner per hardware, but `models_list` flattens that into one `recommended` boolean, true if the child won *any* bucket — so it cannot tell you which hardware, and `paretoOptimalFor` is unrelated frontier metadata, not the recommendation. The exact mapping is `recommendedByHardware` from `trainings_get`, but it is only built on the legacy version-based summary — a modern MMPV training returns no such field, which is the common case. So for most runs there is no exact per-hardware lookup at all. Do not infer one: report the candidates and ask which accuracy/latency tradeoff, or which latency budget, matters.
+- **Reading a run and selecting a hardware target:** Read [NAS results](./nas-results.md) before interpreting child metrics or choosing a model. It covers paging, latency formats, and the limits of recommendation flags.
 - **Deploy:** Each NAS-produced model deploys like any other — pick one and use it as a normal Roboflow model. Call it the hardware-recommended child only when an authoritative `recommendedByHardware` entry actually says so; otherwise it is the child the user chose from the frontier. Inference type is `rfdetr-nas` / `rfdetr-nas-seg`, but it's served through the standard inference paths.
 - **References:** [RF-DETR paper (arxiv)](https://arxiv.org/html/2511.09554v2), [ICLR 2026](https://openreview.net/forum?id=qHm5GePxTh), [What is NAS? (blog)](https://blog.roboflow.com/neural-architecture-search/).
 
