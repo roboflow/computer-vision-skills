@@ -39,7 +39,7 @@ Collecting every frame is rarely useful. Three common approaches:
 
 **Random sampling** — sample a configurable percentage of frames. Useful for capturing distribution shifts even on high-confidence predictions.
 
-**Class-based filtering** — route images containing specific classes or failing specific conditions. Useful when certain classes are underperforming (see improvement playbook).
+**Class-based filtering** — route images containing specific classes or failing specific conditions. Useful when certain classes are underperforming (see model diagnosis).
 
 ## Reviewing and Using Collected Images
 
@@ -47,11 +47,11 @@ Collecting every frame is rarely useful. Three common approaches:
 2. **Annotate** — Accept, correct, or discard pre-annotations. Use AI-assisted labeling for blank images.
 3. **Generate a new version and retrain** — Use the previous model as the checkpoint to preserve what it already knows.
 
-## Connecting to the Improvement Playbook
+## Connecting to Model Diagnosis
 
-Active learning is most effective when it's targeted, not random. Use the model improvement diagnostics to decide what to collect:
+Active learning is most effective when it's targeted, not random. Diagnose the model first (`roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`) and use the finding to decide what to collect:
 
-| Improvement Playbook finding | What to upload |
+| Diagnosis finding | What to upload |
 |---|---|
 | High false negatives on a specific class | Images containing that class, especially under-represented conditions |
 | Background false positives | Images without the target object (negative examples) |
@@ -59,7 +59,7 @@ Active learning is most effective when it's targeted, not random. Use the model 
 | Small objects missed | High-resolution images with small instances |
 | Dataset distribution mismatch (new environment) | Random sample from the new deployment context |
 
-See `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` for the full diagnostic decision tree.
+See the "Which Data to Add" table in `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis` for the full mapping, and `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` for the compact decision tree and training-side fixes.
 
 ## Common Mistakes
 

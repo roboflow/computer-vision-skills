@@ -76,6 +76,7 @@ Workspace -> Project -> Version -> Model
 | Version detail | `/{workspace}/{project}/{version}` | Version summary, image counts per split |
 | Training | `/{workspace}/{project}/{version}/train` | Start training on this version |
 | Training results | `/{workspace}/{project}/{version}/train/results` | mAP, precision, recall, confusion matrix |
+| Model evaluation | `/{workspace}/{project}/evaluation/{versionId}` | Recommendations, per-class metrics, confusion matrix, metrics explorer, vector explorer (paid plans) |
 | Export | `/{workspace}/{project}/{version}/export` | Download in various formats (COCO, YOLO, VOC, etc.) |
 | Version images | `/{workspace}/{project}/{version}/images` | Browse images in this version |
 
