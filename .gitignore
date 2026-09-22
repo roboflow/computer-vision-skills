@@ -3,3 +3,7 @@
 
 .claude/state/
 .claude/worktrees/
+.DS_Store
+cowork/build/
+cowork/appPackage/build/
+cowork/__pycache__/
