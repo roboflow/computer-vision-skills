@@ -1,4 +1,4 @@
-"""Validate the staged Copilot Cowork app package, including generated tools."""
+"""Validate the staged Copilot Cowork app package and its skills."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ def png_size(path: Path) -> tuple[int, int]:
 
 
 def frontmatter_value(path: Path, field: str) -> str:
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     if not text.startswith("---\n"):
         fail(f"{path} has no YAML frontmatter")
     parts = text.split("---", 2)
@@ -39,7 +39,7 @@ def frontmatter_value(path: Path, field: str) -> str:
 
 
 def validate(package: Path = PACKAGE, skills_root: Path = ROOT) -> None:
-    manifest = json.loads((package / "manifest.json").read_text())
+    manifest = json.loads((package / "manifest.json").read_text(encoding="utf-8"))
     if manifest.get("manifestVersion") != "1.28":
         fail("Cowork manifest must use version 1.28")
     if int(manifest.get("version", "0").split(".", 1)[0]) < 1:
@@ -51,23 +51,11 @@ def validate(package: Path = PACKAGE, skills_root: Path = ROOT) -> None:
     if not remote["mcpServerUrl"].startswith("https://"):
         fail("Cowork MCP endpoint must use HTTPS")
 
-    tool_path = package / remote["mcpToolDescription"]["file"].removeprefix("./")
-    tools = json.loads(tool_path.read_text()).get("tools", [])
-    if not tools:
-        fail("mcpToolDescription must contain at least one tool")
-    names = [tool.get("name") for tool in tools]
-    if len(names) != len(set(names)):
-        fail("mcpToolDescription contains duplicate tool names")
-    for tool in tools:
-        if not tool.get("description"):
-            fail(f"{tool.get('name')} has no description")
-        if tool.get("inputSchema", {}).get("type") != "object":
-            fail(f"{tool.get('name')} has no object inputSchema")
-        annotations = tool.get("annotations", {})
-        if not annotations.get("title"):
-            fail(f"{tool.get('name')} has no annotation title")
-        if "readOnlyHint" not in annotations or "destructiveHint" not in annotations:
-            fail(f"{tool.get('name')} has incomplete safety annotations")
+    if remote.get("mcpToolDescription") != {"file": "tools/roboflow-tools.json"}:
+        fail("Cowork requires the schema compatibility tool-description reference")
+    tool_path = package / "tools/roboflow-tools.json"
+    if tool_path.exists() and json.loads(tool_path.read_text(encoding="utf-8")) != {"tools": []}:
+        fail("Cowork discovers tools live; the compatibility file must stay empty")
 
     skills = manifest["agentSkills"]
     if len(skills) > 20:
@@ -77,7 +65,7 @@ def validate(package: Path = PACKAGE, skills_root: Path = ROOT) -> None:
         skill_file = folder / "SKILL.md"
         name = frontmatter_value(skill_file, "name")
         description = frontmatter_value(skill_file, "description")
-        if len(skill_file.read_text()) > 20_000:
+        if len(skill_file.read_text(encoding="utf-8")) > 20_000:
             fail(f"{name} SKILL.md exceeds Cowork's 20,000-character limit")
         if folder.name != name or not NAME_PATTERN.fullmatch(name):
             fail(f"skill folder/name mismatch: {folder.name!r} != {name!r}")
@@ -97,7 +85,7 @@ def validate(package: Path = PACKAGE, skills_root: Path = ROOT) -> None:
         if actual != expected:
             fail(f"{filename} must be {expected[0]}x{expected[1]}, got {actual}")
 
-    print(f"Cowork package source is valid: {len(skills)} skills, {len(tools)} tools")
+    print(f"Cowork package source is valid: {len(skills)} skills, live MCP tool discovery")
 
 
 if __name__ == "__main__":

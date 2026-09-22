@@ -1,31 +1,46 @@
 # Microsoft Copilot Cowork package
 
-This directory contains the Microsoft-specific overlay used to import the existing Roboflow Claude/Cursor plugin into Copilot Cowork. The existing plugin manifests, `.mcp.json`, and `skills/` directory remain the source of truth.
-
-The v1.28 manifest intentionally omits `authorization`. Roboflow publishes OAuth protected-resource and authorization-server metadata, including a Dynamic Client Registration endpoint, so Cowork registers its OAuth client during connection setup. Do not add the placeholder `OAuthPluginVault` authorization emitted by `atk import openplugin`.
-
-The package icons are derived directly from the official [Roboflow brand kit](https://roboflow.com/brand), without recoloring the supplied artwork. `color.png` places the official color logomark on the required opaque light background; `outline.png` uses the official white logomark on transparency.
+This package combines Roboflow skills with the hosted MCP server. Cowork discovers tools directly from the server after connecting. No static tool catalog, MCP source checkout, GitHub credentials, Node.js, or uv is needed.
 
 ## Build
 
-Install Git, Python 3, uv (with Python 3.12 available or automatic downloads enabled), Node.js, and npm. Network access to GitHub and the Python/npm registries is required.
+From the root of this repository, using Python 3.9 or newer:
+
+macOS/Linux:
 
 ```bash
-./cowork/build.sh
+python3 cowork/build.py
 ```
 
-The build fetches the exact `roboflow-mcp` commit in `mcp-revision.txt` into a temporary checkout, installs its locked dependencies, and runs `dev/export_public_tools.py`. The exporter uses the public tool-list middleware, excluding employee-only tools. The generated catalog is validated in the staged package and included at `tools/roboflow-tools.json`; it is never checked into this repository.
+Windows PowerShell:
 
-The pinned Microsoft 365 Agents Toolkit CLI imports the existing plugin into a temporary project. The build applies the reviewed v1.28 manifest and icons, replaces the imported tool description with the generated catalog, and packages the result. Fetch, export, and validation failures stop the build without replacing previous successful outputs.
+```powershell
+py -3 cowork/build.py
+```
 
-`cowork/build/roboflow-cowork.provenance.json` records the MCP commit and SHA-256 hashes of the catalog and ZIP. Both outputs are ignored by Git. A package is a snapshot: rebuilding with the same MCP pin does not adopt newer tool definitions.
+The existing `./cowork/build.sh` command also works on macOS/Linux. Building is offline once you have this repository and Python. Windows line endings in the skill files are supported.
 
-## Update the MCP catalog revision
-
-Set `cowork/mcp-revision.txt` to a full, reviewed 40-character commit SHA from `roboflow/roboflow-mcp` that contains `dev/export_public_tools.py`. Rebuild, validate the package, and commit only the pin change. Do not add a generated catalog to source control or substitute a moving branch name. The initial pin uses the exporter PR commit; after [MCP PR #163](https://github.com/roboflow/roboflow-mcp/pull/163) merges, replace it with the final merged commit and rebuild before distribution.
+The output is `cowork/build/roboflow-cowork.zip`. The adjacent `roboflow-cowork.provenance.json` records the package version and ZIP SHA-256. Validation failures preserve previous successful outputs.
 
 ## Install
 
-The uploadable package is written to `cowork/build/roboflow-cowork.zip`. In Cowork, open **Customize > Plugins**, select **Upload plugin**, and choose the ZIP. The **Skills** uploader is only for a single standalone skill and will reject this complete plugin package.
+In Cowork, open **Customize > Plugins > Upload plugin** and choose the ZIP. The Skills uploader accepts individual skills, not a complete plugin. Enable Roboflow in a new conversation and connect your account when prompted. Try asking Roboflow to list your workspace projects.
 
-After installation, enable Roboflow for a new Cowork conversation. Verify that OAuth sign-in completes, a skill activates, a read-only tool succeeds, and a mutating tool requests confirmation.
+The manifest intentionally omits `authorization` for OAuth Dynamic Client Registration. This is not anonymous access. Do not replace it with `None` or a placeholder `OAuthPluginVault` registration. See [Microsoft's Cowork plugin documentation](https://learn.microsoft.com/en-us/microsoft-365/copilot/cowork/cowork-plugin-development#dynamic-client-registration).
+
+Microsoft documents that Cowork ignores `mcpToolDescription` and discovers tools dynamically. The published v1.28 schema still requires the file reference, so the build generates an empty `{"tools": []}` compatibility file. It contains no duplicated tool definitions and requires no access to the MCP source repository.
+
+## Troubleshooting
+
+- Older builds that report `mcp-revision.txt must contain a full MCP commit SHA` or cannot fetch `roboflow-mcp` should be replaced with this build. The revision pin is no longer used.
+- `Could not verify connection` before sign-in is a runtime connection/authentication problem, not a reason to rebuild the tool catalog. Record the Retry time and timezone, Cowork client (web/desktop), and any request/correlation ID for support. Do not share access tokens or client secrets.
+- Package validation does not establish that OAuth works in a customer tenant. Acceptance requires sign-in, a successful read-only tool call, skill activation, and confirmation for a mutating tool.
+
+## Verification
+
+```bash
+python3 -m unittest discover -s cowork -p 'test_*.py'
+python3 cowork/validate.py
+```
+
+The icons are derived from the official [Roboflow brand kit](https://roboflow.com/brand).
