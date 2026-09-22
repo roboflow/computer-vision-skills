@@ -1,22 +1,33 @@
-"""Build the Cowork ZIP offline using only Python's standard library."""
+"""Build the Cowork ZIP with a pinned public catalog and Python standard library."""
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 from pathlib import Path
 import shutil
 import tempfile
 import zipfile
+from urllib.request import urlopen
 
 from validate import validate
 
 
-def build(root: Path) -> Path:
+def build(root: Path, catalog_path: Path | None = None) -> Path:
     source = root / "cowork"
     output = source / "build"
     # Validate before touching the last successful build.
-    validate(source / "appPackage", root)
+    pin = json.loads((source / "catalog.json").read_text(encoding="utf-8"))
+    if catalog_path is None:
+        if not pin["url"].startswith("https://"):
+            raise ValueError("Catalog download must use HTTPS")
+        with urlopen(pin["url"], timeout=60) as response:
+            catalog = response.read()
+    else:
+        catalog = catalog_path.read_bytes()
+    if hashlib.sha256(catalog).hexdigest() != pin["sha256"]:
+        raise ValueError("Tool catalog SHA-256 does not match catalog.json")
     output.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(dir=output) as temp:
         staging = Path(temp)
@@ -27,11 +38,9 @@ def build(root: Path) -> Path:
             relative = skill["folder"].removeprefix("./")
             shutil.copytree(root / relative, package / relative,
                             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        # Microsoft v1.28 still requires this file reference although Cowork
-        # ignores its contents and discovers tools from the authenticated server.
         tools = package / "tools"
         tools.mkdir(exist_ok=True)
-        (tools / "roboflow-tools.json").write_text('{"tools": []}\n', encoding="utf-8")
+        (tools / "roboflow-tools.json").write_bytes(catalog)
         validate(package, package)
         archive = staging / "roboflow-cowork.zip"
         with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
@@ -41,7 +50,8 @@ def build(root: Path) -> Path:
         provenance = staging / "roboflow-cowork.provenance.json"
         provenance.write_text(json.dumps({
             "package_version": manifest["version"],
-            "tool_discovery": "live",
+            "mcp_commit": pin["mcp_commit"],
+            "tool_catalog_sha256": pin["sha256"],
             "package_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
         }, indent=2) + "\n", encoding="utf-8")
         archive.replace(output / archive.name)
@@ -52,4 +62,8 @@ def build(root: Path) -> Path:
 
 
 if __name__ == "__main__":
-    build(Path(__file__).resolve().parents[1])
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--tool-catalog", type=Path,
+                        help="Use a downloaded catalog offline; its pinned SHA-256 is still checked")
+    args = parser.parse_args()
+    build(Path(__file__).resolve().parents[1], args.tool_catalog)

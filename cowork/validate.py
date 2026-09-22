@@ -51,11 +51,23 @@ def validate(package: Path = PACKAGE, skills_root: Path = ROOT) -> None:
     if not remote["mcpServerUrl"].startswith("https://"):
         fail("Cowork MCP endpoint must use HTTPS")
 
-    if remote.get("mcpToolDescription") != {"file": "tools/roboflow-tools.json"}:
-        fail("Cowork requires the schema compatibility tool-description reference")
-    tool_path = package / "tools/roboflow-tools.json"
-    if tool_path.exists() and json.loads(tool_path.read_text(encoding="utf-8")) != {"tools": []}:
-        fail("Cowork discovers tools live; the compatibility file must stay empty")
+    tool_path = package / remote["mcpToolDescription"]["file"].removeprefix("./")
+    tools = json.loads(tool_path.read_text(encoding="utf-8")).get("tools", [])
+    if not tools:
+        fail("mcpToolDescription must contain at least one tool")
+    names = [tool.get("name") for tool in tools]
+    if len(names) != len(set(names)):
+        fail("mcpToolDescription contains duplicate tool names")
+    for tool in tools:
+        if not tool.get("description"):
+            fail(f"{tool.get('name')} has no description")
+        if tool.get("inputSchema", {}).get("type") != "object":
+            fail(f"{tool.get('name')} has no object inputSchema")
+        annotations = tool.get("annotations", {})
+        if not annotations.get("title"):
+            fail(f"{tool.get('name')} has no annotation title")
+        if "readOnlyHint" not in annotations or "destructiveHint" not in annotations:
+            fail(f"{tool.get('name')} has incomplete safety annotations")
 
     skills = manifest["agentSkills"]
     if len(skills) > 20:
@@ -85,7 +97,7 @@ def validate(package: Path = PACKAGE, skills_root: Path = ROOT) -> None:
         if actual != expected:
             fail(f"{filename} must be {expected[0]}x{expected[1]}, got {actual}")
 
-    print(f"Cowork package source is valid: {len(skills)} skills, live MCP tool discovery")
+    print(f"Cowork package source is valid: {len(skills)} skills, {len(tools)} tools")
 
 
 if __name__ == "__main__":
