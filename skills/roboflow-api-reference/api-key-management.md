@@ -57,6 +57,7 @@ Response:
       "disabled": false,
       "created_on": "2024-01-15T10:30:00Z",
       "created_by": "user@example.com",
+      "rotationDueAt": "2025-01-15T10:30:00Z",
       "customMetadata": {}
     }
   ],
@@ -75,6 +76,8 @@ curl "https://api.roboflow.com/my-workspace/api-keys/abc123?api_key=KEY"
 ```
 
 Response: `{ "apiKey": { ...same fields as above... } }`
+
+`rotationDueAt` is derived, not stored: one year after `created_on`, or `null` when the key has no creation date. Rolling a key restarts it, because the replacement is a new key. Use it to find keys due for rotation; the MCP tools return the same value as `rotation_due_at`.
 
 ### Get Publishable Key
 
@@ -301,6 +304,8 @@ ROBOFLOW_API_KEY=rf_...
 4. Revoke the old key.
 
 This zero-downtime rotation avoids service interruptions.
+
+To find which keys are due, read `rotationDueAt` on the list response (`rotation_due_at` from `api_keys_list`): keys are expected to be rotated within a year of creation, and the dashboard flags them as due 30 days ahead and as overdue past the date.
 
 If the key has leaked, speed matters more than zero downtime: roll it (`POST .../api-keys/:keyId/roll` or `api_keys_roll`). The old secret stops working immediately, the replacement carries the same identity, and any dedicated deployment on the key follows it.
 
