@@ -64,7 +64,7 @@ Model Evaluation runs automatically for paid workspaces after every training (an
 | Order | Tool | What to read |
 |---|---|---|
 | 1 | `models_list` / `models_get` | Which model and version the user means; note `map50` for context |
-| 2 | `model_evals_list(project_id=…, version_number=…, status="done")` | Find the `evalId`. Filters are mutually exclusive: pass one of `project_id`, `version_number`, or `model_id` |
+| 2 | `model_evals_list(project_id=…, status="done")` | Find the `evalId`: pick the entry whose `versionId` matches the version the user means. Filters are mutually exclusive: pass exactly one of `project_id`, `version_number`, or `model_id`; combinations return 400 |
 | 3 | `model_evals_get(eval_id)` | Headline mAP@50, precision, recall at the F1-optimal threshold; `app_url` deep link to hand back to the user |
 | 4 | `model_evals_get_recommendations(eval_id)` | The engine's own findings (see the five types below). `{"generated": false}` means the eval is done but recommendations were never produced; move on |
 | 5 | `model_evals_get_performance_by_class(eval_id, split="test")` | Per-class `map50`, `map50_95`, precision, recall, F1, `optimalThreshold`. Sort by recall then precision to find the weakest class |
