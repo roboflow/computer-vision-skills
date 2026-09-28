@@ -255,7 +255,8 @@ The MCP server exposes every evaluation panel. All require the `model-eval:read`
 |---|---|
 | Generate version | `versions_generate` |
 | Start training | `trainings_create` |
-| Check training status | `models_get_training_status` |
+| Find a training run | `trainings_list(project_id, version_number)` returns each run's `trainingId` and status |
+| Check a known training run | `trainings_get(project_id, version_number, training_id)`; use the paginated NAS path above for child model details |
 | Get model info | `models_get` |
 | List models | `models_list` |
 | Find evaluations | `model_evals_list` |

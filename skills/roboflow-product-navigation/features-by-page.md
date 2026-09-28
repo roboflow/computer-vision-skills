@@ -61,7 +61,7 @@ Base URL: `https://app.roboflow.com`
 | Choose model architecture | `/{ws}/{proj}/train` -> architecture step | MCP: `trainings_create` (model param) |
 | Train from checkpoint | `/{ws}/{proj}/train` -> checkpoint step | MCP: `trainings_create` |
 | Train specific version | `/{ws}/{proj}/{version}/train` | MCP: `trainings_create` |
-| Check training status | `/{ws}/{proj}/{version}` (shows progress bar) | MCP: `models_get_training_status` |
+| Check training status | `/{ws}/{proj}/{version}` (shows progress bar) | MCP: `trainings_get` with project, version, and `training_id`; use `trainings_list` to find the run |
 | View training results (mAP, etc.) | `/{ws}/{proj}/{version}/train/results` | MCP: `models_get` |
 | View model evaluation (recommendations, per-class, confusion matrix, vector explorer) | `/{ws}/{proj}/evaluation/{versionId}` | MCP: `model_evals_list` then `model_evals_get_*`; see `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis` |
 | Cancel training | `/{ws}/{proj}/{version}` -> Cancel button | -- |

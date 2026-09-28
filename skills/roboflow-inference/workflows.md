@@ -2,7 +2,7 @@
 
 > **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-inference`) over fetching `roboflow://skills/roboflow-inference/workflows` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
-> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer **`workflows_run`** (saved workflow by `workflow_id` — the workflow URL slug; workspace is inferred from the API key — see [Finding your workspace slug](#finding-your-workspace-slug)) over raw HTTP. `workflow_specs_run` is an inline-spec escape hatch for explicit one-offs only; see "Authoring & Deployment" below.
+> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer **`workflows_run`** for a saved, published Workflow by URL slug (`workflow_id`); workspace comes from the OAuth or API-key connection. Use `workflow_specs_run` to test an unpublished draft or run an authorized one-off. See "Authoring & Deployment" below.
 
 ## What Are Workflows
 
@@ -120,27 +120,29 @@ Step names: derive from block type, strip `roboflow_core/` and `@vX`, lowercase 
 
 ## Authoring & Deployment
 
-### Two ways to author — both end with a saved workflow on the platform
+### Two ways to author reusable Workflows
 
-Workflows can be authored two ways. The agent should **propose** the right one (or **infer** from prior session signals) — never silently pick. Both paths land at the same place: a workflow saved on the Roboflow platform, identified by its workspace + workflow URL slugs (visible in the builder URL: `app.roboflow.com/<workspace-slug>/workflows/<workflow-slug>`). Storage, versioning, and retrieval always go through the platform; the run path is the same regardless of how the workflow was authored.
+Choose the authoring path from the user's request and existing session context. Save reusable Workflows on the platform, retaining the document ID for updates and the URL slug for execution. Inline specifications also let you test a draft without publishing it.
 
-#### Mode A — Agent-driven (MCP, in-session)
+#### Mode A: Agent-driven (MCP, in-session)
 
-**Use when:** the session is for a demo or preview, or the user is committed to in-session "vibe coding" and wants the agent to drive the whole authoring loop end-to-end.
+**Use when:** the user asks the agent to build or edit a Workflow and MCP tools can complete the task.
 
-**How:** agent designs the block list, calls Roboflow MCP workflow-authoring tools to create and save the workflow on the platform during the session, and runs it. Ground the design in real types: use `workflow_blocks_list` / `workflow_blocks_get_schema` for manifest types and required props, and `workflow_specs_validate` to catch shape errors before saving.
+**How:** use direct tools for straightforward composition, grounding block types and properties with `workflow_blocks_list` / `workflow_blocks_get_schema`. Use `agent_chat` for complex construction; keep its `conversation_id` for follow-ups and poll a returned `run_id` with `agent_chat_result` rather than resending the same request. Validate the specification with `workflow_specs_validate` before saving or running it.
 
-#### Mode B — Platform-driven (Roboflow app + in-app agent)
+`agent_chat` saves edits as drafts. Test the returned `specification` with `workflow_specs_run` when execution is authorized. Publish with `agent_workflow_publish` only when the user has authorized making the changes live. Report separately whether the Workflow was saved, tested, and published.
 
-**Use when:** the workflow is non-trivial, the user prefers to see and adjust it visually, the user isn't committed to agent-driven authoring this session, or Mode A has hit an issue and a fallback is needed. **This is also the better default for sophisticated cases** — the builder's in-app agent is more tightly context-grounded than a generic external agent.
+#### Mode B: Platform-driven (Roboflow app + in-app agent)
 
-**How:** agent proposes the block design (block list, how they connect, expected inputs/outputs) and hands the user a direct link to the [Workflows builder](https://app.roboflow.com/) (Workflows tab → "Create a Workflow"). The user builds manually or works with the in-app workflow agent, tests via the built-in preview, saves, and shares the workspace + workflow URL slugs back (both visible in the builder URL: `app.roboflow.com/<workspace-slug>/workflows/<workflow-slug>`). The agent then runs it from code.
+**Use when:** the user wants visual interaction or the client cannot complete the task. Complexity alone is a reason to use `agent_chat`, not to require a manual handoff.
+
+**How:** explain what needs visual review or what the client could not complete, then send the returned `app_url` for an existing Workflow. For a new Workflow, use `roboflow-product-navigation` to find the builder link. The user can build or edit manually or with the in-app agent, test in the preview, and share the Workflow URL for subsequent execution. Testing a draft does not require publishing.
 
 ### Running a saved workflow
 
-Whichever mode authored it, run it the same way:
+Whichever mode authored it, these calls run the latest **published** version. They do not execute unpublished `agent_chat` edits:
 
-- **MCP:** `workflows_run` with `workflow_id` (and optional `parameters`). The workspace is inferred from the API key — there is no separate workspace argument. (See [Finding your workspace slug](#finding-your-workspace-slug) if you need to know which workspace a key resolves to.)
+- **MCP:** `workflows_run` with `workflow_id` (and optional `parameters`). The workspace comes from the OAuth or API-key connection; there is no separate workspace argument.
 - **SDK:** `client.run_workflow(workspace_name=..., workflow_id=..., images=..., parameters=...)`.
 
 **`workflow_id` is the workflow URL slug, not the document ID.** `workflows_create` / `workflows_get` return both — only the slug is recognised at run time. Find it in the `url` field of those responses, or in the browser address bar at `https://app.roboflow.com/<workspace-slug>/workflows/<workflow-slug>`.
@@ -157,9 +159,9 @@ curl -s "https://api.roboflow.com/?api_key=YOUR_API_KEY"
 
 The response includes a `workspace` field whose `url` (slug) is what you pass as `workspace_name` in the SDK and what appears in `app.roboflow.com/<workspace-slug>/...`. Useful for: SDK scripts started from just a key, verifying which workspace a key belongs to, and CI environments where no human ever opens the dashboard.
 
-### Inline specs — exception only
+### Inline specs: draft tests and one-off runs
 
-`workflow_specs_run` (MCP) and `client.run_workflow(specification=...)` (SDK) accept an inline spec without ever touching the platform. Reserve for narrow cases the user has explicitly authorised: throwaway one-offs or programmatic generation where saving is genuinely impractical. **Validate first** with `workflow_specs_validate`. Default for everything else: author via Mode A or Mode B, then call `workflows_run`.
+`workflow_specs_run` (MCP) and `client.run_workflow(specification=...)` (SDK) execute an inline specification without saving or publishing that definition. Use this to test the draft returned by `agent_chat`, for an authorized one-off, or for programmatic generation where saving is impractical. **Validate first** with `workflow_specs_validate`. Execution can still incur inference costs and run any side-effecting blocks in the specification; testing must stay within the user's authorization. For a reusable published Workflow, call `workflows_run` by URL slug.
 
 ### Deploy
 
@@ -391,8 +393,8 @@ pipeline.join()                       # blocks until video source ends or pipeli
 |------|---------|
 | `workflows_list` | List all workflows in the workspace |
 | `workflows_get` | Get a workflow's definition |
-| **`workflows_run`** | **Preferred run path.** Run a saved workflow by `workflow_id` (the workflow URL slug; workspace is inferred from the API key — see [Finding your workspace slug](#finding-your-workspace-slug)). Optional `parameters`. |
+| **`workflows_run`** | Run the published Workflow by `workflow_id` (URL slug); workspace comes from the connection. Optional `parameters`. |
 | `workflow_blocks_list` | List available block types (filterable by category) — use during Mode A design |
 | `workflow_blocks_get_schema` | Full schema for a block (properties, required fields) — use during Mode A design |
 | `workflow_specs_validate` | Validate an inline workflow spec without running it — use before saving in Mode A and before any inline run |
-| `workflow_specs_run` | *Exception only.* Run an inline workflow spec without saving — for explicit throwaway runs the user authorised |
+| `workflow_specs_run` | Test an unpublished draft or run an authorized one-off from an inline specification |
