@@ -13,6 +13,10 @@ The repo ships both plugin manifests pointing at the same skill content and MCP 
 
 Both manifests load skills from [`skills/`](skills/) and bundle the Roboflow MCP server config from [`.mcp.json`](.mcp.json).
 
+The bundled connection uses OAuth: sign in to Roboflow when your client prompts
+you. No API key is needed. Clients that cannot complete OAuth can configure the
+[API-key fallback](#api-key-fallback).
+
 ### Microsoft Copilot Cowork
 
 The [`cowork/`](cowork/) directory contains a Microsoft 365 app manifest, validation, and a Python-only package build that downloads a verified public tool catalog. It uses Roboflow's OAuth Dynamic Client Registration flow and produces a v1.28 package ready for tenant sideloading.
@@ -37,13 +41,14 @@ The first command registers this repo as a marketplace source (run once per mach
 <details>
 <summary>Per-project installation</summary>
 
-For per-project isolation — for example, when different projects need different `ROBOFLOW_API_KEY` values for different workspaces:
+To install the plugin only for the current project:
 
 ```bash
 claude plugin install roboflow --scope local
 ```
 
-Local scope writes the plugin into the current project only and reads the API key from that project's environment.
+Local scope controls where the plugin is installed. The bundled MCP connection
+still uses OAuth; it does not automatically read a project API key.
 </details>
 
 <details>
@@ -113,7 +118,9 @@ Codex caches installed plugins under `~/.codex/plugins/cache/`, so a running Cod
 
 </details>
 
-Codex CLI picks up `ROBOFLOW_API_KEY` from the shell environment that launches the `codex` binary. In Codex desktop, set the key in the local environment used by the workspace. Use a project-scoped `.env` if you need different keys per project.
+The bundled Codex connection also uses OAuth. Setting `ROBOFLOW_API_KEY` alone
+does not configure MCP authentication; API-key connections need an explicit
+header configuration as described below.
 
 ## Install standalone skills
 
@@ -154,23 +161,38 @@ That separation keeps the install model simple:
 - Plugin skills: durable product guidance and workflow playbooks
 - This repo: canonical source for skill updates and plugin distribution
 
-<details>
-<summary>Get your API key</summary>
+### API-key fallback
 
-**Grab your Roboflow API key** from the Roboflow settings:
-[app.roboflow.com/settings/api](https://app.roboflow.com/settings/api)
+Use this only when your client cannot complete OAuth or you need a headless
+API-key connection. Obtain a private key from
+[Roboflow settings](https://app.roboflow.com/settings/api), then configure your
+client to send it in the `x-api-key` header to `https://mcp.roboflow.com/mcp`.
 
-The key authenticates the bundled MCP server against `https://mcp.roboflow.com` via the `x-api-key` header.
+For clients that support environment expansion in MCP JSON configuration:
 
-Export it in the shell that launches your agent:
-
-```bash
-export ROBOFLOW_API_KEY=your_key
+```json
+{
+  "mcpServers": {
+    "roboflow": {
+      "type": "http",
+      "url": "https://mcp.roboflow.com/mcp",
+      "headers": {
+        "x-api-key": "${ROBOFLOW_API_KEY}"
+      }
+    }
+  }
+}
 ```
 
-For persistence, add the `export` to your shell profile (`~/.zshrc`, `~/.bashrc`) or to a project-local `.env` file loaded by your agent's environment. Per-project isolation is the safer default — keeps separate workspaces and billing accounts from leaking across projects.
+Load `ROBOFLOW_API_KEY` into the environment of the process running the client,
+using a secret manager or a gitignored `.env` that you explicitly load. A `.env`
+file is not automatically loaded by this plugin. If your client uses a different
+configuration format or does not expand environment variables, use its supported
+secret-to-header configuration instead of this JSON example. Configure one
+Roboflow connection, avoiding duplicate plugin and manual server entries.
 
-</details>
+Never paste a private key into chat or commit it. To return to OAuth, remove the
+API-key header configuration and reconnect.
 
 ## Contributing
 
