@@ -13,7 +13,7 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 
 > **Authoring Workflows.** Save reusable Workflows on the Roboflow platform and run published versions by **identifier**. Choose the authoring path from the user's request and existing session context:
 >
-> - **Mode A: Agent-driven (MCP, in-session).** Use direct authoring tools for straightforward Workflows, grounding the design with `workflow_blocks_list` / `workflow_blocks_get_schema`. Use `agent_chat` for complex construction. Validate with `workflow_specs_validate` before saving or running. Agent-created edits are drafts; test them with `workflow_specs_run` before publishing when execution is authorized.
+> - **Mode A: Agent-driven (MCP, in-session).** Use direct authoring tools for straightforward Workflows, grounding the design with `workflow_blocks_list` / `workflow_blocks_get_schema`. Use `agent_chat` for complex construction. Validate with `workflow_specs_validate` before saving or running. Edits saved by `agent_chat` are drafts; test them with `workflow_specs_run` before publishing when execution is authorized.
 > - **Mode B: Platform-driven (Roboflow app + in-app agent).** Use when the user wants visual interaction or the client cannot complete the task. Send the Workflow's returned `app_url`, or use `roboflow-product-navigation` for the correct builder link. The user can review, edit, and test there.
 >
 > `workflows_run` executes the latest published version, not an agent's draft. Use `agent_workflow_publish` only when publishing is authorized. Draft testing does not require publishing. See [workflows](./workflows.md) "Authoring & Deployment" for the full flow.

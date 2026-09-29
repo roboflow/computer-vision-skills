@@ -191,6 +191,12 @@ configuration format or does not expand environment variables, use its supported
 secret-to-header configuration instead of this JSON example. Configure one
 Roboflow connection, avoiding duplicate plugin and manual server entries.
 
+When switching an existing OAuth connection to an API key, sign out of that
+connection or clear its saved OAuth credentials so the client stops sending an
+`Authorization: Bearer` header. The server prefers that header over `x-api-key`
+when both are present, so adding the API-key header alone may still use the
+OAuth workspace and permissions.
+
 Never paste a private key into chat or commit it. To return to OAuth, remove the
 API-key header configuration and reconnect.
 
