@@ -15,7 +15,8 @@ server, Colab) so Roboflow can convert, host, and serve it.
 Packaging reads the checkpoint from disk, so the upload always runs on the
 machine that has the weights — client-side, with the Python SDK flow below.
 
-The `models_upload_custom_weights` MCP tool is a guide, not an uploader:
+The `models_custom_weights_upload_guide` MCP tool (named
+`models_upload_custom_weights` on older servers) is a guide, not an uploader:
 calling it returns this recipe and echoes back the arguments you passed
 (its `upload_mode` field says whether they describe a versioned or a
 workspace upload, or `undetermined` when they pin down neither). It never
