@@ -17,6 +17,14 @@ The bundled connection uses OAuth: sign in to Roboflow when your client prompts
 you. No API key is needed. Clients that cannot complete OAuth can configure the
 [API-key fallback](#api-key-fallback).
 
+### Claude
+
+[Add Roboflow to Claude](https://claude.ai/directory/roboflow), select Connect, and sign in to Roboflow when prompted.
+
+### Cursor
+
+[Open Roboflow in Cursor](cursor://anysphere.cursor-deeplink/plugin/add?id=26126658), then select Install to add the MCP server and skills. If Cursor does not open, use the [Roboflow listing in Cursor Marketplace](https://cursor.com/marketplace/roboflow), or run `/add-plugin roboflow` in Cursor chat.
+
 ### Microsoft Copilot Cowork
 
 The [`cowork/`](cowork/) directory contains a Microsoft 365 app manifest, validation, and a Python-only package build that downloads a verified public tool catalog. It uses Roboflow's OAuth Dynamic Client Registration flow and produces a v1.28 package ready for tenant sideloading.
@@ -29,7 +37,7 @@ See [`cowork/README.md`](cowork/README.md) for build and installation instructio
 
 ### Claude Code
 
-Install from GitHub — no clone required:
+Run these commands in your terminal. Claude Code CLI has no documented browser install link:
 
 ```bash
 claude plugin marketplace add roboflow/computer-vision-skills
@@ -79,7 +87,9 @@ Install from GitHub:
 codex plugin marketplace add roboflow/computer-vision-skills
 ```
 
-Restart Codex, then open the plugin browser:
+[Open Roboflow in Codex](codex://plugins/install/roboflow?marketplace=roboflow) after adding the marketplace above, then select Install. This link requires the desktop app and a registered `roboflow` marketplace. If the marketplace is missing, it opens the Plugins page instead.
+
+If the link does not open, restart Codex and open the plugin browser:
 
 ```text
 codex /plugins
@@ -121,6 +131,32 @@ Codex caches installed plugins under `~/.codex/plugins/cache/`, so a running Cod
 The bundled Codex connection also uses OAuth. Setting `ROBOFLOW_API_KEY` alone
 does not configure MCP authentication; API-key connections need an explicit
 header configuration as described below.
+
+### Gemini CLI
+
+Gemini CLI has no documented browser install link. Run these commands in your terminal:
+
+```bash
+npx skills add roboflow/computer-vision-skills -a gemini-cli
+gemini mcp add --scope project --transport http roboflow https://mcp.roboflow.com/mcp
+```
+
+Start Gemini CLI, then run `/mcp auth roboflow` to sign in. See [Gemini CLI MCP setup](https://geminicli.com/docs/tools/mcp-server/) for more options.
+
+### Devin Desktop
+
+Devin Local shares MCP configuration with Devin CLI. With Devin CLI installed, run:
+
+```bash
+devin mcp add -s user roboflow https://mcp.roboflow.com/mcp
+devin mcp login roboflow
+```
+
+Start a new Devin Local session in Devin Desktop. See the [Devin MCP setup guide](https://docs.devin.ai/cli/extensibility/mcp/configuration). Legacy Cascade sessions use a [separate MCP configuration](https://docs.devin.ai/desktop/cascade/mcp) and do not support one-click installation.
+
+### Cline
+
+Follow the [Cline setup guide](https://docs.cline.bot/mcp/mcp-overview#add-servers). In MCP Servers > Remote Servers, add `roboflow` with URL `https://mcp.roboflow.com/mcp` and transport Streamable HTTP. When editing Cline's config directly, include `"type": "streamableHttp"` so it does not default to SSE.
 
 ## Install standalone skills
 
