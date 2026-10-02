@@ -125,7 +125,7 @@ fail.
 |------|---------|
 | `connect_cloud_storage` | End-to-end: credential + datasource + validate + first run |
 | `credentials_list` | List masked cloud-storage credentials |
-| `credentials_create` | Create a credential (secret collected securely out-of-band) |
+| `get_aws_storage_credential_setup_link` | Get a Roboflow app link for AWS storage credential setup; enter secrets in the app |
 | `credentials_delete` | Delete a credential |
 | `datasources_list` / `datasource_get` | List / inspect datasource configs |
 | `datasource_create` / `datasource_update` / `datasource_delete` | Manage a datasource |
