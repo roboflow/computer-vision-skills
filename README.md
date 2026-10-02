@@ -23,7 +23,13 @@ you. No API key is needed. Clients that cannot complete OAuth can configure the
 
 ### Cursor
 
-[Open Roboflow in Cursor](cursor://anysphere.cursor-deeplink/plugin/add?id=26126658), then select Install to add the MCP server and skills. If Cursor does not open, use the [Roboflow listing in Cursor Marketplace](https://cursor.com/marketplace/roboflow), or run `/add-plugin roboflow` in Cursor chat.
+Open the [Roboflow listing in Cursor Marketplace](https://cursor.com/marketplace/roboflow), or run `/add-plugin roboflow` in Cursor chat. Select Install to add the MCP server and skills.
+
+To open the plugin directly in Cursor Desktop, copy this URL into your browser address bar:
+
+```text
+cursor://anysphere.cursor-deeplink/plugin/add?id=26126658
+```
 
 ### Microsoft Copilot Cowork
 
@@ -87,7 +93,13 @@ Install from GitHub:
 codex plugin marketplace add roboflow/computer-vision-skills
 ```
 
-[Open Roboflow in Codex](codex://plugins/install/roboflow?marketplace=roboflow) after adding the marketplace above, then select Install. This link requires the desktop app and a registered `roboflow` marketplace. If the marketplace is missing, it opens the Plugins page instead.
+After adding the marketplace above, copy this URL into your browser address bar to open Roboflow in Codex, then select Install:
+
+```text
+codex://plugins/install/roboflow?marketplace=roboflow
+```
+
+This link requires the desktop app and a registered `roboflow` marketplace. If the marketplace is missing, it opens the Plugins page instead. The [Roboflow MCP docs](https://docs.roboflow.com/agents/mcp-server#codex) also provide the desktop install link.
 
 If the link does not open, restart Codex and open the plugin browser:
 
