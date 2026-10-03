@@ -150,6 +150,8 @@ Projects sharing the same annotation group share classes and annotations. Useful
 
 Enable at project creation: "Share image annotations with other projects". Look for the chain-link icon on shared images/projects.
 
+Reusing a group name that another project already has, including a project in the Trash, shares annotations the same way. Uploads of images that project already annotated then fail with "Image was already annotated". Pick an unused name unless sharing is intended; `projects_list` and `trash_list` show each project's `annotation` group.
+
 ## MCP Tools Available
 
 | Tool | Purpose |

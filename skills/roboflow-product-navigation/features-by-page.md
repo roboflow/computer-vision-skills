@@ -14,7 +14,7 @@ Base URL: `https://app.roboflow.com`
 | Import from S3/GCS/Azure | `/{ws}/{proj}/upload` -> Cloud Import tab | Python SDK with cloud URLs |
 | Import images from cloud storage (S3 / GCS bucket mirror) | `/{ws}/settings/datasources` | MCP: `connect_cloud_storage`; see `roboflow://skills/roboflow-cloud-storage/SKILL` |
 | Import from Universe | `/{ws}/{proj}/upload` -> Universe tab | MCP: `universe_search` then fork |
-| Upload pre-annotated data | `/{ws}/{proj}/upload` (drag folder with annotations) | Python SDK: `project.upload(path)` auto-detects annotations |
+| Upload pre-annotated data | `/{ws}/{proj}/upload` (drag folder with annotations) | Python SDK: `project.upload(path)` auto-detects annotations, MCP: `image_upload` with annotation files in the zip |
 
 ## Annotate
 
@@ -34,8 +34,8 @@ Base URL: `https://app.roboflow.com`
 
 | Intent | Web URL | Alternatives |
 |--------|---------|-------------|
-| Search images | `/{ws}/{proj}/images` -> search bar | MCP: `images_search` |
-| Filter by class/tag/split | `/{ws}/{proj}/images` -> filter panel | -- |
+| Search images | `/{ws}/{proj}/images` -> search bar | MCP: `images_search` (semantic), `images_workspace_search` (RoboQL) |
+| Filter by class/tag/split | `/{ws}/{proj}/images` -> filter panel | MCP: `images_workspace_search`, e.g. `project:<slug> split:valid` |
 | Add tags to images | `/{ws}/{proj}/images` -> select images -> Tag | -- |
 | Manage classes | `/{ws}/{proj}/settings` | -- |
 | Delete images | `/{ws}/{proj}/images` -> select -> Delete | -- |

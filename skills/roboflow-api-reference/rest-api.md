@@ -28,6 +28,8 @@ curl -X POST "https://api.roboflow.com/my-workspace/projects?api_key=KEY" \
 
 Required body fields: `name`, `type`, `annotation` (annotation group identifier).
 
+Projects with the same `annotation` value share annotations on the images they have in common, and that includes projects in the Trash. Use a value no other project has unless shared annotations are intended.
+
 Project types: `object-detection`, `single-label-classification`, `multi-label-classification`, `instance-segmentation`, `semantic-segmentation`
 
 ## Image Upload
