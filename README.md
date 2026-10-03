@@ -255,3 +255,14 @@ Skills are markdown. Open a PR with edits or a new folder under [`skills/`](skil
 ## License
 
 Apache-2.0
+
+## ChatGPT
+
+[Open ChatGPT Plugins](https://chatgpt.com/plugins), then select **Add > Create custom MCP server**.
+Enter **Roboflow** as the name, `https://mcp.roboflow.com/mcp` as the Server URL, and select **OAuth**.
+Create the connection and sign in to Roboflow, then select the connection in a new chat.
+
+If required, enable **Developer mode** under **Settings > Security and login**. Availability depends
+on your account and workspace settings. The link opens Plugins; it does not prefill the connection.
+See [OpenAI's connection instructions](https://developers.openai.com/plugins/deploy/connect-chatgpt).
+
