@@ -101,7 +101,7 @@ codex://plugins/install/roboflow?marketplace=roboflow
 
 This link requires the desktop app and a registered `roboflow` marketplace. If the marketplace is missing, it opens the Plugins page instead. The [Roboflow MCP docs](https://docs.roboflow.com/agents/mcp-server#codex) also provide the desktop install link.
 
-If the link does not open, restart Codex and open the plugin browser:
+If the link does not open, open Plugins in the Codex app, or use the CLI plugin browser:
 
 ```text
 codex /plugins
