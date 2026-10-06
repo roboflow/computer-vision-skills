@@ -104,8 +104,8 @@ semantics and the same Dataset snapshot; otherwise the response explains why not
 
 Every Run starts image-embedding analyses on its own (CLIP, DINOv2, DINOv3, SigLIP2), which
 project each Case's input to 2D points for clustering failures by appearance.
-`workflow_evals_embeddings_get` without a provider returns every provider's job; a completed
-job's `result.url` holds the points. Reading never starts work. Call
+`workflow_evals_embeddings_get` without a provider returns every provider's job, and lists any
+provider it could not read under `errors`. A completed job's `result.url` holds the points. Reading never starts work. Call
 `workflow_evals_embeddings_start` only for older Runs or to retry a failed job, and only when
 the user asks: it costs compute.
 

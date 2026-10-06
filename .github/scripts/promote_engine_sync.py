@@ -11,6 +11,7 @@ ROBOFLOW_API_URL. Without the Roboflow variables the script only reports what it
 from __future__ import annotations
 
 import base64
+import binascii
 import json
 import os
 import subprocess
@@ -73,21 +74,35 @@ def promote(
     read_target: Callable[[str, str], str] = target_version,
     run_gh: Callable[..., str] = gh,
 ) -> list[int]:
-    promoted = []
+    """Mark ready the newest draft production can serve. Older servable drafts are superseded:
+    merging one after the newest would roll the reference back."""
+    servable: list[tuple[tuple[int, ...], dict, str]] = []
     for pull in pulls:
-        number = str(pull["number"])
-        target = read_target(repository, pull["headRefName"])
-        if not is_served(served, target):
-            print(f"#{number} waits: production serves engine {served}, the PR targets {target}.")
+        number = pull["number"]
+        try:
+            target = read_target(repository, pull["headRefName"])
+            key = version_key(target)
+        except (subprocess.CalledProcessError, KeyError, ValueError, binascii.Error) as error:
+            print(f"::warning::Skipped #{number}: could not read its engine version ({type(error).__name__}).")
             continue
-        run_gh("pr", "ready", number, "--repo", repository)
-        run_gh(
-            "pr", "comment", number, "--repo", repository, "--body",
-            f"Production serves Workflow Evals engine {served}, which covers {target}. "
-            "Marked ready for review.",
-        )
-        promoted.append(pull["number"])
-    return promoted
+        if is_served(served, target):
+            servable.append((key, pull, target))
+        else:
+            print(f"#{number} waits: production serves engine {served}, the PR targets {target}.")
+    if not servable:
+        return []
+    _, newest, target = max(servable, key=lambda item: item[0])
+    for _, pull, older in servable:
+        if pull is not newest:
+            print(f"#{pull['number']} is superseded by #{newest['number']} ({older} < {target}); close it.")
+    number = str(newest["number"])
+    run_gh("pr", "ready", number, "--repo", repository)
+    run_gh(
+        "pr", "comment", number, "--repo", repository, "--body",
+        f"Production serves Workflow Evals engine {served}, which covers {target}. "
+        "Marked ready for review.",
+    )
+    return [newest["number"]]
 
 
 def main() -> int:
