@@ -28,24 +28,23 @@ class PromoteEngineSyncTest(unittest.TestCase):
         targets = [(pull(7), "0.5.0"), (pull(8), "0.10.0"), (pull(9), "0.4.0")]
         candidates, superseded = promotion.triage(targets, merged_version="0.4.0")
         self.assertEqual([p["number"] for p, _ in candidates], [8])
-        reasons = {p["number"]: reason for p, _, reason in superseded}
-        self.assertIn("targets engine 0.10.0", reasons[7])
-        self.assertIn("already ships engine 0.4.0", reasons[9])
+        # Only main can supersede: #7 waits for the unmerged #8 instead of being closed.
+        self.assertEqual([(p["number"], reason) for p, _, reason in superseded], [(9, "the default branch already ships engine 0.4.0")])
 
-    def test_a_ready_newer_sync_supersedes_older_drafts(self) -> None:
+    def test_an_unmerged_newer_sync_holds_older_drafts_without_closing_them(self) -> None:
         targets = [(pull(7), "0.5.0"), (pull(8, draft=False), "0.6.0")]
         candidates, superseded = promotion.triage(targets, merged_version=None)
-        self.assertEqual(candidates, [])
-        self.assertEqual([p["number"] for p, _, _ in superseded], [7])
+        self.assertEqual((candidates, superseded), ([], []))
 
-    def test_unreadable_drafts_are_skipped(self) -> None:
+    def test_any_unreadable_sync_pauses_the_whole_run(self) -> None:
         def read(_repository: str, branch: str) -> str:
-            if branch.endswith("/7"):
+            if branch.endswith("/8"):
                 raise subprocess.CalledProcessError(1, ["gh"])
             return "0.5.0"
 
-        targets = promotion.read_targets(REPO, [pull(7), pull(8)], read)
-        self.assertEqual([p["number"] for p, _ in targets], [8])
+        self.assertIsNone(promotion.read_targets(REPO, [pull(7), pull(8, draft=False)], read))
+        targets = promotion.read_targets(REPO, [pull(7)], read)
+        self.assertEqual([p["number"] for p, _ in targets or []], [7])
 
     def test_promote_marks_ready_only_what_production_serves(self) -> None:
         calls: list[tuple[str, ...]] = []
@@ -81,7 +80,7 @@ class PromoteEngineSyncTest(unittest.TestCase):
 
     def test_without_credentials_superseded_drafts_close_but_nothing_is_promoted(self) -> None:
         env = {"GITHUB_REPOSITORY": REPO}
-        targets = {"workflow-evals/7": "0.5.0", "workflow-evals/8": "0.6.0", "main": "0.4.0"}
+        targets = {"workflow-evals/7": "0.5.0", "workflow-evals/8": "0.6.0", "main": "0.5.0"}
         with mock.patch.dict(promotion.os.environ, env, clear=True), mock.patch.object(
             promotion, "open_sync_pull_requests", return_value=[pull(7), pull(8)]
         ), mock.patch.object(

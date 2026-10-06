@@ -2,7 +2,7 @@ name: Promote engine sync
 
 # Draft engine-sync pull requests update the Workflow Evals skill's reference for an engine
 # release. Mark the newest one ready once production serves that engine version, and close
-# older drafts it supersedes.
+# drafts that main already supersedes.
 
 on:
   schedule:

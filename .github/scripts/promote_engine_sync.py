@@ -4,9 +4,10 @@ An engine-sync pull request regenerates skills/roboflow-workflow-evals/reference
 release. Merging it before production runs that engine would teach agents vocabulary the API
 rejects, so it stays a draft until GET /workflow-evals/capabilities reports that version.
 
-Only the newest sync can be promoted. A draft whose engine is not newer than every other open
-engine-sync pull request and than the reference already on the default branch is superseded:
-merging it would roll the reference back, so it is closed with a comment instead.
+Only the newest sync can be promoted. A draft whose engine is not newer than the reference
+already on the default branch is closed with a comment: merging it would roll the reference
+back. A draft that only an open, unmerged sync outranks is left alone until that one lands.
+If any open engine-sync pull request cannot be read, nothing is promoted or closed that run.
 
 Environment: GITHUB_REPOSITORY, GH_TOKEN, ROBOFLOW_API_KEY, ROBOFLOW_WORKSPACE, and optionally
 ROBOFLOW_API_URL. Without the Roboflow variables nothing is promoted.
@@ -76,20 +77,26 @@ def production_version(api_url: str, workspace: str, api_key: str) -> str:
 
 def read_targets(
     repository: str, pulls: list[dict], read_target: Callable[[str, str], str]
-) -> list[tuple[dict, str]]:
+) -> Optional[list[tuple[dict, str]]]:
+    """Engine version per open sync pull request, or None if any cannot be read: without every
+    version, an older draft could be mistaken for the newest."""
     targets = []
+    unreadable = []
     for pull in pulls:
         try:
             targets.append((pull, read_target(repository, pull["headRefName"])))
         except READ_ERRORS as error:
-            print(f"::warning::Skipped #{pull['number']}: could not read its engine version ({type(error).__name__}).")
+            unreadable.append(f"#{pull['number']} ({type(error).__name__})")
+    if unreadable:
+        print(f"::warning::Could not read the engine version of {', '.join(unreadable)}; promoting and closing nothing.")
+        return None
     return targets
 
 
 def triage(
     targets: list[tuple[dict, str]], merged_version: Optional[str]
 ) -> tuple[list[tuple[dict, str]], list[tuple[dict, str, str]]]:
-    """Split drafts into the one that may be promoted and the superseded ones."""
+    """Split drafts into the one that may be promoted and the ones the default branch supersedes."""
     if not targets:
         return [], []
     newest = max((target for _, target in targets), key=version_key)
@@ -100,7 +107,7 @@ def triage(
         if merged_version and version_key(target) <= version_key(merged_version):
             superseded.append((pull, target, f"the default branch already ships engine {merged_version}"))
         elif version_key(target) < version_key(newest):
-            superseded.append((pull, target, f"another engine-sync pull request targets engine {newest}"))
+            print(f"#{pull['number']} waits: an open engine-sync pull request targets engine {newest}.")
         else:
             candidates.append((pull, target))
     return candidates, superseded
@@ -139,6 +146,8 @@ def main() -> int:
         print("No draft engine-sync pull requests.")
         return 0
     targets = read_targets(repository, pulls, target_version)
+    if targets is None:
+        return 0
     try:
         merged = target_version(repository, os.environ.get("DEFAULT_BRANCH") or "main")
     except READ_ERRORS:
