@@ -23,13 +23,17 @@ you. No API key is needed. Clients that cannot complete OAuth can configure the
 
 ### Cursor
 
-Open the [Roboflow listing in Cursor Marketplace](https://cursor.com/marketplace/roboflow), or run `/add-plugin roboflow` in Cursor chat. Select Install to add the MCP server and skills.
+Open the [Roboflow listing in Cursor Marketplace](https://cursor.com/marketplace/roboflow). Sign in if prompted, select **Add to Cursor** to install the MCP server and skills, then authenticate the Roboflow MCP connection in Cursor.
 
-To open the plugin directly in Cursor Desktop, copy this URL into your browser address bar:
+### ChatGPT
 
-```text
-cursor://anysphere.cursor-deeplink/plugin/add?id=26126658
-```
+[Open ChatGPT Plugins](https://chatgpt.com/plugins), then select **Add > Create custom MCP server**.
+Enter **Roboflow** as the name, `https://mcp.roboflow.com/mcp` as the Server URL, and select **OAuth**.
+Create the connection and sign in to Roboflow, then select the connection in a new chat.
+
+If required, enable **Developer mode** under **Settings > Security and login**. Availability depends
+on your account and workspace settings. The link opens Plugins; it does not prefill the connection.
+See [OpenAI's connection instructions](https://developers.openai.com/plugins/deploy/connect-chatgpt).
 
 ### Microsoft Copilot Cowork
 
@@ -255,14 +259,3 @@ Skills are markdown. Open a PR with edits or a new folder under [`skills/`](skil
 ## License
 
 Apache-2.0
-
-## ChatGPT
-
-[Open ChatGPT Plugins](https://chatgpt.com/plugins), then select **Add > Create custom MCP server**.
-Enter **Roboflow** as the name, `https://mcp.roboflow.com/mcp` as the Server URL, and select **OAuth**.
-Create the connection and sign in to Roboflow, then select the connection in a new chat.
-
-If required, enable **Developer mode** under **Settings > Security and login**. Availability depends
-on your account and workspace settings. The link opens Plugins; it does not prefill the connection.
-See [OpenAI's connection instructions](https://developers.openai.com/plugins/deploy/connect-chatgpt).
-
