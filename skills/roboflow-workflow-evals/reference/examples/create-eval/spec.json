@@ -1,0 +1,40 @@
+{
+    "id": "package-count-spec-v1",
+    "schemaVersion": "workflow-evals/spec/v1",
+    "specId": "package-count",
+    "inputs": [
+        {
+            "name": "image",
+            "type": "InferenceImage"
+        }
+    ],
+    "outputs": [
+        {
+            "id": "package-count",
+            "name": "Package count",
+            "kind": "count",
+            "description": "How many packages the Workflow reports for one image."
+        }
+    ],
+    "checks": [
+        {
+            "id": "package-count",
+            "name": "Package count",
+            "output": "package-count",
+            "semanticType": "count",
+            "checkKind": "outcome",
+            "groundTruth": {
+                "kind": "path",
+                "path": "$.packageCount"
+            },
+            "evaluator": {
+                "type": "count@1"
+            },
+            "passRule": {
+                "measurement": "absoluteDelta",
+                "operator": "<=",
+                "value": 1
+            }
+        }
+    ]
+}

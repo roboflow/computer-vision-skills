@@ -1,0 +1,104 @@
+{
+    "$id": "workflow-evals://schemas/dataset/v1",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+        "cases": {
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "annotationViews": {
+                        "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "annotationPath": { "pattern": "^\\$", "type": "string" },
+                                "height": { "exclusiveMinimum": 0, "type": "number" },
+                                "mediaPath": { "pattern": "^\\$", "type": "string" },
+                                "width": { "exclusiveMinimum": 0, "type": "number" }
+                            },
+                            "required": ["annotationPath"],
+                            "type": "object",
+                            "anyOf": [
+                                { "properties": { "mediaPath": {} }, "required": ["mediaPath"] },
+                                {
+                                    "properties": { "height": {}, "width": {} },
+                                    "required": ["width", "height"]
+                                }
+                            ],
+                            "dependentRequired": { "height": ["width"], "width": ["height"] }
+                        },
+                        "type": "array"
+                    },
+                    "groundTruth": { "type": "object" },
+                    "groundTruthPath": { "type": "string" },
+                    "id": { "type": "string" },
+                    "imageUrl": { "type": "string" },
+                    "inputs": { "type": "object" },
+                    "name": { "type": "string" },
+                    "slices": { "items": { "type": "string" }, "type": "array" }
+                },
+                "required": ["id", "name", "inputs", "groundTruth"],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "datasetRole": { "enum": ["development", "evaluation"], "type": "string" },
+        "groundTruthContract": {
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "optional": { "type": "boolean" },
+                    "path": { "type": "string" },
+                    "valueKind": {
+                        "enum": [
+                            "keypoints",
+                            "array",
+                            "boolean",
+                            "count",
+                            "label",
+                            "labelSet",
+                            "numeric",
+                            "positionedIntervals",
+                            "positionedObjects",
+                            "segmentation",
+                            "present"
+                        ],
+                        "type": "string"
+                    }
+                },
+                "required": ["path", "valueKind"],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "id": { "type": "string" },
+        "inputs": {
+            "items": {
+                "additionalProperties": true,
+                "properties": {
+                    "default_value": {},
+                    "name": { "type": "string" },
+                    "type": { "type": "string" }
+                },
+                "required": ["name", "type"],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "name": { "type": "string" },
+        "schemaVersion": { "const": "workflow-evals/dataset/v1", "type": "string" },
+        "version": { "type": "string" }
+    },
+    "required": [
+        "id",
+        "name",
+        "version",
+        "schemaVersion",
+        "datasetRole",
+        "inputs",
+        "groundTruthContract",
+        "cases"
+    ],
+    "type": "object",
+    "title": "Workflow Evals Dataset authoring contract"
+}

@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.28/MicrosoftTeams.schema.json",
   "manifestVersion": "1.28",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "id": "a2158cf0-5901-5f4a-8f67-3dc812b0f650",
   "developer": {
     "name": "Roboflow",
@@ -32,7 +32,8 @@
     { "folder": "./skills/roboflow-plans-and-pricing" },
     { "folder": "./skills/roboflow-product-navigation" },
     { "folder": "./skills/roboflow-training-and-evaluation" },
-    { "folder": "./skills/roboflow-universe" }
+    { "folder": "./skills/roboflow-universe" },
+    { "folder": "./skills/roboflow-workflow-evals" }
   ],
   "agentConnectors": [
     {

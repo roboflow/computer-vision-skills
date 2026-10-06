@@ -1,0 +1,33 @@
+name: Promote engine sync
+
+# Draft engine-sync pull requests update the Workflow Evals skill's reference for an engine
+# release. Mark each one ready once production serves that engine version.
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: promote-engine-sync
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Promote drafts production can serve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ROBOFLOW_API_KEY: ${{ secrets.ROBOFLOW_API_KEY }}
+          ROBOFLOW_WORKSPACE: ${{ vars.ROBOFLOW_WORKSPACE }}
+          ROBOFLOW_API_URL: ${{ vars.ROBOFLOW_API_URL }}
+        run: python .github/scripts/promote_engine_sync.py

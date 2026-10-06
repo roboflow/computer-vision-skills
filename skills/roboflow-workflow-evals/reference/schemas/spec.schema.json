@@ -1,0 +1,639 @@
+{
+    "$id": "workflow-evals://schemas/spec/v1",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+        "binding": {
+            "oneOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "kind": { "const": "path", "type": "string" },
+                        "path": { "pattern": "^\\$", "type": "string" }
+                    },
+                    "required": ["kind", "path"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "kind": { "const": "array_length", "type": "string" },
+                        "path": { "pattern": "^\\$", "type": "string" }
+                    },
+                    "required": ["kind", "path"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "kind": { "const": "count_where", "type": "string" },
+                        "path": { "pattern": "^\\$", "type": "string" },
+                        "where": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "equals": {},
+                                "path": { "pattern": "^\\$", "type": "string" }
+                            },
+                            "required": ["path", "equals"],
+                            "type": "object"
+                        }
+                    },
+                    "required": ["kind", "path", "where"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "fieldPaths": {
+                            "items": { "pattern": "^\\$", "type": "string" },
+                            "minItems": 1,
+                            "type": "array"
+                        },
+                        "kind": { "const": "field_presence_count", "type": "string" }
+                    },
+                    "required": ["kind", "fieldPaths"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "fieldPaths": {
+                            "items": { "pattern": "^\\$", "type": "string" },
+                            "minItems": 1,
+                            "type": "array"
+                        },
+                        "kind": { "const": "all_fields_present", "type": "string" }
+                    },
+                    "required": ["kind", "fieldPaths"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "kind": { "const": "select_project", "type": "string" },
+                        "path": { "pattern": "^\\$", "type": "string" },
+                        "project": { "pattern": "^\\$", "type": "string" },
+                        "where": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "equals": {},
+                                "path": { "pattern": "^\\$", "type": "string" }
+                            },
+                            "required": ["path", "equals"],
+                            "type": "object"
+                        }
+                    },
+                    "required": ["kind", "path", "project", "where"],
+                    "type": "object"
+                }
+            ]
+        },
+        "check": {
+            "oneOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "id": { "type": "string" },
+                        "name": { "type": "string" },
+                        "semanticType": {
+                            "enum": [
+                                "keypoints",
+                                "boolean",
+                                "classification",
+                                "count",
+                                "intervalCoverage",
+                                "segmentation",
+                                "label",
+                                "labelSet",
+                                "numeric",
+                                "objectDetection",
+                                "positionedObjects"
+                            ],
+                            "type": "string"
+                        },
+                        "checkKind": { "const": "outcome", "type": "string" },
+                        "evaluator": {
+                            "allOf": [
+                                { "$ref": "#/$defs/evaluator" },
+                                {
+                                    "not": {
+                                        "type": "object",
+                                        "properties": { "type": { "const": "latency@1" } },
+                                        "required": ["type"]
+                                    }
+                                }
+                            ]
+                        },
+                        "groundTruth": { "$ref": "#/$defs/binding" },
+                        "output": { "type": "string" },
+                        "applicability": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "kind": { "enum": ["ground_truth_present"], "type": "string" },
+                                "path": { "pattern": "^\\$", "type": "string" }
+                            },
+                            "required": ["kind", "path"],
+                            "type": "object"
+                        },
+                        "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "aggregation": { "enum": ["mean"], "type": "string" },
+                                "groundTruth": { "$ref": "#/$defs/binding" },
+                                "match": { "$ref": "#/$defs/itemMatch" }
+                            },
+                            "required": ["aggregation", "groundTruth", "match"],
+                            "type": "object"
+                        },
+                        "passRule": { "$ref": "#/$defs/passRule" }
+                    },
+                    "required": [
+                        "id",
+                        "name",
+                        "output",
+                        "semanticType",
+                        "checkKind",
+                        "groundTruth",
+                        "evaluator"
+                    ],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "id": { "type": "string" },
+                        "name": { "type": "string" },
+                        "semanticType": { "const": "latency", "type": "string" },
+                        "checkKind": { "const": "runtime", "type": "string" },
+                        "evaluator": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "type": { "const": "latency@1", "type": "string" },
+                                "config": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "maxLatencyMs": { "type": "number", "exclusiveMinimum": 0 }
+                                    },
+                                    "required": ["maxLatencyMs"],
+                                    "type": "object"
+                                }
+                            },
+                            "required": ["type", "config"],
+                            "type": "object"
+                        },
+                        "passRule": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "measurement": {
+                                    "enum": [
+                                        "latencyMs",
+                                        "latencyOverBudgetMs",
+                                        "latencyBudgetScore"
+                                    ],
+                                    "type": "string"
+                                },
+                                "operator": {
+                                    "enum": ["==", ">", ">=", "<", "<=", "!="],
+                                    "type": "string"
+                                },
+                                "value": { "type": "number" }
+                            },
+                            "required": ["measurement", "operator", "value"],
+                            "type": "object"
+                        }
+                    },
+                    "required": ["id", "name", "checkKind", "semanticType", "evaluator"],
+                    "type": "object"
+                }
+            ]
+        },
+        "evaluator": {
+            "oneOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": { "const": "latency@1", "type": "string" },
+                        "config": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "maxLatencyMs": { "type": "number", "exclusiveMinimum": 0 }
+                            },
+                            "required": ["maxLatencyMs"],
+                            "type": "object"
+                        }
+                    },
+                    "required": ["type", "config"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": { "const": "keypoints@1", "type": "string" },
+                        "config": {
+                            "type": "object",
+                            "properties": {
+                                "area": { "type": "string", "enum": ["boundingBox", "annotated"] },
+                                "missingPoints": {
+                                    "type": "string",
+                                    "enum": ["zeroContribution", "reject"]
+                                },
+                                "skeletons": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "maxItems": 256,
+                                    "items": {
+                                        "oneOf": [
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "class": {
+                                                        "type": "string",
+                                                        "minLength": 1,
+                                                        "pattern": "\\S"
+                                                    },
+                                                    "points": {
+                                                        "type": "array",
+                                                        "minItems": 1,
+                                                        "maxItems": 512,
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "minimum": 0
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "minLength": 1,
+                                                                    "pattern": "\\S"
+                                                                }
+                                                            },
+                                                            "required": ["id", "name"],
+                                                            "additionalProperties": false
+                                                        }
+                                                    }
+                                                },
+                                                "required": ["class", "points"],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "class": {
+                                                        "type": "string",
+                                                        "minLength": 1,
+                                                        "pattern": "\\S"
+                                                    },
+                                                    "points": {
+                                                        "type": "array",
+                                                        "minItems": 1,
+                                                        "maxItems": 512,
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "minimum": 0
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "minLength": 1,
+                                                                    "pattern": "\\S"
+                                                                }
+                                                            },
+                                                            "required": ["id", "name"],
+                                                            "additionalProperties": false
+                                                        }
+                                                    },
+                                                    "sigmas": {
+                                                        "type": "array",
+                                                        "minItems": 1,
+                                                        "maxItems": 512,
+                                                        "items": {
+                                                            "type": "number",
+                                                            "exclusiveMinimum": 0
+                                                        }
+                                                    }
+                                                },
+                                                "required": ["class", "points", "sigmas"],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "class": {
+                                                        "type": "string",
+                                                        "minLength": 1,
+                                                        "pattern": "\\S"
+                                                    },
+                                                    "points": {
+                                                        "type": "array",
+                                                        "minItems": 1,
+                                                        "maxItems": 512,
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "minimum": 0
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "minLength": 1,
+                                                                    "pattern": "\\S"
+                                                                }
+                                                            },
+                                                            "required": ["id", "name"],
+                                                            "additionalProperties": false
+                                                        }
+                                                    },
+                                                    "sigmaPreset": {
+                                                        "type": "string",
+                                                        "enum": ["cocoHuman"]
+                                                    }
+                                                },
+                                                "required": ["class", "points", "sigmaPreset"],
+                                                "additionalProperties": false
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "required": ["skeletons"],
+                            "additionalProperties": false
+                        }
+                    },
+                    "required": ["type", "config"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": { "const": "segmentation@1", "type": "string" },
+                        "config": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "classes": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "uniqueItems": true,
+                                    "items": { "type": "string", "minLength": 1, "pattern": "\\S" }
+                                },
+                                "backgroundClass": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "pattern": "\\S"
+                                }
+                            },
+                            "required": [],
+                            "type": "object"
+                        }
+                    },
+                    "required": ["type"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": { "enum": ["classification@1", "labelSet@1"], "type": "string" },
+                        "config": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "classes": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "uniqueItems": true,
+                                    "items": { "type": "string", "pattern": "^\\S(.*\\S)?$" }
+                                }
+                            },
+                            "required": [],
+                            "type": "object"
+                        }
+                    },
+                    "required": ["type"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "enum": [
+                                "boolean@1",
+                                "count@1",
+                                "label@1",
+                                "numeric@1",
+                                "objectDetection@1",
+                                "positionedObjects@1"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    "required": ["type"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "config": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "axis": { "enum": ["horizontal", "vertical"], "type": "string" }
+                            },
+                            "required": ["axis"],
+                            "type": "object"
+                        },
+                        "type": { "const": "intervalCoverage@1", "type": "string" }
+                    },
+                    "required": ["type"],
+                    "type": "object"
+                }
+            ]
+        },
+        "itemMatch": {
+            "oneOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": { "kind": { "const": "index", "type": "string" } },
+                    "required": ["kind"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "actualKeyPath": { "pattern": "^\\$", "type": "string" },
+                        "groundTruthKeyPath": { "pattern": "^\\$", "type": "string" },
+                        "kind": { "const": "key", "type": "string" }
+                    },
+                    "required": ["kind", "actualKeyPath", "groundTruthKeyPath"],
+                    "type": "object"
+                }
+            ]
+        },
+        "input": {
+            "additionalProperties": true,
+            "properties": {
+                "default_value": {},
+                "name": { "type": "string" },
+                "type": { "type": "string" }
+            },
+            "required": ["name", "type"],
+            "type": "object"
+        },
+        "output": {
+            "additionalProperties": false,
+            "properties": {
+                "description": { "type": "string" },
+                "id": { "type": "string" },
+                "kind": {
+                    "enum": [
+                        "keypoints",
+                        "boolean",
+                        "count",
+                        "label",
+                        "labelSet",
+                        "numeric",
+                        "segmentation",
+                        "positionedIntervals",
+                        "positionedObjects",
+                        "positionedValues",
+                        "temporalSequence",
+                        "text"
+                    ],
+                    "type": "string"
+                },
+                "name": { "type": "string" }
+            },
+            "required": ["id", "name", "kind"],
+            "type": "object"
+        },
+        "passRule": {
+            "oneOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "measurement": {
+                            "enum": [
+                                "keypointAp",
+                                "keypointAp50",
+                                "keypointAp75",
+                                "keypointAr",
+                                "absoluteDelta",
+                                "latencyMs",
+                                "latencyOverBudgetMs",
+                                "latencyBudgetScore",
+                                "absoluteRelativeDelta",
+                                "coverageIou",
+                                "coveragePrecision",
+                                "coverageRecall",
+                                "exactMatch",
+                                "f1",
+                                "hammingLoss",
+                                "labelAccuracy",
+                                "falseNegativeCount",
+                                "falsePositiveCount",
+                                "map50",
+                                "meanIou",
+                                "pixelPrecision",
+                                "pixelRecall",
+                                "pixelDice",
+                                "pixelTruePositiveCount",
+                                "pixelFalsePositiveCount",
+                                "pixelFalseNegativeCount",
+                                "meanAbsoluteCenterDelta",
+                                "meanAbsoluteSizeDelta",
+                                "precision",
+                                "relativeDelta",
+                                "recall",
+                                "signedDelta",
+                                "trueNegativeCount",
+                                "truePositiveCount"
+                            ],
+                            "type": "string"
+                        },
+                        "operator": {
+                            "enum": ["==", ">", ">=", "<", "<=", "!="],
+                            "type": "string"
+                        },
+                        "value": { "type": "number" }
+                    },
+                    "required": ["measurement", "operator", "value"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "measurement": {
+                            "enum": [
+                                "keypointAp",
+                                "keypointAp50",
+                                "keypointAp75",
+                                "keypointAr",
+                                "absoluteDelta",
+                                "latencyMs",
+                                "latencyOverBudgetMs",
+                                "latencyBudgetScore",
+                                "absoluteRelativeDelta",
+                                "coverageIou",
+                                "coveragePrecision",
+                                "coverageRecall",
+                                "exactMatch",
+                                "f1",
+                                "hammingLoss",
+                                "labelAccuracy",
+                                "falseNegativeCount",
+                                "falsePositiveCount",
+                                "map50",
+                                "meanIou",
+                                "pixelPrecision",
+                                "pixelRecall",
+                                "pixelDice",
+                                "pixelTruePositiveCount",
+                                "pixelFalsePositiveCount",
+                                "pixelFalseNegativeCount",
+                                "meanAbsoluteCenterDelta",
+                                "meanAbsoluteSizeDelta",
+                                "precision",
+                                "relativeDelta",
+                                "recall",
+                                "signedDelta",
+                                "trueNegativeCount",
+                                "truePositiveCount"
+                            ],
+                            "type": "string"
+                        },
+                        "operator": {
+                            "enum": ["==", ">", ">=", "<", "<=", "!="],
+                            "type": "string"
+                        },
+                        "threshold": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "absolute": { "type": "boolean" },
+                                "minimum": { "type": "number" },
+                                "path": { "pattern": "^\\$", "type": "string" },
+                                "source": { "enum": ["ground_truth"], "type": "string" }
+                            },
+                            "required": ["source", "path"],
+                            "type": "object"
+                        }
+                    },
+                    "required": ["measurement", "operator", "threshold"],
+                    "type": "object"
+                }
+            ]
+        }
+    },
+    "additionalProperties": false,
+    "description": "Subject-independent evaluation policy: semantic outputs plus checks. A Spec never names a Workflow, a Workflow response path, or a comparison. `checks` and `outputs` may be empty while a Spec is still being authored, so an in-progress document parses. Running one is rejected at the run boundary before the Workflow is called, with the `empty_spec_not_runnable` diagnostic.",
+    "properties": {
+        "checks": { "items": { "$ref": "#/$defs/check" }, "type": "array" },
+        "id": { "type": "string" },
+        "inputs": { "items": { "$ref": "#/$defs/input" }, "type": "array" },
+        "name": { "type": "string" },
+        "outputs": { "items": { "$ref": "#/$defs/output" }, "type": "array" },
+        "schemaVersion": { "const": "workflow-evals/spec/v1", "type": "string" },
+        "specId": { "type": "string" }
+    },
+    "required": ["id", "schemaVersion", "specId", "inputs", "outputs", "checks"],
+    "title": "Workflow Evals Spec authoring contract",
+    "type": "object"
+}

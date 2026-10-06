@@ -20,6 +20,8 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 
 > **For live video (webcam, RTSP, file):** the MCP `workflows_run` tool only handles single static images. For live video, present the user with **three options** (don't pick one silently): **(A)** WebRTC → serverless GPU, **(B)** WebRTC → local `inference server`, or **(C)** in-process `InferencePipeline`. They have different setup costs, dep sizes, and latency characteristics — surface a brief 1-line summary of each and let the user choose. See `roboflow://skills/roboflow-inference/workflows` ("Video Stream" section) for full code and the comparison table.
 
+> **Is this Workflow good enough?** Running it on a few images shows what it returns. To measure it against ground truth, catch regressions after a change, or compare two Workflows, use the `roboflow-workflow-evals` skill.
+
 ## Deployment Options
 
 | Option | Best For | Latency | Scaling | Cost Model | GPU |

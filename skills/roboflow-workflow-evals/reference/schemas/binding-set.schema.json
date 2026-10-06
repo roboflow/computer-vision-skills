@@ -1,0 +1,114 @@
+{
+    "$id": "workflow-evals://schemas/binding-set/v1",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+        "binding": {
+            "oneOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "kind": { "const": "path", "type": "string" },
+                        "path": { "pattern": "^\\$", "type": "string" }
+                    },
+                    "required": ["kind", "path"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "kind": { "const": "array_length", "type": "string" },
+                        "path": { "pattern": "^\\$", "type": "string" }
+                    },
+                    "required": ["kind", "path"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "kind": { "const": "count_where", "type": "string" },
+                        "path": { "pattern": "^\\$", "type": "string" },
+                        "where": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "equals": {},
+                                "path": { "pattern": "^\\$", "type": "string" }
+                            },
+                            "required": ["path", "equals"],
+                            "type": "object"
+                        }
+                    },
+                    "required": ["kind", "path", "where"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "fieldPaths": {
+                            "items": { "pattern": "^\\$", "type": "string" },
+                            "minItems": 1,
+                            "type": "array"
+                        },
+                        "kind": { "const": "field_presence_count", "type": "string" }
+                    },
+                    "required": ["kind", "fieldPaths"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "fieldPaths": {
+                            "items": { "pattern": "^\\$", "type": "string" },
+                            "minItems": 1,
+                            "type": "array"
+                        },
+                        "kind": { "const": "all_fields_present", "type": "string" }
+                    },
+                    "required": ["kind", "fieldPaths"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "kind": { "const": "select_project", "type": "string" },
+                        "path": { "pattern": "^\\$", "type": "string" },
+                        "project": { "pattern": "^\\$", "type": "string" },
+                        "where": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "equals": {},
+                                "path": { "pattern": "^\\$", "type": "string" }
+                            },
+                            "required": ["path", "equals"],
+                            "type": "object"
+                        }
+                    },
+                    "required": ["kind", "path", "project", "where"],
+                    "type": "object"
+                }
+            ]
+        },
+        "outputBinding": {
+            "additionalProperties": false,
+            "properties": {
+                "items": { "$ref": "#/$defs/binding" },
+                "value": { "$ref": "#/$defs/binding" }
+            },
+            "required": ["value"],
+            "type": "object"
+        }
+    },
+    "additionalProperties": false,
+    "description": "Connects one Spec and one Dataset to one concrete Workflow: Dataset case inputs map to Workflow inputs, and semantic Spec output ids map to concrete Workflow result paths.",
+    "properties": {
+        "id": { "type": "string" },
+        "inputs": { "additionalProperties": { "$ref": "#/$defs/binding" }, "type": "object" },
+        "outputs": {
+            "additionalProperties": { "$ref": "#/$defs/outputBinding" },
+            "type": "object"
+        },
+        "schemaVersion": { "const": "workflow-evals/binding-set/v1", "type": "string" }
+    },
+    "required": ["id", "schemaVersion", "inputs", "outputs"],
+    "title": "Workflow Evals BindingSet authoring contract",
+    "type": "object"
+}

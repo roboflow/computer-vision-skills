@@ -1,0 +1,33 @@
+{
+    "id": "package-count-dataset",
+    "name": "Package count examples",
+    "version": "1",
+    "schemaVersion": "workflow-evals/dataset/v1",
+    "datasetRole": "development",
+    "inputs": [
+        {
+            "name": "image",
+            "type": "InferenceImage"
+        }
+    ],
+    "groundTruthContract": [
+        {
+            "path": "cases[].groundTruth.packageCount",
+            "valueKind": "count"
+        }
+    ],
+    "cases": [
+        {
+            "id": "case-1",
+            "name": "Three packages",
+            "inputs": {
+                "image": {
+                    "$asset": "images/case-1.jpg"
+                }
+            },
+            "groundTruth": {
+                "packageCount": 3
+            }
+        }
+    ]
+}

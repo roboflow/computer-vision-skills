@@ -150,6 +150,7 @@ The `npx skills` CLI works with any agent that reads `SKILL.md` files from `.cla
 - **roboflow-product-navigation**: where features live in the Roboflow product
 - **roboflow-training-and-evaluation**: training models, diagnosing why a model underperforms, and improving accuracy
 - **roboflow-universe**: searching and using Roboflow Universe
+- **roboflow-workflow-evals**: measuring Workflows against ground truth, catching regressions, and comparing Workflows
 
 ## MCP and skills
 
@@ -202,7 +203,15 @@ API-key header configuration and reconnect.
 
 ## Contributing
 
-Skills are markdown. Open a PR with edits or a new folder under [`skills/`](skills/). Each new skill must have a `SKILL.md` at its root with `name` and `description` frontmatter.
+Skills are markdown. Open a PR with edits or a new folder under [`skills/`](skills/). Each new skill must have a `SKILL.md` at its root with `name` and `description` frontmatter. Check your change with:
+
+```bash
+python3 .github/scripts/validate_skills.py
+```
+
+It enforces the folder-name match, the 20,000-character `SKILL.md` limit, at most 20 companion files, and working relative links.
+
+`skills/roboflow-workflow-evals/reference/` is generated from each Workflow Evals engine release, which opens a draft `engine-sync` pull request here. Do not edit those files by hand. The draft is marked ready once production serves that engine version.
 
 ## License
 

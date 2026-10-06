@@ -1,0 +1,1828 @@
+{
+    "id": "resource:engine-catalogs",
+    "schemaVersion": "workflow-evals/agent-catalogs/v1",
+    "aggregations": [
+        {
+            "computedFrom": "Per-case CheckScore.measurements for one check in one Run.",
+            "consumers": "Check rows, comparison deltas, and agent-readable run summaries.",
+            "emittedAt": "CheckAggregate.measurements[MeasurementKey]",
+            "fields": [
+                {
+                    "name": "sum",
+                    "summary": "Total of all numeric measurement values included in this aggregate."
+                },
+                {
+                    "name": "count",
+                    "summary": "Number of evaluated cases that emitted this measurement."
+                },
+                { "name": "average", "summary": "Rounded sum divided by count." }
+            ],
+            "kind": "measurementAggregate",
+            "name": "Measurement Aggregate",
+            "summary": "Rolls one measurement key into sum, count, and average for a check."
+        },
+        {
+            "computedFrom": "Per-case CheckScore.performanceScore, measurements, and optional judgments for one outcome check.",
+            "consumers": "Check tables, performance summaries, and Run comparisons.",
+            "emittedAt": "RunSummary.checkPerformance[checkId]",
+            "fields": [
+                {
+                    "name": "segmentation",
+                    "summary": "For segmentation checks, pooled per-class pixel counts and dataset meanIou from successful leaf evidence; distinct from equal-weight case means."
+                },
+                {
+                    "name": "labelSet",
+                    "summary": "For labelSet and classification checks: subset accuracy, mean case F1, micro and macro precision/recall/F1, per-class support and counts, and label accuracy/Hamming loss with fixed classes. Pooled from successfully scored cases; failed cases are counted separately."
+                },
+                {
+                    "name": "keypoints",
+                    "summary": "Versioned dataset-pooled pose AP/AR, detector-selected F1@mOKS, per-class counts, resolved policy and coverage. Confidence is optimized on the evaluation Dataset; incomplete metrics are unavailable."
+                },
+                {
+                    "name": "performanceScore",
+                    "summary": "Equal-weight average of normalized case performance across evaluated cases."
+                },
+                {
+                    "name": "measurements",
+                    "summary": "Measurement aggregates keyed by MeasurementKey."
+                },
+                {
+                    "name": "judgment",
+                    "summary": "Optional passed, failed, near-miss, material-miss, total, and pass-rate policy summary when a pass rule exists."
+                },
+                {
+                    "name": "evaluatedCount",
+                    "summary": "Cases where the check applied and was evaluated; the denominator basis."
+                },
+                {
+                    "name": "notApplicableCount",
+                    "summary": "Cases recorded as not applicable and excluded from every denominator."
+                }
+            ],
+            "kind": "checkAggregate",
+            "name": "Metric Aggregate",
+            "summary": "Summarizes one semantic check across all evaluated cases in one Run."
+        },
+        {
+            "computedFrom": "Per-case metric judgments and applicability statuses grouped by case slice.",
+            "consumers": "Slice-by-metric pass-rate matrices with row and column totals.",
+            "emittedAt": "buildJudgmentMatrix(run, spec)",
+            "fields": [
+                {
+                    "name": "rows",
+                    "summary": "One row per case slice with a judgment cell for every pass-rule metric."
+                },
+                { "name": "columns", "summary": "Pass-rule metrics rendered as matrix columns." },
+                {
+                    "name": "columnTotals",
+                    "summary": "Per-metric counts across every case, counted exactly once."
+                },
+                {
+                    "name": "grandTotal",
+                    "summary": "Overall passed, failed, evaluated, and not-applicable counts."
+                }
+            ],
+            "kind": "judgmentMatrix",
+            "name": "Judgment Matrix",
+            "summary": "Deterministic slice-by-metric pass rates computed from explicit passed/evaluated counts."
+        },
+        {
+            "computedFrom": "Runner runtime metrics emitted for every case execution in one Run.",
+            "consumers": "Runtime metric tables, tradeoff summaries, and operational checks.",
+            "emittedAt": "RunSummary.runtime",
+            "fields": [
+                {
+                    "name": "averageLatencyMs",
+                    "summary": "Average of runtime latencyMs values that were present."
+                },
+                { "name": "totalCreditCost", "summary": "Sum of reported creditCost values." },
+                {
+                    "name": "timeoutRate",
+                    "summary": "Timed-out executions divided by total executions."
+                },
+                {
+                    "name": "failureRate",
+                    "summary": "Executions with runtime errors divided by total executions."
+                }
+            ],
+            "kind": "runtimeAggregate",
+            "name": "Runtime Aggregate",
+            "summary": "Summarizes latency, cost, timeout, and failure behavior for one Run."
+        },
+        {
+            "computedFrom": "Check aggregates and runtime aggregate for one completed Run.",
+            "consumers": "Run hero cards, dashboards, generated artifacts, and comparison reads.",
+            "emittedAt": "WorkflowEvalRun.summary",
+            "fields": [
+                { "name": "checkPerformance", "summary": "Check aggregates keyed by check id." },
+                { "name": "runtime", "summary": "Runtime aggregate for this Run." }
+            ],
+            "kind": "runSummary",
+            "name": "Run Summary",
+            "summary": "Per-check aggregates and runtime facts for one Run of one Workflow subject. It carries no Run-level quality score and no cross-check verdict."
+        }
+    ],
+    "evaluationFlow": {
+        "captureContractKinds": ["full_output", "projected_fields"],
+        "compileDiagnosticCodes": [
+            "unsupported_keypoint_item_scope",
+            "invalid_keypoint_config",
+            "duplicate_check_id",
+            "duplicate_input_name",
+            "duplicate_output_id",
+            "empty_spec_not_runnable",
+            "incompatible_check_semantic_type",
+            "incompatible_output_kind",
+            "incompatible_output_policy",
+            "invalid_applicability_path",
+            "invalid_binding_expression",
+            "invalid_input_binding",
+            "invalid_input_definition",
+            "invalid_item_match_key_path",
+            "invalid_pass_rule",
+            "invalid_runtime_check",
+            "invalid_latency_config",
+            "invalid_pass_rule_threshold_path",
+            "missing_items_output_binding",
+            "missing_output_binding",
+            "missing_workflow_input_binding",
+            "unexpected_items_output_binding",
+            "unknown_check_output",
+            "unknown_output_binding",
+            "unknown_workflow_input_binding",
+            "unsupported_pass_rule_measurement"
+        ],
+        "compilerVersion": "workflow-evals/compiler/v1",
+        "operations": [
+            "compileWorkflowEvalSpec",
+            "compareWorkflowEvalContracts",
+            "fingerprintWorkflowSubject",
+            "linkWorkflowEvalPlan",
+            "compileWorkflowEvalPlan",
+            "instantiateWorkflowEvalWorkGraph",
+            "executeWorkflowEvalPlan",
+            "retryFailedWorkflowEvalPlan",
+            "retryFailedWorkflowEvalRun",
+            "scoreWorkflowEvalEvidence",
+            "rescoreWorkflowEvalEvidence",
+            "aggregateRunResults",
+            "runWorkflowEval",
+            "compareWorkflowEvalRuns"
+        ],
+        "runArtifactSchemaVersions": ["workflow-evals/run/v1"],
+        "runComparison": {
+            "compatibilityKinds": ["compatible", "incompatible"],
+            "diagnosticCodes": ["dataset_mismatch", "spec_mismatch"]
+        },
+        "stages": [
+            "parse",
+            "compile-spec",
+            "link-binding-set",
+            "instantiate-work-graph",
+            "execute-or-score",
+            "compare-runs"
+        ],
+        "workGraphModes": ["full", "rescore_only", "retry_failed"],
+        "workNodeKinds": ["aggregate_run", "execute_case", "score_case"]
+    },
+    "inputContracts": {
+        "fields": ["default_value", "dimensionality", "kind", "name", "type"],
+        "knownTypes": [
+            "InferenceImage",
+            "InferenceParameter",
+            "WorkflowBatchInput",
+            "WorkflowImage",
+            "WorkflowParameter",
+            "WorkflowVideoMetadata"
+        ]
+    },
+    "contractCompatibility": {
+        "diagnosticCodes": [
+            "duplicate_dataset_ground_truth_path",
+            "duplicate_dataset_input_name",
+            "incompatible_ground_truth_kind",
+            "incompatible_input_dimensionality",
+            "incompatible_input_kind",
+            "incompatible_input_type",
+            "missing_ground_truth",
+            "missing_input",
+            "optional_dataset_input"
+        ]
+    },
+    "evaluators": [
+        {
+            "type": "latency@1",
+            "name": "Latency budget",
+            "summary": "Runner-observed case duration against a Spec-wide millisecond budget.",
+            "semanticType": "latency",
+            "family": "scalar",
+            "acceptedValueKinds": ["numeric"],
+            "exampleEvaluator": { "type": "latency@1", "config": { "maxLatencyMs": 2000 } },
+            "measurementKeys": ["latencyMs", "latencyOverBudgetMs", "latencyBudgetScore"],
+            "primaryPerformance": {
+                "measurement": "latencyBudgetScore",
+                "normalization": "1 within budget, otherwise budget divided by observed duration.",
+                "summary": "Under-budget cases saturate at 1."
+            },
+            "suggestedPassRule": {
+                "measurement": "latencyOverBudgetMs",
+                "operator": "<=",
+                "value": 0
+            },
+            "passCondition": "An optional static rule can require latencyOverBudgetMs <= 0.",
+            "examples": [
+                {
+                    "actual": 1500,
+                    "expected": 2000,
+                    "expectedJudgment": true,
+                    "note": "Within the 2000 ms budget."
+                },
+                {
+                    "actual": 5000,
+                    "expected": 2000,
+                    "expectedJudgment": false,
+                    "note": "Exceeds the 2000 ms budget."
+                }
+            ]
+        },
+        {
+            "acceptedValueKinds": ["positionedObjects"],
+            "suggestedPassRule": { "measurement": "f1", "operator": ">=", "value": 1 },
+            "examples": [
+                {
+                    "actual": [
+                        {
+                            "class": "green candy",
+                            "class_id": 0,
+                            "confidence": 0.9,
+                            "detection_id": "green-candy-10-10",
+                            "height": 10,
+                            "parent_id": "image",
+                            "width": 10,
+                            "x": 15,
+                            "y": 15
+                        }
+                    ],
+                    "expected": [
+                        { "class": "green candy", "height": 10, "width": 10, "x": 16, "y": 15 }
+                    ],
+                    "note": "Roboflow inference predictions use center x/y plus width/height; a class-matched prediction with sufficient overlap is a true positive.",
+                    "expectedJudgment": true
+                },
+                {
+                    "actual": [
+                        {
+                            "class": "pink candy",
+                            "class_id": 1,
+                            "confidence": 0.9,
+                            "detection_id": "pink-candy-10-10",
+                            "height": 10,
+                            "parent_id": "image",
+                            "width": 10,
+                            "x": 15,
+                            "y": 15
+                        }
+                    ],
+                    "expected": [
+                        { "class": "green candy", "height": 10, "width": 10, "x": 15, "y": 15 }
+                    ],
+                    "note": "A class mismatch fails when the suggested perfect-F1 acceptance rule is explicitly configured.",
+                    "expectedJudgment": false
+                }
+            ],
+            "family": "positionedItems",
+            "measurementKeys": [
+                "map50",
+                "precision",
+                "recall",
+                "f1",
+                "truePositiveCount",
+                "falsePositiveCount",
+                "falseNegativeCount"
+            ],
+            "name": "Positioned Objects",
+            "passCondition": "Can be judged with an explicit metric passRule; the suggested rule requires F1 >= 1.",
+            "primaryPerformance": {
+                "measurement": "map50",
+                "normalization": "Uses mAP@50 directly as a normalized 0-1 performance score.",
+                "summary": "Higher performance means stronger class-aware localization at IoU 0.5."
+            },
+            "semanticType": "positionedObjects",
+            "summary": "Use for Roboflow inference predictions with class, center x/y, width, height, and optional richer geometry.",
+            "type": "positionedObjects@1"
+        },
+        {
+            "acceptedValueKinds": ["boolean"],
+            "suggestedPassRule": { "measurement": "exactMatch", "operator": "==", "value": 1 },
+            "examples": [
+                {
+                    "actual": true,
+                    "expected": true,
+                    "note": "Boolean values must match exactly.",
+                    "expectedJudgment": true
+                },
+                {
+                    "actual": false,
+                    "expected": true,
+                    "note": "A false/true mismatch fails.",
+                    "expectedJudgment": false
+                }
+            ],
+            "family": "label",
+            "measurementKeys": [
+                "exactMatch",
+                "truePositiveCount",
+                "falsePositiveCount",
+                "falseNegativeCount",
+                "trueNegativeCount"
+            ],
+            "name": "Boolean",
+            "passCondition": "Can be judged with an explicit metric passRule; the suggested rule requires exactMatch == 1.",
+            "primaryPerformance": {
+                "measurement": "exactMatch",
+                "normalization": "Uses exactMatch directly as a binary 0-1 performance score.",
+                "summary": "Performance is 1 for an exact boolean match and 0 otherwise."
+            },
+            "semanticType": "boolean",
+            "summary": "Use for yes/no metrics such as has defect, contains text, or field present.",
+            "type": "boolean@1"
+        },
+        {
+            "acceptedValueKinds": ["label"],
+            "suggestedPassRule": { "measurement": "exactMatch", "operator": "==", "value": 1 },
+            "examples": [
+                {
+                    "actual": " scratch ",
+                    "expected": "SCRATCH",
+                    "note": "Whitespace and casing are normalized before comparison.",
+                    "expectedJudgment": true
+                },
+                {
+                    "actual": "scratch",
+                    "expected": "missing-hole",
+                    "note": "Different labels fail.",
+                    "expectedJudgment": false
+                }
+            ],
+            "family": "label",
+            "measurementKeys": [
+                "exactMatch",
+                "truePositiveCount",
+                "falsePositiveCount",
+                "falseNegativeCount"
+            ],
+            "name": "Label",
+            "passCondition": "Can be judged with an explicit metric passRule; the suggested rule requires exactMatch == 1.",
+            "primaryPerformance": {
+                "measurement": "exactMatch",
+                "normalization": "Uses normalized exactMatch directly as a binary 0-1 performance score.",
+                "summary": "Performance is 1 for a normalized label match and 0 otherwise."
+            },
+            "semanticType": "label",
+            "summary": "Use for labels, classes, routing decisions, extracted names, and enum-like answers.",
+            "type": "label@1"
+        },
+        {
+            "acceptedValueKinds": ["labelSet", "label"],
+            "suggestedPassRule": { "measurement": "exactMatch", "operator": "==", "value": 1 },
+            "examples": [
+                {
+                    "actual": ["dog", "cat"],
+                    "expected": ["cat", "dog"],
+                    "note": "Order does not matter; identical class sets are an exact match.",
+                    "expectedJudgment": true
+                },
+                {
+                    "actual": ["cat"],
+                    "expected": ["cat", "dog"],
+                    "note": "Missing dog gives F1 0.666667 as partial performance, but exactMatch is 0 so the suggested rule fails.",
+                    "expectedJudgment": false
+                }
+            ],
+            "family": "labelSet",
+            "measurementKeys": [
+                "exactMatch",
+                "precision",
+                "recall",
+                "f1",
+                "truePositiveCount",
+                "falsePositiveCount",
+                "falseNegativeCount",
+                "trueNegativeCount",
+                "labelAccuracy",
+                "hammingLoss"
+            ],
+            "name": "Label Set",
+            "passCondition": "Can be judged with an explicit metric passRule; the suggested rule requires exactMatch == 1. An f1 threshold is the partial-credit alternative.",
+            "primaryPerformance": {
+                "measurement": "f1",
+                "normalization": "Uses per-case set F1 = 2TP / (2TP + FP + FN) directly; two explicitly empty sets score 1.",
+                "summary": "Matches exactMatch for single-label cases and gives partial credit for multi-label overlap."
+            },
+            "semanticType": "labelSet",
+            "summary": "Use for class or tag sets. A single class is a singleton set; class names are exact identifiers after trimming. Optional fixed classes enable true negatives, label accuracy, and Hamming loss.",
+            "type": "labelSet@1"
+        },
+        {
+            "acceptedValueKinds": ["labelSet", "label"],
+            "suggestedPassRule": { "measurement": "exactMatch", "operator": "==", "value": 1 },
+            "examples": [
+                {
+                    "actual": {
+                        "top": "cat",
+                        "confidence": 0.94,
+                        "predictions": [
+                            { "class": "cat", "class_id": 0, "confidence": 0.94 },
+                            { "class": "dog", "class_id": 1, "confidence": 0.06 }
+                        ]
+                    },
+                    "expected": ["cat"],
+                    "note": "A single-label Roboflow response contributes only its top class, not every scored candidate.",
+                    "expectedJudgment": true
+                },
+                {
+                    "actual": {
+                        "predicted_classes": ["cat"],
+                        "predictions": {
+                            "cat": { "class_id": 0, "confidence": 0.91 },
+                            "dog": { "class_id": 1, "confidence": 0.42 }
+                        }
+                    },
+                    "expected": ["cat", "dog"],
+                    "note": "A multi-label Roboflow response contributes its predicted_classes decision; missing dog gives F1 0.666667 and fails exact match.",
+                    "expectedJudgment": false
+                }
+            ],
+            "family": "labelSet",
+            "measurementKeys": [
+                "exactMatch",
+                "precision",
+                "recall",
+                "f1",
+                "truePositiveCount",
+                "falsePositiveCount",
+                "falseNegativeCount",
+                "trueNegativeCount",
+                "labelAccuracy",
+                "hammingLoss"
+            ],
+            "name": "Classification",
+            "passCondition": "Can be judged with an explicit metric passRule; the suggested rule requires exactMatch == 1. An f1 threshold is the partial-credit alternative.",
+            "primaryPerformance": {
+                "measurement": "f1",
+                "normalization": "Uses per-case set F1 = 2TP / (2TP + FP + FN) directly; two explicitly empty sets score 1.",
+                "summary": "Matches exactMatch for single-label cases and gives partial credit for multi-label overlap."
+            },
+            "presetOf": "labelSet@1",
+            "semanticType": "classification",
+            "summary": "Preset for labelSet@1 that also reads Roboflow single-label (top) and multi-label (predicted_classes) classification responses. Ground truth is one class or a class set.",
+            "type": "classification@1"
+        },
+        {
+            "acceptedValueKinds": ["count"],
+            "suggestedPassRule": { "measurement": "absoluteDelta", "operator": "<=", "value": 0 },
+            "examples": [
+                {
+                    "actual": 2,
+                    "expected": 2,
+                    "note": "Counts are exact-match today.",
+                    "expectedJudgment": true
+                },
+                {
+                    "actual": 3,
+                    "expected": 2,
+                    "note": "Any count difference fails when the suggested exact-count rule is explicitly configured, while retaining all delta measurements.",
+                    "expectedJudgment": false
+                }
+            ],
+            "family": "scalar",
+            "measurementKeys": [
+                "signedDelta",
+                "absoluteDelta",
+                "relativeDelta",
+                "absoluteRelativeDelta"
+            ],
+            "name": "Count",
+            "passCondition": "Can be judged with an explicit metric passRule; the suggested rule requires absoluteDelta <= 0.",
+            "primaryPerformance": {
+                "measurement": "absoluteRelativeDelta",
+                "normalization": "Uses max(0, 1 - absoluteRelativeDelta), with exact zero-to-zero scoring 1 and nonzero actual against zero ground truth scoring 0.",
+                "summary": "Higher performance means a smaller count error relative to ground truth."
+            },
+            "semanticType": "count",
+            "summary": "Use for object counts, field counts, detected issue counts, or extracted item totals.",
+            "type": "count@1"
+        },
+        {
+            "acceptedValueKinds": ["numeric"],
+            "suggestedPassRule": { "measurement": "absoluteDelta", "operator": "<=", "value": 0 },
+            "examples": [
+                {
+                    "actual": 10.4,
+                    "expected": 10,
+                    "note": "Numeric values can pass when a metric passRule accepts the emitted absolute delta.",
+                    "passRule": { "measurement": "absoluteDelta", "operator": "<=", "value": 0.5 },
+                    "expectedJudgment": true
+                },
+                {
+                    "actual": 10.6,
+                    "expected": 10,
+                    "note": "Values outside the metric passRule fail and still record the complete delta measurement set.",
+                    "passRule": { "measurement": "absoluteDelta", "operator": "<=", "value": 0.5 },
+                    "expectedJudgment": false
+                }
+            ],
+            "family": "scalar",
+            "measurementKeys": [
+                "signedDelta",
+                "absoluteDelta",
+                "relativeDelta",
+                "absoluteRelativeDelta"
+            ],
+            "name": "Numeric",
+            "passCondition": "Can be judged with an explicit metric passRule; the suggested rule requires absoluteDelta <= 0.",
+            "primaryPerformance": {
+                "measurement": "absoluteRelativeDelta",
+                "normalization": "Uses max(0, 1 - absoluteRelativeDelta), with exact zero-to-zero scoring 1 and nonzero actual against zero ground truth scoring 0.",
+                "summary": "Higher performance means a smaller numeric error relative to ground truth."
+            },
+            "semanticType": "numeric",
+            "summary": "Use for scores, distances, measurements, confidences, and numeric extracted values.",
+            "type": "numeric@1"
+        },
+        {
+            "acceptedValueKinds": ["positionedObjects"],
+            "suggestedPassRule": { "measurement": "f1", "operator": ">=", "value": 1 },
+            "examples": [
+                {
+                    "actual": [
+                        {
+                            "class": "green candy",
+                            "class_id": 0,
+                            "confidence": 0.9,
+                            "detection_id": "green-candy-10-10",
+                            "height": 10,
+                            "parent_id": "image",
+                            "width": 10,
+                            "x": 15,
+                            "y": 15
+                        }
+                    ],
+                    "expected": [
+                        { "class": "green candy", "height": 10, "width": 10, "x": 16, "y": 15 }
+                    ],
+                    "note": "Roboflow inference predictions use center x/y plus width/height; a class-matched prediction with IoU >= 0.5 is a true positive.",
+                    "expectedJudgment": true
+                },
+                {
+                    "actual": [
+                        {
+                            "class": "pink candy",
+                            "class_id": 1,
+                            "confidence": 0.9,
+                            "detection_id": "pink-candy-10-10",
+                            "height": 10,
+                            "parent_id": "image",
+                            "width": 10,
+                            "x": 15,
+                            "y": 15
+                        }
+                    ],
+                    "expected": [
+                        { "class": "green candy", "height": 10, "width": 10, "x": 15, "y": 15 }
+                    ],
+                    "note": "A class mismatch fails when the suggested perfect-F1 acceptance rule is explicitly configured.",
+                    "expectedJudgment": false
+                }
+            ],
+            "family": "positionedItems",
+            "measurementKeys": [
+                "map50",
+                "precision",
+                "recall",
+                "f1",
+                "truePositiveCount",
+                "falsePositiveCount",
+                "falseNegativeCount"
+            ],
+            "name": "Object Detection",
+            "passCondition": "Can be judged with an explicit metric passRule; the suggested rule requires F1 >= 1.",
+            "primaryPerformance": {
+                "measurement": "map50",
+                "normalization": "Uses mAP@50 directly as a normalized 0-1 performance score.",
+                "summary": "Higher performance means stronger class-aware detection at IoU 0.5."
+            },
+            "presetOf": "positionedObjects@1",
+            "semanticType": "objectDetection",
+            "summary": "Compatibility preset for positionedObjects@1 using Roboflow inference detection geometry.",
+            "type": "objectDetection@1"
+        },
+        {
+            "acceptedValueKinds": ["positionedIntervals"],
+            "suggestedPassRule": { "measurement": "coverageIou", "operator": ">=", "value": 0.8 },
+            "examples": [
+                {
+                    "actual": [
+                        {
+                            "class": "crack",
+                            "confidence": 0.91,
+                            "height": 18,
+                            "width": 50,
+                            "x": 85,
+                            "y": 50
+                        },
+                        {
+                            "class": "crack",
+                            "confidence": 0.82,
+                            "height": 22,
+                            "width": 35,
+                            "x": 122.5,
+                            "y": 52
+                        }
+                    ],
+                    "expected": [
+                        { "class": "crack", "height": 20, "width": 80, "x": 100, "y": 50 }
+                    ],
+                    "note": "Two fragmented Roboflow predictions project onto [60,110] and [105,140]; merged they cover the ground-truth span [60,140] exactly, so coverage IoU is 1. The y/height/class/confidence fields are ignored on the horizontal axis.",
+                    "expectedJudgment": true
+                },
+                {
+                    "actual": [
+                        {
+                            "class": "crack",
+                            "confidence": 0.88,
+                            "height": 20,
+                            "width": 40,
+                            "x": 400,
+                            "y": 50
+                        }
+                    ],
+                    "expected": [
+                        { "class": "crack", "height": 20, "width": 80, "x": 100, "y": 50 }
+                    ],
+                    "note": "A prediction projecting onto [380,420] never overlaps the ground-truth span [60,140], so coverage IoU is 0 and the suggested rule fails.",
+                    "expectedJudgment": false
+                }
+            ],
+            "family": "positionedItems",
+            "measurementKeys": [
+                "coverageIou",
+                "coveragePrecision",
+                "coverageRecall",
+                "meanAbsoluteCenterDelta",
+                "meanAbsoluteSizeDelta"
+            ],
+            "name": "Interval Coverage",
+            "passCondition": "Can be judged with an explicit metric passRule; the suggested rule requires coverageIou >= 0.8.",
+            "primaryPerformance": {
+                "measurement": "coverageIou",
+                "normalization": "Uses coverage IoU of merged intervals directly as a normalized 0-1 performance score.",
+                "summary": "Higher performance means the merged predicted span covers the ground-truth span more completely on the configured axis."
+            },
+            "semanticType": "intervalCoverage",
+            "summary": "Use for metrics where only one axis of position/size matters (cracks, seams, weld beads); boxes are projected onto the axis and merged before comparison.",
+            "type": "intervalCoverage@1"
+        },
+        {
+            "acceptedValueKinds": ["segmentation"],
+            "examples": [
+                {
+                    "actual": {
+                        "image": { "width": 4, "height": 3 },
+                        "predictions": [
+                            { "class": "corrosion", "rle": { "size": [3, 4], "counts": "02:" } },
+                            { "class": "corrosion", "rle": { "size": [3, 4], "counts": "02106" } }
+                        ]
+                    },
+                    "expected": {
+                        "image": { "width": 4, "height": 3 },
+                        "predictions": [
+                            {
+                                "class": "corrosion",
+                                "rle": { "size": [3, 4], "counts": [0, 2, 1, 2, 7] }
+                            }
+                        ]
+                    },
+                    "note": "Overlapping instances union to the same four corrosion pixels as one class mask; mIoU is 1.",
+                    "expectedJudgment": true
+                },
+                {
+                    "actual": {
+                        "image": { "width": 4, "height": 3 },
+                        "predictions": [
+                            {
+                                "class": "corrosion",
+                                "rle": { "size": [3, 4], "counts": [3, 2, 1, 2, 4] }
+                            }
+                        ]
+                    },
+                    "expected": {
+                        "image": { "width": 4, "height": 3 },
+                        "predictions": [
+                            {
+                                "class": "corrosion",
+                                "rle": { "size": [3, 4], "counts": [0, 2, 1, 2, 7] }
+                            }
+                        ]
+                    },
+                    "note": "Two correct, two extra and two missed pixels give IoU 2/6 and pixel Dice 0.5.",
+                    "expectedJudgment": false
+                }
+            ],
+            "family": "positionedItems",
+            "measurementKeys": [
+                "meanIou",
+                "pixelPrecision",
+                "pixelRecall",
+                "pixelDice",
+                "pixelTruePositiveCount",
+                "pixelFalsePositiveCount",
+                "pixelFalseNegativeCount"
+            ],
+            "name": "Segmentation",
+            "passCondition": "Only an explicit passRule applies judgment; suggested meanIou >= 0.8.",
+            "primaryPerformance": {
+                "measurement": "meanIou",
+                "normalization": "Macro mean of per-class pixel IoUs, excluding zero-union classes; 1 when all selected classes are absent on both sides.",
+                "summary": "Higher means better class-mask coverage, independent of instance splitting."
+            },
+            "semanticType": "segmentation",
+            "suggestedPassRule": { "measurement": "meanIou", "operator": ">=", "value": 0.8 },
+            "summary": "Compares predicted and ground-truth masks by class. Accepts Inference points, COCO RLE, and grayscale class-ID PNG responses. Unions instances by class; excludes background by default. Select classes and backgroundClass in evaluator.config. Does not measure instance identity or mask AP.",
+            "type": "segmentation@1"
+        },
+        {
+            "type": "keypoints@1",
+            "name": "Keypoints",
+            "semanticType": "keypoints",
+            "acceptedValueKinds": ["keypoints"],
+            "family": "positionedItems",
+            "measurementKeys": ["keypointAp", "keypointAp50", "keypointAp75", "keypointAr"],
+            "summary": "COCO-style pose AP/AR plus dataset F1@mOKS at detector-optimal confidence. Configure each class skeleton; default sigmas are 1/K. Missing predicted points contribute zero. Bind the full image/predictions envelope, not just predictions.",
+            "passCondition": "Only an explicit case pass rule produces judgment; dataset metrics do not produce a Run verdict.",
+            "primaryPerformance": {
+                "measurement": "keypointAp",
+                "normalization": "Single-image AP in [0,1]; empty-to-empty diagnostic performance is 1 without fabricating AP.",
+                "summary": "Case diagnostic only. Dataset AP/AR and F1@mOKS are separately pooled in CheckAggregate.keypoints."
+            },
+            "suggestedPassRule": { "measurement": "keypointAp", "operator": ">=", "value": 0.5 },
+            "exampleEvaluator": {
+                "type": "keypoints@1",
+                "config": {
+                    "skeletons": [{ "class": "part", "points": [{ "id": 0, "name": "tip" }] }]
+                }
+            },
+            "examples": [
+                {
+                    "expected": {
+                        "image": { "width": 100, "height": 100 },
+                        "objects": [
+                            {
+                                "class": "part",
+                                "x": 50,
+                                "y": 50,
+                                "width": 20,
+                                "height": 20,
+                                "keypoints": [{ "class_id": 0, "x": 50, "y": 50, "visibility": 2 }]
+                            }
+                        ]
+                    },
+                    "actual": {
+                        "image": { "width": 100, "height": 100 },
+                        "predictions": [
+                            {
+                                "class": "part",
+                                "x": 50,
+                                "y": 50,
+                                "width": 20,
+                                "height": 20,
+                                "confidence": 0.9,
+                                "keypoints": [{ "class_id": 0, "x": 50, "y": 50 }]
+                            }
+                        ]
+                    },
+                    "note": "A perfect pose passes the explicitly selected AP rule; object confidence ranks instances.",
+                    "expectedJudgment": true
+                },
+                {
+                    "expected": {
+                        "image": { "width": 100, "height": 100 },
+                        "objects": [
+                            {
+                                "class": "part",
+                                "x": 50,
+                                "y": 50,
+                                "width": 20,
+                                "height": 20,
+                                "keypoints": [{ "class_id": 0, "x": 50, "y": 50, "visibility": 1 }]
+                            }
+                        ]
+                    },
+                    "actual": {
+                        "image": { "width": 100, "height": 100 },
+                        "predictions": [
+                            {
+                                "class": "part",
+                                "x": 50,
+                                "y": 50,
+                                "width": 20,
+                                "height": 20,
+                                "confidence": 0.9,
+                                "keypoints": []
+                            }
+                        ]
+                    },
+                    "note": "An annotated occluded point still matters. An omitted prediction contributes zero, not an ignored GT point.",
+                    "expectedJudgment": false
+                }
+            ]
+        }
+    ],
+    "examples": [
+        {
+            "aggregationKind": "measurementAggregate",
+            "businessArea": "Counting",
+            "businessProblem": "The conveyor team needs to know whether candy counts are reliable enough for production reporting.",
+            "businessQuestion": "Can the workflow count candies accurately enough for conveyor reporting?",
+            "evaluatorType": "count@1",
+            "id": "measurement-aggregate-count-delta",
+            "measurementKeys": ["absoluteDelta", "absoluteRelativeDelta"],
+            "name": "Candy Count Accuracy",
+            "score": {
+                "body": "A lower average miss shows the counter is close enough to the annotated frame counts.",
+                "sample": {
+                    "decisionThreshold": "<= 1 candy",
+                    "score": "1.25 candies average miss"
+                },
+                "title": "Average absolute count error"
+            },
+            "stageItems": [
+                {
+                    "body": "A sampled conveyor frame has 10 annotated candies and the workflow predicts 8.",
+                    "kind": "evaluator",
+                    "sample": { "expectedCandies": 10, "predictedCandies": 8 },
+                    "title": "Compare expected and predicted totals"
+                },
+                {
+                    "body": "The miss is preserved as both item error and relative error, so the team can reason in counts or percent.",
+                    "kind": "measurements",
+                    "sample": { "absoluteError": 2, "missedBy": -2, "relativeError": "20%" },
+                    "title": "Capture how far the count missed"
+                },
+                {
+                    "body": "Across frames, average absolute error shows the typical counting drift for this workflow subject.",
+                    "kind": "aggregation",
+                    "sample": { "averageAbsoluteError": 1.25, "evaluatedFrames": 4 },
+                    "title": "Roll misses into a counting KPI"
+                },
+                {
+                    "body": "Operations can accept the workflow only if the average miss stays within the line's counting tolerance.",
+                    "kind": "consumption",
+                    "sample": { "decision": "Candidate needs tuning before deployment" },
+                    "title": "Decide whether the counter is acceptable"
+                }
+            ],
+            "summary": "How frame-level count misses become an average counting KPI for a conveyor line."
+        },
+        {
+            "aggregationKind": "checkAggregate",
+            "businessArea": "Quality Inspection",
+            "businessProblem": "The inspection team needs to know whether boards that require review are being flagged before they leave the line.",
+            "businessQuestion": "Does the workflow correctly flag boards that need review?",
+            "evaluatorType": "boolean@1",
+            "id": "metric-aggregate-boolean-performance",
+            "measurementKeys": [],
+            "name": "PCB Defect Gate Accuracy",
+            "score": {
+                "body": "Higher performance means more boards receive the correct review decision; an optional rule can set the deployment bar.",
+                "sample": { "performance": "75% exact matches", "optionalMetric": ">= 95%" },
+                "title": "Review-gate performance"
+            },
+            "stageItems": [
+                {
+                    "body": "A board is annotated as defective, and the workflow also flags it for review.",
+                    "kind": "evaluator",
+                    "sample": { "expectedNeedsReview": true, "predictedNeedsReview": true },
+                    "title": "Check the review decision"
+                },
+                {
+                    "body": "This yes/no comparison always contributes exact-match performance; policy judgment appears only when the team configures a threshold.",
+                    "kind": "measurements",
+                    "sample": { "exactMatch": 1, "performanceScore": 1 },
+                    "title": "Record case performance"
+                },
+                {
+                    "body": "Across the Dataset, average performance shows how often the workflow sends the right boards to review.",
+                    "kind": "aggregation",
+                    "sample": {
+                        "judgment": {
+                            "failed": 1,
+                            "materialMisses": 0,
+                            "nearMisses": 1,
+                            "passed": 3,
+                            "passRate": 0.75,
+                            "total": 4
+                        },
+                        "performanceScore": 0.75
+                    },
+                    "title": "Summarize review-gate quality"
+                },
+                {
+                    "body": "Quality teams can decide whether the workflow is safe enough to assist inspection.",
+                    "kind": "consumption",
+                    "sample": { "metricRow": "Needs-review exact-match performance: 75%" },
+                    "title": "Decide if the gate is trustworthy"
+                }
+            ],
+            "summary": "How board-level yes/no comparisons become scores with an optional acceptance policy."
+        },
+        {
+            "aggregationKind": "runtimeAggregate",
+            "businessArea": "Throughput",
+            "businessProblem": "The line team needs to know whether a more accurate workflow still fits latency and credit budgets.",
+            "businessQuestion": "Can the candidate meet throughput and cost constraints?",
+            "evaluatorType": "positionedObjects@1",
+            "id": "runtime-aggregate-workflow-requests",
+            "measurementKeys": [],
+            "name": "Inspection Throughput Cost",
+            "score": {
+                "body": "Lower latency and credit use show whether the workflow can keep up with production.",
+                "sample": { "averageLatencyMs": 190, "totalCreditCost": 1.24 },
+                "title": "Latency and credit budget"
+            },
+            "stageItems": [
+                {
+                    "body": "The same sampled frames are sent through a candidate workflow while the runner records execution facts.",
+                    "kind": "evaluator",
+                    "sample": { "frames": 4, "workflowSubject": "candidate" },
+                    "title": "Run the workflow on sampled data"
+                },
+                {
+                    "body": "Latency, credit usage, timeouts, and failures are captured beside the quality results.",
+                    "kind": "measurements",
+                    "sample": { "creditCost": 0.31, "latencyMs": 194, "timedOut": false },
+                    "title": "Capture request performance"
+                },
+                {
+                    "body": "The run summarizes how expensive and slow the workflow is across the Dataset.",
+                    "kind": "aggregation",
+                    "sample": {
+                        "averageLatencyMs": 190,
+                        "failureRate": 0,
+                        "timeoutRate": 0,
+                        "totalCreditCost": 1.24
+                    },
+                    "title": "Summarize throughput risk"
+                },
+                {
+                    "body": "The team can weigh a quality gain against the extra latency or credit cost.",
+                    "kind": "consumption",
+                    "sample": { "summary": "Candidate wins quality, baseline wins latency." },
+                    "title": "Explain the tradeoff"
+                }
+            ],
+            "summary": "How workflow request facts reveal whether a version can run on the line."
+        },
+        {
+            "aggregationKind": "runSummary",
+            "businessArea": "Detection Quality",
+            "businessProblem": "The model team needs to know which workflow subject finds and labels candies most reliably on sampled frames.",
+            "businessQuestion": "Which workflow subject finds candies more reliably on sampled frames?",
+            "evaluatorType": "positionedObjects@1",
+            "id": "run-summary-positioned-objects",
+            "measurementKeys": ["f1", "falsePositiveCount", "falseNegativeCount"],
+            "name": "Candy Detector Candidate Scorecard",
+            "score": {
+                "body": "Higher F1 with fewer false positives and missed candies shows a stronger detector.",
+                "sample": { "f1": 0.91, "falseNegativeCount": 1, "falsePositiveCount": 2 },
+                "title": "Detection F1 with miss and extra counts"
+            },
+            "stageItems": [
+                {
+                    "body": "Each workflow subject predicts candy objects and color labels on the same annotated frames.",
+                    "kind": "evaluator",
+                    "sample": {
+                        "groundTruthObjects": 41,
+                        "predictedObjects": 39,
+                        "workflowSubject": "candidate"
+                    },
+                    "title": "Compare detected candies"
+                },
+                {
+                    "body": "Object matches expose misses, extra detections, and the balance between precision and recall.",
+                    "kind": "measurements",
+                    "sample": { "f1": 0.91, "falseNegativeCount": 1, "falsePositiveCount": 2 },
+                    "title": "Measure detection quality"
+                },
+                {
+                    "body": "Quality and runtime are combined into one scorecard for this workflow subject.",
+                    "kind": "aggregation",
+                    "sample": {
+                        "performanceScore": 0.88,
+                        "runtime": { "averageLatencyMs": 190 },
+                        "checkPerformance": { "candy_objects": 0.91 }
+                    },
+                    "title": "Build the workflow scorecard"
+                },
+                {
+                    "body": "Reviewers can compare a candidate's quality improvement against its operational cost.",
+                    "kind": "consumption",
+                    "sample": { "runCard": "Workflow: 7/8 checks passed, 190 ms avg latency" },
+                    "title": "Review one workflow subject"
+                }
+            ],
+            "summary": "How detection quality and runtime become one scorecard for a workflow subject."
+        },
+        {
+            "aggregationKind": "runSummary",
+            "businessArea": "Release Decision",
+            "businessProblem": "The team needs to see, check by check, what a candidate workflow subject changed against the baseline.",
+            "businessQuestion": "What did the candidate workflow subject change, check by check?",
+            "evaluatorType": "positionedObjects@1",
+            "id": "run-comparison-per-check-deltas",
+            "measurementKeys": ["f1"],
+            "name": "Candidate Versus Baseline Read",
+            "score": {
+                "body": "Per-check deltas show where the candidate improved and what it cost, without inventing an overall verdict.",
+                "sample": { "candyObjectsPerformanceDelta": 0.16, "runtimeTradeoff": "+42 ms" },
+                "title": "Per-check deltas and runtime tradeoff"
+            },
+            "stageItems": [
+                {
+                    "body": "Each workflow subject is evaluated in its own Run against the same Spec and Dataset snapshot.",
+                    "kind": "evaluator",
+                    "sample": {
+                        "cases": 4,
+                        "checks": ["candy_objects", "total_count"],
+                        "runs": ["baseline", "candidate"]
+                    },
+                    "title": "Run each workflow subject once"
+                },
+                {
+                    "body": "Each Run carries normalized quality evidence, optional policy judgments, and runtime facts.",
+                    "kind": "measurements",
+                    "sample": { "baselineF1Average": 0.78, "candidateF1Average": 0.91 },
+                    "title": "Collect comparable evidence"
+                },
+                {
+                    "body": "Each Run summarizes only its own checks; comparison reads those summaries afterwards.",
+                    "kind": "aggregation",
+                    "sample": {
+                        "baselinePerformanceScore": 0.72,
+                        "candidatePerformanceScore": 0.88
+                    },
+                    "title": "Summarize each Run"
+                },
+                {
+                    "body": "compareWorkflowEvalRuns reports per-check deltas across compatible Runs; pass/fail stays per check and no aggregate verdict is produced.",
+                    "kind": "consumption",
+                    "sample": {
+                        "candyObjectsPassRateDelta": 0.25,
+                        "candyObjectsPerformanceDelta": 0.16
+                    },
+                    "title": "Read the comparison"
+                }
+            ],
+            "summary": "How two Runs of the same Spec and Dataset are read as per-check deltas."
+        },
+        {
+            "aggregationKind": "measurementAggregate",
+            "businessArea": "Quality Inspection",
+            "businessProblem": "The structure inspection team annotates cracks as bounding boxes but only cares where each crack sits along the surface and how wide it is.",
+            "businessQuestion": "Do fragmented detections still cover each crack's full horizontal span?",
+            "evaluatorType": "intervalCoverage@1",
+            "id": "measurement-aggregate-interval-coverage",
+            "measurementKeys": ["coverageIou", "coverageRecall"],
+            "name": "Crack Horizontal Coverage",
+            "score": {
+                "body": "Higher coverage means fragmented detections still span each crack's full width; an optional rule can set the acceptance bar.",
+                "sample": { "coverageIou": "0.93 average", "decisionThreshold": ">= 0.8" },
+                "title": "Average crack coverage"
+            },
+            "stageItems": [
+                {
+                    "body": "A scanned slab has one annotated crack box, and the workflow returns two shorter detection boxes that together span the same width.",
+                    "kind": "evaluator",
+                    "sample": {
+                        "expectedCrackSpan": "60-140 px",
+                        "predictedSpans": ["60-110 px", "105-140 px"]
+                    },
+                    "title": "Compare where the crack sits along the surface"
+                },
+                {
+                    "body": "Boxes are projected onto the horizontal axis and merged, so fragmented detections that cover the right span count as full coverage.",
+                    "kind": "measurements",
+                    "sample": { "coverageIou": 1, "coverageRecall": 1 },
+                    "title": "Measure horizontal coverage"
+                },
+                {
+                    "body": "Across slabs, average coverage shows how reliably the workflow spans each crack even when detections fragment.",
+                    "kind": "aggregation",
+                    "sample": { "averageCoverageIou": 0.93, "evaluatedSlabs": 12 },
+                    "title": "Roll coverage into an inspection KPI"
+                },
+                {
+                    "body": "The inspection lead accepts the workflow only when cracks are consistently covered along their length.",
+                    "kind": "consumption",
+                    "sample": {
+                        "decision": "Candidate covers cracks well enough to trial on the line"
+                    },
+                    "title": "Decide whether crack coverage is acceptable"
+                }
+            ],
+            "summary": "How fragmented crack detections become a horizontal coverage score for a structure inspection team."
+        },
+        {
+            "aggregationKind": "judgmentMatrix",
+            "businessArea": "Quality Inspection",
+            "businessProblem": "The coating inspection team runs several part configurations, each with its own set of layer thickness checks, and needs pass rates per configuration.",
+            "businessQuestion": "Which configurations pass their layer thickness checks?",
+            "evaluatorType": "numeric@1",
+            "id": "judgment-matrix-configuration-pass-rates",
+            "measurementKeys": ["absoluteDelta"],
+            "name": "Configuration Thickness Pass Rates",
+            "score": {
+                "body": "Each cell shows passed over evaluated checks; checks that do not apply to a configuration are excluded instead of counted as failures.",
+                "sample": { "config5DenseLayer": "8/10 passed", "notApplicable": "excluded" },
+                "title": "Pass rate per configuration and check"
+            },
+            "stageItems": [
+                {
+                    "body": "A sampled part measures its dense layer at 9.1 mils against an annotated average of 8.9 with a tolerance from the annotation itself.",
+                    "kind": "evaluator",
+                    "sample": {
+                        "actualMils": 9.1,
+                        "annotatedAverageMils": 8.9,
+                        "toleranceMils": 0.19
+                    },
+                    "title": "Compare a layer thickness to its annotation"
+                },
+                {
+                    "body": "The absolute difference is judged against the per-part tolerance, so each configuration can carry its own acceptance band.",
+                    "kind": "measurements",
+                    "sample": { "absoluteDifference": 0.2, "judged": "fail", "tolerance": 0.19 },
+                    "title": "Judge the difference against the tolerance"
+                },
+                {
+                    "body": "Passed and evaluated counts are grouped by configuration slice and check, with totals summed from counts rather than averaged percentages.",
+                    "kind": "aggregation",
+                    "sample": {
+                        "config5": { "denseLayer": "8/10", "rowTotal": "26/30" },
+                        "grandTotal": "118/140"
+                    },
+                    "title": "Group judgments by configuration"
+                },
+                {
+                    "body": "The team reads the grid to find which configuration and check combinations need attention before release.",
+                    "kind": "consumption",
+                    "sample": { "worstCell": "Config5 outer layer 4/10" },
+                    "title": "Find the weakest configuration"
+                }
+            ],
+            "summary": "How per-case pass/fail judgments become a configuration-by-check pass-rate grid."
+        },
+        {
+            "aggregationKind": "checkAggregate",
+            "businessArea": "Quality Inspection",
+            "businessProblem": "An inspection team compares corrosion coverage from semantic and instance models on the same test images.",
+            "businessQuestion": "Which model covers corrosion most accurately?",
+            "evaluatorType": "segmentation@1",
+            "id": "segmentation-corrosion-coverage",
+            "measurementKeys": ["meanIou", "pixelDice"],
+            "name": "Corrosion Mask Coverage",
+            "score": {
+                "title": "Corrosion mIoU",
+                "body": "Compare coverage per image and across all annotated pixels.",
+                "sample": { "meanPerImageIou": 0.5, "pooledDatasetIou": 0.333333 }
+            },
+            "stageItems": [
+                {
+                    "kind": "evaluator",
+                    "title": "Compare class masks",
+                    "body": "Unite overlapping corrosion instances, then compare their pixels with the annotation.",
+                    "sample": { "class": "corrosion", "predictedInstances": 2 }
+                },
+                {
+                    "kind": "measurements",
+                    "title": "Measure overlap",
+                    "body": "The first image has two correct pixels; the second misses four pixels.",
+                    "sample": {
+                        "first": { "intersection": 2, "union": 2 },
+                        "second": { "intersection": 0, "union": 4 }
+                    }
+                },
+                {
+                    "kind": "aggregation",
+                    "title": "Pool class pixels",
+                    "body": "The image scores average to 0.5; pooling intersections and unions gives 2/6, or 0.333333.",
+                    "sample": { "performanceScore": 0.5, "segmentation": { "meanIou": 0.333333 } }
+                },
+                {
+                    "kind": "consumption",
+                    "title": "Compare models",
+                    "body": "Use the same classes and test images for both models and inspect per-image misses.",
+                    "sample": { "selectedClasses": ["corrosion"] }
+                }
+            ],
+            "summary": "Compare class coverage independently of how a model divides corrosion into instances."
+        },
+        {
+            "aggregationKind": "checkAggregate",
+            "businessArea": "Quality Inspection",
+            "businessProblem": "A product-tagging Workflow assigns one or more classes per image, and the team must know whether it misses classes or adds wrong ones.",
+            "businessQuestion": "How well does the classifier recover each image's class set?",
+            "evaluatorType": "classification@1",
+            "id": "classification-class-set-recovery",
+            "measurementKeys": ["exactMatch", "f1"],
+            "name": "Classification Class Sets",
+            "score": {
+                "title": "Class-set F1",
+                "body": "Mean case F1 is the primary performance; subset accuracy, micro F1, and macro F1 answer different questions and are reported separately.",
+                "sample": {
+                    "sampleF1": 0.555556,
+                    "subsetAccuracy": 0.333333,
+                    "microF1": 0.571429,
+                    "macroF1": 0.266667
+                }
+            },
+            "stageItems": [
+                {
+                    "kind": "evaluator",
+                    "title": "Normalize decisions",
+                    "body": "Single-label responses contribute top; multi-label responses contribute predicted_classes. Confidence maps are never read as positive sets.",
+                    "sample": { "groundTruth": ["cat", "dog"], "predicted_classes": ["cat"] }
+                },
+                {
+                    "kind": "measurements",
+                    "title": "Compare sets",
+                    "body": "Image one misses dog (F1 0.666667), image two is exact (F1 1), image three predicts cat for bird (F1 0).",
+                    "sample": {
+                        "first": {
+                            "truePositiveCount": 1,
+                            "falseNegativeCount": 1,
+                            "f1": 0.666667
+                        },
+                        "third": { "falsePositiveCount": 1, "falseNegativeCount": 1, "f1": 0 }
+                    }
+                },
+                {
+                    "kind": "aggregation",
+                    "title": "Pool by case, decision, and class",
+                    "body": "Case F1 averages to 0.555556; pooled counts 2/1/2 give micro F1 0.571429; averaging cat 0.8, dog 0, and bird 0 gives macro F1 0.266667.",
+                    "sample": {
+                        "performanceScore": 0.555556,
+                        "labelSet": {
+                            "micro": { "f1": 0.571429 },
+                            "macro": { "f1": 0.266667, "classCount": 3 }
+                        }
+                    }
+                },
+                {
+                    "kind": "consumption",
+                    "title": "Find weak classes",
+                    "body": "Per-class rows show dog and bird are never recovered while cat is over-predicted.",
+                    "sample": { "weakestClasses": ["bird", "dog"] }
+                }
+            ],
+            "summary": "Compare predicted class sets with partial credit and distinct case, micro, and macro aggregations."
+        },
+        {
+            "aggregationKind": "checkAggregate",
+            "businessArea": "Quality Inspection",
+            "businessProblem": "An inspection Workflow must complete each case within a 2000 ms budget.",
+            "businessQuestion": "Did the Workflow stay within its latency budget?",
+            "evaluatorType": "latency@1",
+            "id": "latency-budget-per-case",
+            "measurementKeys": ["latencyMs", "latencyOverBudgetMs", "latencyBudgetScore"],
+            "name": "Inspection latency budget",
+            "score": {
+                "title": "Per-case budget performance",
+                "body": "One 1500 ms case scores 1 and one 5000 ms case scores 0.4; equal case weighting gives 0.7.",
+                "sample": { "budgetMs": 2000, "checkPerformance": 0.7, "averageLatencyMs": 3250 }
+            },
+            "stageItems": [
+                {
+                    "kind": "evaluator",
+                    "title": "Read runner timing",
+                    "body": "Read the retained runtime duration, not a Workflow output or case annotation.",
+                    "sample": { "latencyMs": [1500, 5000], "budgetMs": 2000 }
+                },
+                {
+                    "kind": "measurements",
+                    "title": "Emit measurements",
+                    "body": "Emit observed duration, over-budget time and normalized budget score.",
+                    "sample": { "latencyOverBudgetMs": [0, 3000], "latencyBudgetScore": [1, 0.4] }
+                },
+                {
+                    "kind": "aggregation",
+                    "title": "Average case scores",
+                    "body": "Each executed case has equal weight; raw runtime average is reported separately.",
+                    "sample": { "checkPerformance": 0.7, "averageLatencyMs": 3250 }
+                },
+                {
+                    "kind": "consumption",
+                    "title": "Apply optional judgment",
+                    "body": "An explicit over-budget rule fails the slow case, with no Run-wide verdict.",
+                    "sample": { "passed": 1, "failed": 1 }
+                }
+            ],
+            "summary": "A global millisecond budget grades each retained runner duration without annotations."
+        },
+        {
+            "aggregationKind": "checkAggregate",
+            "businessArea": "Quality Inspection",
+            "businessProblem": "A robotic inspection workflow must locate the annotated landmarks on each part without hiding missed or duplicate instances.",
+            "businessQuestion": "Did pose localization improve across the evaluation dataset?",
+            "evaluatorType": "keypoints@1",
+            "id": "keypoint-dataset-pooling",
+            "name": "Part Landmark Quality",
+            "measurementKeys": ["keypointAp", "keypointAr"],
+            "summary": "Case evidence becomes dataset AP/AR and F1@mOKS, independently of the mean image diagnostic.",
+            "score": {
+                "title": "Pooled pose quality",
+                "body": "A low-confidence false positive on a negative image can leave AP perfect while changing the detector-selected confidence. Read the pooled summary, not an image average.",
+                "sample": {
+                    "datasetAp": 1,
+                    "imagePerformanceMean": 0.5,
+                    "selectedConfidence": 0.21,
+                    "f1AtMeanOks": 1
+                }
+            },
+            "stageItems": [
+                {
+                    "kind": "evaluator",
+                    "title": "Evaluate landmarks",
+                    "body": "One positive image has a correct pose at 0.8 confidence. A negative image has an extra detection at 0.2.",
+                    "sample": { "classes": ["part"], "pointIds": [0], "sigmas": [1] }
+                },
+                {
+                    "kind": "measurements",
+                    "title": "Keep case diagnostics",
+                    "body": "The positive image has AP 1. Negative-image AP is unavailable; false-positive case performance is 0.",
+                    "sample": { "positiveAp": 1, "negativeAp": null }
+                },
+                {
+                    "kind": "aggregation",
+                    "title": "Pool matching evidence",
+                    "body": "Rank predictions across images for AP. Choose detector confidence on the eval Dataset, then measure pose F1 at each OKS threshold.",
+                    "sample": { "ap": 1, "selectedConfidence": 0.21, "f1AtMeanOks": 1 }
+                },
+                {
+                    "kind": "consumption",
+                    "title": "Compare like-for-like policies",
+                    "body": "Inspect pooled deltas, resolved skeleton policy, coverage and independently selected thresholds. No aggregate verdict is emitted.",
+                    "sample": {
+                        "source": "CheckAggregate.keypoints",
+                        "selection": "optimized_on_evaluation_dataset"
+                    }
+                }
+            ]
+        }
+    ],
+    "measurements": [
+        {
+            "key": "latencyMs",
+            "name": "Latency",
+            "unit": "milliseconds",
+            "direction": "lowerIsBetter",
+            "interpretation": "Runner-observed duration in milliseconds.",
+            "aggregation": "Sum, count and average across evaluated cases; duration sum is not Run wall-clock time.",
+            "defaultAggregation": "sumCountAverage",
+            "displayFormat": "number",
+            "producedBy": ["latency@1"],
+            "summary": "Runner-observed duration in milliseconds."
+        },
+        {
+            "key": "latencyOverBudgetMs",
+            "name": "Latency over budget",
+            "unit": "milliseconds",
+            "direction": "lowerIsBetter",
+            "interpretation": "Zero within budget; positive milliseconds above the Spec budget.",
+            "aggregation": "Sum, count and average across evaluated cases; duration sum is not Run wall-clock time.",
+            "defaultAggregation": "sumCountAverage",
+            "displayFormat": "number",
+            "producedBy": ["latency@1"],
+            "summary": "Zero within budget; positive milliseconds above the Spec budget."
+        },
+        {
+            "key": "latencyBudgetScore",
+            "name": "Latency budget score",
+            "unit": "ratio",
+            "direction": "higherIsBetter",
+            "interpretation": "One within budget; budget divided by observed duration otherwise.",
+            "aggregation": "Sum, count and average across evaluated cases; duration sum is not Run wall-clock time.",
+            "defaultAggregation": "sumCountAverage",
+            "displayFormat": "number",
+            "producedBy": ["latency@1"],
+            "summary": "One within budget; budget divided by observed duration otherwise."
+        },
+        {
+            "key": "keypointAp",
+            "name": "Pose AP",
+            "aggregation": "Case mean only; authoritative dataset pose metrics are pooled separately in CheckAggregate.keypoints.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "unit": "ratio",
+            "producedBy": ["keypoints@1"],
+            "summary": "Single-image COCO-style pose diagnostic; unavailable without eligible ground truth.",
+            "interpretation": "Higher is better. Never interpret the mean of image AP as dataset AP."
+        },
+        {
+            "key": "keypointAp50",
+            "name": "Pose AP50",
+            "aggregation": "Case mean only; authoritative dataset pose metrics are pooled separately in CheckAggregate.keypoints.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "unit": "ratio",
+            "producedBy": ["keypoints@1"],
+            "summary": "Single-image COCO-style pose diagnostic; unavailable without eligible ground truth.",
+            "interpretation": "Higher is better. Never interpret the mean of image AP as dataset AP."
+        },
+        {
+            "key": "keypointAp75",
+            "name": "Pose AP75",
+            "aggregation": "Case mean only; authoritative dataset pose metrics are pooled separately in CheckAggregate.keypoints.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "unit": "ratio",
+            "producedBy": ["keypoints@1"],
+            "summary": "Single-image COCO-style pose diagnostic; unavailable without eligible ground truth.",
+            "interpretation": "Higher is better. Never interpret the mean of image AP as dataset AP."
+        },
+        {
+            "key": "keypointAr",
+            "name": "Pose AR",
+            "aggregation": "Case mean only; authoritative dataset pose metrics are pooled separately in CheckAggregate.keypoints.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "unit": "ratio",
+            "producedBy": ["keypoints@1"],
+            "summary": "Single-image COCO-style pose diagnostic; unavailable without eligible ground truth.",
+            "interpretation": "Higher is better. Never interpret the mean of image AP as dataset AP."
+        },
+        {
+            "aggregation": "sum, count, and average across evaluated cases for the same check in one Run.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "informational",
+            "displayFormat": "number",
+            "interpretation": "Positive means actual is above expected; negative means actual is below expected.",
+            "key": "signedDelta",
+            "name": "Signed Delta",
+            "producedBy": ["count@1", "numeric@1"],
+            "summary": "Actual minus expected for count and numeric metrics.",
+            "unit": "scalar"
+        },
+        {
+            "aggregation": "sum, count, and average absolute error across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "lowerIsBetter",
+            "displayFormat": "number",
+            "interpretation": "Lower is better. Zero means actual exactly matched expected.",
+            "key": "absoluteDelta",
+            "name": "Absolute Delta",
+            "producedBy": ["count@1", "numeric@1"],
+            "summary": "Magnitude of the count or numeric miss, ignoring direction.",
+            "unit": "scalar"
+        },
+        {
+            "aggregation": "sum, count, and average relative error across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "informational",
+            "displayFormat": "percent",
+            "interpretation": "Positive means over-prediction relative to expected; negative means under-prediction.",
+            "key": "relativeDelta",
+            "name": "Relative Delta",
+            "producedBy": ["count@1", "numeric@1"],
+            "summary": "Signed delta divided by expected for count and numeric metrics.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average relative error magnitude across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "lowerIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Lower is better. Useful for tolerance pass rules such as <= 0.05.",
+            "key": "absoluteRelativeDelta",
+            "name": "Absolute Relative Delta",
+            "producedBy": ["count@1", "numeric@1"],
+            "summary": "Magnitude of relative error for count and numeric metrics.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average exact-match rate across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Higher is better. One means the expected and actual semantic values matched.",
+            "key": "exactMatch",
+            "name": "Exact Match",
+            "producedBy": ["boolean@1", "label@1", "classification@1", "labelSet@1"],
+            "summary": "One when a boolean or label matched, or when a predicted class set equals ground truth; otherwise zero.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average mAP@50 across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Higher is better. One means all expected detections were matched at IoU >= 0.5.",
+            "key": "map50",
+            "name": "mAP@50",
+            "producedBy": ["objectDetection@1", "positionedObjects@1"],
+            "summary": "Mean average precision at a 0.5 IoU threshold for positioned object metrics.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average precision across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Higher is better. Drops when predictions include extra unmatched detections or classes.",
+            "key": "precision",
+            "name": "Precision",
+            "producedBy": [
+                "objectDetection@1",
+                "positionedObjects@1",
+                "classification@1",
+                "labelSet@1"
+            ],
+            "summary": "True positives divided by true positives plus false positives.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average recall across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Higher is better. Drops when expected detections or classes are missed.",
+            "key": "recall",
+            "name": "Recall",
+            "producedBy": [
+                "objectDetection@1",
+                "positionedObjects@1",
+                "classification@1",
+                "labelSet@1"
+            ],
+            "summary": "True positives divided by true positives plus false negatives.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average F1 across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Higher is better. Balances precision and recall into one detection or class-set score.",
+            "key": "f1",
+            "name": "F1",
+            "producedBy": [
+                "objectDetection@1",
+                "positionedObjects@1",
+                "classification@1",
+                "labelSet@1"
+            ],
+            "summary": "2TP / (2TP + FP + FN) for positioned objects or class sets; the case mean is not micro or macro F1.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average true positives across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "count",
+            "interpretation": "Higher usually means more correct matches, but compare with false positives and false negatives.",
+            "key": "truePositiveCount",
+            "name": "True Positive Count",
+            "producedBy": [
+                "boolean@1",
+                "label@1",
+                "objectDetection@1",
+                "positionedObjects@1",
+                "classification@1",
+                "labelSet@1"
+            ],
+            "summary": "Number of expected semantic items matched by actual semantic items.",
+            "unit": "count"
+        },
+        {
+            "aggregation": "sum, count, and average false positives across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "lowerIsBetter",
+            "displayFormat": "count",
+            "interpretation": "Lower is better. Counts extra predictions that did not match expected detections.",
+            "key": "falsePositiveCount",
+            "name": "False Positive Count",
+            "producedBy": [
+                "boolean@1",
+                "label@1",
+                "objectDetection@1",
+                "positionedObjects@1",
+                "classification@1",
+                "labelSet@1"
+            ],
+            "summary": "Number of actual semantic items that did not match expected semantic items.",
+            "unit": "count"
+        },
+        {
+            "aggregation": "sum, count, and average false negatives across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "lowerIsBetter",
+            "displayFormat": "count",
+            "interpretation": "Lower is better. Counts expected detections the workflow missed.",
+            "key": "falseNegativeCount",
+            "name": "False Negative Count",
+            "producedBy": [
+                "boolean@1",
+                "label@1",
+                "objectDetection@1",
+                "positionedObjects@1",
+                "classification@1",
+                "labelSet@1"
+            ],
+            "summary": "Number of expected semantic items that were not matched by actual semantic items.",
+            "unit": "count"
+        },
+        {
+            "aggregation": "sum, count, and average true negatives across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "informational",
+            "displayFormat": "count",
+            "interpretation": "Useful for binary classification context; compare with dataset slice composition before optimizing.",
+            "key": "trueNegativeCount",
+            "name": "True Negative Count",
+            "producedBy": ["boolean@1", "classification@1", "labelSet@1"],
+            "summary": "Expected false boolean values predicted false, or configured vocabulary classes correctly absent from both class sets.",
+            "unit": "count"
+        },
+        {
+            "aggregation": "sum, count, and average coverage IoU across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Higher is better. One means the merged predicted and ground-truth intervals cover exactly the same span on the axis.",
+            "key": "coverageIou",
+            "name": "Coverage IoU",
+            "producedBy": ["intervalCoverage@1"],
+            "summary": "Intersection over union of the merged predicted and ground-truth intervals on the configured axis.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average coverage precision across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Higher is better. Drops when predicted coverage extends beyond the ground-truth span on the axis.",
+            "key": "coveragePrecision",
+            "name": "Coverage Precision",
+            "producedBy": ["intervalCoverage@1"],
+            "summary": "Share of the merged predicted interval length that overlaps the ground-truth intervals.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average coverage recall across evaluated cases.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Higher is better. Drops when parts of the ground-truth extent are missed by predicted coverage.",
+            "key": "coverageRecall",
+            "name": "Coverage Recall",
+            "producedBy": ["intervalCoverage@1"],
+            "summary": "Share of the merged ground-truth interval length that overlaps the predicted intervals.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average absolute center error across matched interval pairs.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "lowerIsBetter",
+            "displayFormat": "number",
+            "interpretation": "Lower is better. Zero means matched predicted intervals share the same axis center as ground truth.",
+            "key": "meanAbsoluteCenterDelta",
+            "name": "Mean Absolute Center Delta",
+            "producedBy": ["intervalCoverage@1"],
+            "summary": "Average absolute difference in axis center between greedily matched predicted and ground-truth intervals.",
+            "unit": "scalar"
+        },
+        {
+            "aggregation": "sum, count, and average absolute size error across matched interval pairs.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "lowerIsBetter",
+            "displayFormat": "number",
+            "interpretation": "Lower is better. Zero means matched predicted intervals share the same axis size as ground truth.",
+            "key": "meanAbsoluteSizeDelta",
+            "name": "Mean Absolute Size Delta",
+            "producedBy": ["intervalCoverage@1"],
+            "summary": "Average absolute difference in axis size between greedily matched predicted and ground-truth intervals.",
+            "unit": "scalar"
+        },
+        {
+            "aggregation": "Equal-weight mean across cases; pooled dataset mIoU is separately available at CheckAggregate.segmentation.meanIou.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Macro mean of IoU over classes with nonzero union. Empty comparisons score 1.",
+            "key": "meanIou",
+            "name": "mIoU",
+            "producedBy": ["segmentation@1"],
+            "summary": "Macro mean of IoU over classes with nonzero union. Empty comparisons score 1.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average across evaluated cases; ratios here are case means, not pooled pixel ratios.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Micro pixel precision across selected classes.",
+            "key": "pixelPrecision",
+            "name": "Pixel Precision",
+            "producedBy": ["segmentation@1"],
+            "summary": "Micro pixel precision across selected classes.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average across evaluated cases; ratios here are case means, not pooled pixel ratios.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Micro pixel recall across selected classes.",
+            "key": "pixelRecall",
+            "name": "Pixel Recall",
+            "producedBy": ["segmentation@1"],
+            "summary": "Micro pixel recall across selected classes.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average across evaluated cases; ratios here are case means, not pooled pixel ratios.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Micro pixel Dice coefficient across selected classes.",
+            "key": "pixelDice",
+            "name": "Pixel Dice / F1",
+            "producedBy": ["segmentation@1"],
+            "summary": "Micro pixel Dice coefficient across selected classes.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average across evaluated cases; ratios here are case means, not pooled pixel ratios.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "informational",
+            "displayFormat": "number",
+            "interpretation": "Sum of correctly predicted class-pixel memberships.",
+            "key": "pixelTruePositiveCount",
+            "name": "True Positive Pixels",
+            "producedBy": ["segmentation@1"],
+            "summary": "Sum of correctly predicted class-pixel memberships.",
+            "unit": "count"
+        },
+        {
+            "aggregation": "sum, count, and average across evaluated cases; ratios here are case means, not pooled pixel ratios.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "lowerIsBetter",
+            "displayFormat": "number",
+            "interpretation": "Sum of extra predicted class-pixel memberships.",
+            "key": "pixelFalsePositiveCount",
+            "name": "False Positive Pixels",
+            "producedBy": ["segmentation@1"],
+            "summary": "Sum of extra predicted class-pixel memberships.",
+            "unit": "count"
+        },
+        {
+            "aggregation": "sum, count, and average across evaluated cases; ratios here are case means, not pooled pixel ratios.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "lowerIsBetter",
+            "displayFormat": "number",
+            "interpretation": "Sum of missed class-pixel memberships.",
+            "key": "pixelFalseNegativeCount",
+            "name": "False Negative Pixels",
+            "producedBy": ["segmentation@1"],
+            "summary": "Sum of missed class-pixel memberships.",
+            "unit": "count"
+        },
+        {
+            "aggregation": "sum, count, and average across evaluated cases; CheckAggregate.labelSet.labelAccuracy pools every class decision.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "higherIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Higher is better, but sparse labels inflate it: missing one of 100 classes still scores 0.99. Do not use it as the primary score.",
+            "key": "labelAccuracy",
+            "name": "Label Accuracy",
+            "producedBy": ["classification@1", "labelSet@1"],
+            "summary": "Correct per-class decisions (TP + TN) divided by the configured vocabulary size; emitted only with fixed classes.",
+            "unit": "ratio"
+        },
+        {
+            "aggregation": "sum, count, and average across evaluated cases; CheckAggregate.labelSet.hammingLoss pools every class decision.",
+            "defaultAggregation": "sumCountAverage",
+            "direction": "lowerIsBetter",
+            "displayFormat": "percent",
+            "interpretation": "Lower is better. Equals 1 - labelAccuracy for the same vocabulary.",
+            "key": "hammingLoss",
+            "name": "Hamming Loss",
+            "producedBy": ["classification@1", "labelSet@1"],
+            "summary": "Wrong per-class decisions (FP + FN) divided by the configured vocabulary size; emitted only with fixed classes.",
+            "unit": "ratio"
+        }
+    ]
+}

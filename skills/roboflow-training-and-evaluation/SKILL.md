@@ -229,6 +229,8 @@ Deep link: `https://app.roboflow.com/{workspace}/{project}/evaluation/{versionId
 
 **When a user asks why a model is bad or how to improve it, start with `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`.** It maps every evaluation panel to a root cause (taxonomy, mislabeled data, inconsistent label standards, coverage gaps, too little data, bad data) and says which data to add next. The improvement playbook holds the compact decision tree and the training-side fixes (architecture, size, augmentation, overfitting).
 
+To measure a whole Workflow against ground truth instead, use `roboflow-workflow-evals`.
+
 The MCP server exposes every evaluation panel. All require the `model-eval:read` scope and return `409 model_eval_not_done` while an evaluation is still running.
 
 | Panel | Tool |

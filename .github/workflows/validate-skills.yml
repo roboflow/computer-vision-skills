@@ -1,0 +1,46 @@
+name: Validate skills
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Test the repository scripts
+        run: python -m unittest discover -s .github/scripts
+      - name: Validate skill folders
+        run: python .github/scripts/validate_skills.py
+
+  generated-references:
+    # Files under skills/*/reference/ are generated from an engine release. Only engine-sync
+    # pull requests (opened by the roboflow/workflow-evals release workflow) may change them.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generated references change only in engine-sync pull requests
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HAS_SYNC_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'engine-sync') }}
+        run: |
+          set -euo pipefail
+          changed=$(git diff --name-only "$BASE_SHA"...HEAD -- 'skills/*/reference/*')
+          if [ -n "$changed" ] && [ "$HAS_SYNC_LABEL" != "true" ]; then
+            echo "::error::These generated files changed without the engine-sync label:"
+            echo "$changed"
+            echo "Regenerate them with npm run agent:export-public in roboflow/workflow-evals instead of editing them."
+            exit 1
+          fi

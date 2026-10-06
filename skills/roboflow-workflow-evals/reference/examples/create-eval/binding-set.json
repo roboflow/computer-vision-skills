@@ -1,0 +1,18 @@
+{
+    "id": "package-count-bindings",
+    "schemaVersion": "workflow-evals/binding-set/v1",
+    "inputs": {
+        "image": {
+            "kind": "path",
+            "path": "$.image"
+        }
+    },
+    "outputs": {
+        "package-count": {
+            "value": {
+                "kind": "path",
+                "path": "$[0].package_count"
+            }
+        }
+    }
+}
