@@ -1,7 +1,8 @@
 name: Promote engine sync
 
 # Draft engine-sync pull requests update the Workflow Evals skill's reference for an engine
-# release. Mark each one ready once production serves that engine version.
+# release. Mark the newest one ready once production serves that engine version, and close
+# older drafts it supersedes.
 
 on:
   schedule:
@@ -27,6 +28,7 @@ jobs:
       - name: Promote drafts production can serve
         env:
           GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           ROBOFLOW_API_KEY: ${{ secrets.ROBOFLOW_API_KEY }}
           ROBOFLOW_WORKSPACE: ${{ vars.ROBOFLOW_WORKSPACE }}
           ROBOFLOW_API_URL: ${{ vars.ROBOFLOW_API_URL }}

@@ -211,7 +211,7 @@ python3 .github/scripts/validate_skills.py
 
 It enforces the folder-name match, the 20,000-character `SKILL.md` limit, at most 20 companion files, and working relative links.
 
-`skills/roboflow-workflow-evals/reference/` is generated from each Workflow Evals engine release, which opens a draft `engine-sync` pull request here. Do not edit those files by hand. The draft is marked ready once production serves that engine version.
+`skills/roboflow-workflow-evals/reference/` is generated from each Workflow Evals engine release, which opens a draft `engine-sync` pull request here. Do not edit those files by hand. The draft is marked ready once production serves that engine version, and an older draft that a newer sync supersedes is closed.
 
 ## License
 

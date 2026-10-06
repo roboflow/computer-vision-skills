@@ -11,6 +11,12 @@ from unittest import mock
 
 import promote_engine_sync as promotion
 
+REPO = "roboflow/computer-vision-skills"
+
+
+def pull(number: int, draft: bool = True) -> dict:
+    return {"number": number, "isDraft": draft, "headRefName": f"workflow-evals/{number}"}
+
 
 class PromoteEngineSyncTest(unittest.TestCase):
     def test_versions_compare_numerically(self) -> None:
@@ -18,51 +24,43 @@ class PromoteEngineSyncTest(unittest.TestCase):
         self.assertTrue(promotion.is_served("0.5.0", "0.5.0"))
         self.assertFalse(promotion.is_served("0.2.1", "0.5.0"))
 
-    def run_promote(self, pulls, targets, served):
+    def test_only_the_newest_draft_ahead_of_main_is_a_candidate(self) -> None:
+        targets = [(pull(7), "0.5.0"), (pull(8), "0.10.0"), (pull(9), "0.4.0")]
+        candidates, superseded = promotion.triage(targets, merged_version="0.4.0")
+        self.assertEqual([p["number"] for p, _ in candidates], [8])
+        reasons = {p["number"]: reason for p, _, reason in superseded}
+        self.assertIn("targets engine 0.10.0", reasons[7])
+        self.assertIn("already ships engine 0.4.0", reasons[9])
+
+    def test_a_ready_newer_sync_supersedes_older_drafts(self) -> None:
+        targets = [(pull(7), "0.5.0"), (pull(8, draft=False), "0.6.0")]
+        candidates, superseded = promotion.triage(targets, merged_version=None)
+        self.assertEqual(candidates, [])
+        self.assertEqual([p["number"] for p, _, _ in superseded], [7])
+
+    def test_unreadable_drafts_are_skipped(self) -> None:
+        def read(_repository: str, branch: str) -> str:
+            if branch.endswith("/7"):
+                raise subprocess.CalledProcessError(1, ["gh"])
+            return "0.5.0"
+
+        targets = promotion.read_targets(REPO, [pull(7), pull(8)], read)
+        self.assertEqual([p["number"] for p, _ in targets], [8])
+
+    def test_promote_marks_ready_only_what_production_serves(self) -> None:
         calls: list[tuple[str, ...]] = []
-
-        def read_target(_repository: str, branch: str) -> str:
-            target = targets[branch]
-            if isinstance(target, Exception):
-                raise target
-            return target
-
-        promoted = promotion.promote(
-            "roboflow/computer-vision-skills",
-            pulls,
-            served,
-            read_target=read_target,
-            run_gh=lambda *args: calls.append(args) or "",
-        )
-        return promoted, calls
-
-    def test_promotes_only_drafts_production_can_serve(self) -> None:
-        promoted, calls = self.run_promote(
-            [{"number": 7, "headRefName": "a"}, {"number": 8, "headRefName": "b"}],
-            {"a": "0.5.0", "b": "0.6.0"},
-            "0.5.2",
-        )
-        self.assertEqual(promoted, [7])
-        self.assertEqual(calls[0], ("pr", "ready", "7", "--repo", "roboflow/computer-vision-skills"))
-        self.assertEqual(calls[1][:3], ("pr", "comment", "7"))
-        self.assertEqual(len(calls), 2)
-
-    def test_promotes_only_the_newest_servable_draft(self) -> None:
-        promoted, calls = self.run_promote(
-            [{"number": 7, "headRefName": "a"}, {"number": 9, "headRefName": "b"}],
-            {"a": "0.5.0", "b": "0.10.0"},
-            "0.10.0",
-        )
-        self.assertEqual(promoted, [9])
-        self.assertEqual([call[:3] for call in calls], [("pr", "ready", "9"), ("pr", "comment", "9")])
-
-    def test_one_unreadable_draft_does_not_block_the_others(self) -> None:
-        promoted, _ = self.run_promote(
-            [{"number": 7, "headRefName": "gone"}, {"number": 8, "headRefName": "b"}, {"number": 10, "headRefName": "c"}],
-            {"gone": subprocess.CalledProcessError(1, ["gh"]), "b": "0.5.0", "c": "not-a-version"},
-            "0.5.0",
-        )
+        record = lambda *args: calls.append(args) or ""  # noqa: E731
+        promoted = promotion.promote(REPO, [(pull(8), "0.6.0")], "0.5.2", run_gh=record)
+        self.assertEqual((promoted, calls), ([], []))
+        promoted = promotion.promote(REPO, [(pull(8), "0.6.0")], "0.6.0", run_gh=record)
         self.assertEqual(promoted, [8])
+        self.assertEqual([call[:3] for call in calls], [("pr", "ready", "8"), ("pr", "comment", "8")])
+
+    def test_superseded_drafts_are_closed_with_the_reason(self) -> None:
+        calls: list[tuple[str, ...]] = []
+        promotion.close_superseded(REPO, [(pull(7), "0.5.0", "another engine-sync pull request targets engine 0.6.0")], run_gh=lambda *a: calls.append(a) or "")
+        self.assertEqual(calls[0][:3], ("pr", "close", "7"))
+        self.assertIn("targets engine 0.6.0", calls[0][-1])
 
     def test_reads_the_served_version(self) -> None:
         response = io.BytesIO(json.dumps({"engine": {"version": "0.5.0"}}).encode())
@@ -81,12 +79,18 @@ class PromoteEngineSyncTest(unittest.TestCase):
         self.assertNotIn("secret-key", str(raised.exception))
         self.assertIsNone(raised.exception.__cause__)
 
-    def test_without_credentials_nothing_is_promoted(self) -> None:
-        env = {"GITHUB_REPOSITORY": "roboflow/computer-vision-skills"}
+    def test_without_credentials_superseded_drafts_close_but_nothing_is_promoted(self) -> None:
+        env = {"GITHUB_REPOSITORY": REPO}
+        targets = {"workflow-evals/7": "0.5.0", "workflow-evals/8": "0.6.0", "main": "0.4.0"}
         with mock.patch.dict(promotion.os.environ, env, clear=True), mock.patch.object(
-            promotion, "draft_sync_pull_requests", return_value=[{"number": 1, "headRefName": "b"}]
-        ), mock.patch.object(promotion, "promote") as promote:
+            promotion, "open_sync_pull_requests", return_value=[pull(7), pull(8)]
+        ), mock.patch.object(
+            promotion, "target_version", side_effect=lambda _repo, ref: targets[ref]
+        ), mock.patch.object(promotion, "close_superseded") as close, mock.patch.object(
+            promotion, "promote"
+        ) as promote:
             self.assertEqual(promotion.main(), 0)
+        self.assertEqual([p["number"] for p, _, _ in close.call_args.args[1]], [7])
         promote.assert_not_called()
 
 
