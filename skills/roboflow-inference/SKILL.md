@@ -5,7 +5,7 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 
 > **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
 
-> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its inference tools over raw HTTP; auth is handled for OAuth and API-key connections. Use **`workflows_run`** for a saved, published Workflow by URL slug (`workflow_id`); the workspace comes from the connection. For single-model calls use `models_infer`. Use `workflow_specs_validate` before saving or running a new specification, and `workflow_specs_run` to test an unpublished draft or run an authorized one-off.
+> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its inference tools over raw HTTP; auth is handled for OAuth and API-key connections. Use **`workflows_run`** for a saved, published Workflow by URL slug (`workflow_id`); the workspace comes from the connection. For single-model calls use `models_infer`. Use `workflow_specs_validate` before saving a new specification with `workflows_create` or `workflows_update`.
 
 # Inference & Deployment
 
@@ -13,10 +13,10 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 
 > **Authoring Workflows.** Save reusable Workflows on the Roboflow platform and run published versions by **identifier**. Choose the authoring path from the user's request and existing session context:
 >
-> - **Mode A: Agent-driven (MCP, in-session).** Use direct authoring tools for straightforward Workflows, grounding the design with `workflow_blocks_list` / `workflow_blocks_get_schema`. Use `agent_chat` for complex construction. Validate with `workflow_specs_validate` before saving or running. Edits saved by `agent_chat` are drafts; test them with `workflow_specs_run` before publishing when execution is authorized.
+> - **Mode A: Agent-driven (MCP, in-session).** Use direct authoring tools for straightforward Workflows: start from an existing Workflow (`workflows_list`, then `workflows_get`) and check block types in the `roboflow://workflows/blocks` resources. Validate with `workflow_specs_validate`, save with `workflows_create` or `workflows_update`, and run the published version with `workflows_run`. Use `agent_chat` for complex construction. Edits saved by `agent_chat` are drafts until published.
 > - **Mode B: Platform-driven (Roboflow app + in-app agent).** Use when the user wants visual interaction or the client cannot complete the task. Send the Workflow's returned `app_url`, or use `roboflow-product-navigation` for the correct builder link. The user can review, edit, and test there.
 >
-> `workflows_run` executes the latest published version, not an agent's draft. Use `agent_workflow_publish` only when publishing is authorized. Draft testing does not require publishing. See [workflows](./workflows.md) "Authoring & Deployment" for the full flow.
+> `workflows_run` executes the latest published version, not an agent's draft. Use `agent_workflow_publish` only when publishing is authorized. Testing a draft in the app preview does not require publishing. See [workflows](./workflows.md) "Authoring & Deployment" for the full flow.
 
 > **For live video (webcam, RTSP, file):** the MCP `workflows_run` tool only handles single static images. For live video, present the user with **three options** (don't pick one silently): **(A)** WebRTC → serverless GPU, **(B)** WebRTC → local `inference server`, or **(C)** in-process `InferencePipeline`. They have different setup costs, dep sizes, and latency characteristics — surface a brief 1-line summary of each and let the user choose. See `roboflow://skills/roboflow-inference/workflows` ("Video Stream" section) for full code and the comparison table.
 
@@ -54,8 +54,8 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 | `trainings_list` | Find runs and their `trainingId` for a project and version |
 | `trainings_get` | Check a known run with `project_id`, `version_number`, and `training_id`; for NAS model details use the paginated path in the training skill |
 | **`workflows_run`** | Run the published Workflow by `workflow_id` (URL slug); workspace comes from the connection. Optional `parameters`. |
-| `workflow_specs_validate` | Validate an inline workflow spec without running it — use before any inline run. |
-| `workflow_specs_run` | Test an unpublished draft or run an authorized one-off from an inline specification |
+| `workflow_specs_validate` | Validate a workflow spec without running it. Use before saving and before any inline run. |
+| `workflow_specs_run` | Optional, not on every client: test an unpublished draft or run an authorized one-off from an inline specification |
 
 ## Local tooling: when MCP isn't enough
 
@@ -79,7 +79,7 @@ Mitigation strategies:
 4. **Post-process** -- if consuming raw responses, drop or simplify the `points` array when you only need bounding boxes
 5. **Avoid returning raw segmentation results through LLM context** -- extract only the fields you need (class counts, bounding boxes) and discard polygon data
 
-**Workflow image outputs are a second culprit.** Visualization blocks (bounding box, polygon, mask, label, halo, …) emit rendered images as base64-encoded blobs inside the response — a 720p annotated frame is hundreds of KB of JSON-escaped string. When you call `workflows_run` / `workflow_specs_run` via MCP, this routinely overflows the tool-result token budget. Decode every image-shaped output (`{"type": "base64", "value": "..."}`) and write it to disk instead of carrying it through agent context. Don't hard-code field names — the output keys are whatever the workflow author declared via `JsonField`; iterate `output.keys()` and shape-check.
+**Workflow image outputs are a second culprit.** Visualization blocks (bounding box, polygon, mask, label, halo, …) emit rendered images as base64-encoded blobs inside the response, and a 720p annotated frame is hundreds of KB of JSON-escaped string. When you call `workflows_run` via MCP, this routinely overflows the tool-result token budget. Decode every image-shaped output (`{"type": "base64", "value": "..."}`) and write it to disk instead of carrying it through agent context. Don't hard-code field names: the output keys are whatever the workflow author declared via `JsonField`; iterate `output.keys()` and shape-check.
 
 ## Batch Processing
 

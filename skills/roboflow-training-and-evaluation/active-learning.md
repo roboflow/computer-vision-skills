@@ -27,9 +27,9 @@ Image Input
       → Review → annotate/correct → generate version → train → update project model
 ```
 
-The Project Model block is managed by the Roboflow Workflow builder rather than exposed as a normal block manifest through `workflow_blocks_list`. Do not substitute a regular model block plus Dataset Upload just because Project Model is absent from that catalog.
+The Project Model block is managed by the Roboflow Workflow builder rather than listed as a normal block in the `roboflow://workflows/blocks` catalog. Do not substitute a regular model block plus Dataset Upload just because Project Model is absent from that catalog.
 
-Use a **Dataset Upload block** only when the user explicitly needs bespoke collection routing or a different target project that project-level Active Learning does not cover. For that exception, use `workflow_blocks_get_schema` with the block's `type` (or its manifest key from `workflow_blocks_list`) instead of relying on hardcoded properties. Follow the Mode A or Mode B authoring flow in `roboflow://skills/roboflow-inference/SKILL` to create and save the Workflow.
+Use a **Dataset Upload block** only when the user explicitly needs bespoke collection routing or a different target project that project-level Active Learning does not cover. For that exception, read its schema from `roboflow://workflows/blocks/{type}` instead of relying on hardcoded properties. Follow the Mode A or Mode B authoring flow in `roboflow://skills/roboflow-inference/SKILL` to create and save the Workflow.
 
 ## Filtering What Gets Collected
 

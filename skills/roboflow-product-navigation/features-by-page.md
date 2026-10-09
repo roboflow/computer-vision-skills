@@ -85,10 +85,10 @@ Base URL: `https://app.roboflow.com`
 |--------|---------|-------------|
 | Create workflow | `/{ws}/workflows` -> Create | -- |
 | Edit workflow (visual) | `/{ws}/workflows/{id}` | -- |
-| Edit workflow JSON | `/{ws}/workflows/{id}` -> JSON tab | MCP: `workflow_specs_validate` |
-| Test workflow | `/{ws}/workflows/{id}` -> Preview/Test | MCP: `workflows_run`, `workflow_specs_run` |
+| Edit workflow JSON | `/{ws}/workflows/{id}` -> JSON tab | MCP: `workflow_specs_validate`, `workflows_update` |
+| Test workflow | `/{ws}/workflows/{id}` -> Preview/Test | MCP: `workflows_run` |
 | Deploy workflow | `/{ws}/workflows/{id}` -> Deploy | Inference SDK, REST API |
-| List available blocks | `/{ws}/workflows/{id}` -> block palette | MCP: `workflow_blocks_list` |
+| List available blocks | `/{ws}/workflows/{id}` -> block palette | MCP resource: `roboflow://workflows/blocks` |
 
 ## Universe (Pretrained Models & Datasets)
 
