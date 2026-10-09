@@ -2,7 +2,7 @@
 
 > **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-inference`) over fetching `roboflow://skills/roboflow-inference/workflows` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
-> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer **`workflows_run`** for a saved, published Workflow by URL slug (`workflow_id`); workspace comes from the OAuth or API-key connection. Use `workflow_specs_run` to test an unpublished draft or run an authorized one-off. See "Authoring & Deployment" below.
+> **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer **`workflows_run`** for a saved, published Workflow by URL slug (`workflow_id`); workspace comes from the OAuth or API-key connection. To build one, start from an existing Workflow, validate with `workflow_specs_validate`, and save with `workflows_create` or `workflows_update`. See "Authoring & Deployment" below.
 
 ## What Are Workflows
 
@@ -27,9 +27,9 @@ Composable, multi-step computer vision pipelines built in a visual editor. Chain
 
 ## Block Reference
 
-Use `workflow_blocks_list` to get the live catalog. Below are the ~30 most common blocks grouped by category.
+Read the `roboflow://workflows/blocks` resource for the live catalog, and `roboflow://workflows/blocks/{type}` for one block's full schema (e.g. `roboflow://workflows/blocks/roboflow_core/open_ai@v7`). Below are the ~30 most common blocks grouped by category.
 
-> **Two block identifiers.** The "Workflow `type`" column below is the value you put in the `type` field of a workflow JSON spec (e.g. `roboflow_core/sam3@v3`). `workflow_blocks_list` also returns each block's long `manifest` key (e.g. `roboflow_workflows__core_steps__models__foundation__segment_anything3__v3__BlockManifest`). `workflow_blocks_get_schema` accepts either one. Prefer the versioned `type`: unversioned aliases such as `OpenAI` resolve to the oldest block version that declares them. If an MCP server older than roboflow-mcp#218 answers "Block not found" for a `type`, pass the `manifest` key instead.
+> **Two block identifiers.** The "Workflow `type`" column below is the value you put in the `type` field of a workflow JSON spec (e.g. `roboflow_core/sam3@v3`). The `roboflow://workflows/blocks` catalog also lists each block's long `manifest` key (e.g. `roboflow_workflows__core_steps__models__foundation__segment_anything3__v3__BlockManifest`). `roboflow://workflows/blocks/{type}` accepts either one. Prefer the versioned `type`: unversioned aliases such as `OpenAI` resolve to the oldest block version that declares them.
 
 ### Models
 
@@ -122,15 +122,15 @@ Step names: derive from block type, strip `roboflow_core/` and `@vX`, lowercase 
 
 ### Two ways to author reusable Workflows
 
-Choose the authoring path from the user's request and existing session context. Save reusable Workflows on the platform, retaining the document ID for updates and the URL slug for execution. Inline specifications also let you test a draft without publishing it.
+Choose the authoring path from the user's request and existing session context. Save reusable Workflows on the platform, retaining the document ID for updates and the URL slug for execution.
 
 #### Mode A: Agent-driven (MCP, in-session)
 
 **Use when:** the user asks the agent to build or edit a Workflow and MCP tools can complete the task.
 
-**How:** use direct tools for straightforward composition, grounding block types and properties with `workflow_blocks_list` / `workflow_blocks_get_schema`. Use `agent_chat` for complex construction; keep its `conversation_id` for follow-ups and poll a returned `run_id` with `agent_chat_result` rather than resending the same request. Validate the specification with `workflow_specs_validate` before saving or running it.
+**How:** use direct tools for straightforward composition. Start from a similar existing Workflow (`workflows_list`, then `workflows_get`) and copy its shape instead of writing a specification from scratch. Check block types and properties in the `roboflow://workflows/blocks` resources. Validate the specification with `workflow_specs_validate`, save it with `workflows_create` (or `workflows_update` for an existing Workflow), then run the published version with `workflows_run`. Use `agent_chat` for complex construction; keep its `conversation_id` for follow-ups and poll a returned `run_id` with `agent_chat_result` rather than resending the same request.
 
-`agent_chat` saves edits as drafts. Test the returned `specification` with `workflow_specs_run` when execution is authorized. Publish with `agent_workflow_publish` only when the user has authorized making the changes live. Report separately whether the Workflow was saved, tested, and published.
+`agent_chat` saves edits as drafts. Publish with `agent_workflow_publish` only when the user has authorized making the changes live, then run it with `workflows_run`. If your client also offers `workflow_specs_run`, you can optionally test the returned `specification` with it before publishing, when execution is authorized. Report separately whether the Workflow was saved, tested, and published.
 
 #### Mode B: Platform-driven (Roboflow app + in-app agent)
 
@@ -159,9 +159,9 @@ curl -s "https://api.roboflow.com/?api_key=YOUR_API_KEY"
 
 The response includes a `workspace` field whose `url` (slug) is what you pass as `workspace_name` in the SDK and what appears in `app.roboflow.com/<workspace-slug>/...`. Useful for: SDK scripts started from just a key, verifying which workspace a key belongs to, and CI environments where no human ever opens the dashboard.
 
-### Inline specs: draft tests and one-off runs
+### Inline specs: draft tests and one-off runs (optional)
 
-`workflow_specs_run` (MCP) and `client.run_workflow(specification=...)` (SDK) execute an inline specification without saving or publishing that definition. Use this to test the draft returned by `agent_chat`, for an authorized one-off, or for programmatic generation where saving is impractical. **Validate first** with `workflow_specs_validate`. Execution can still incur inference costs and run any side-effecting blocks in the specification; testing must stay within the user's authorization. For a reusable published Workflow, call `workflows_run` by URL slug.
+Some MCP clients also offer `workflow_specs_run`, and the SDK has `client.run_workflow(specification=...)`. Both execute an inline specification without saving or publishing that definition. Use this to test the draft returned by `agent_chat`, for an authorized one-off, or for programmatic generation where saving is impractical. **Validate first** with `workflow_specs_validate`. Execution can still incur inference costs and run any side-effecting blocks in the specification; testing must stay within the user's authorization. For a reusable published Workflow, call `workflows_run` by URL slug. Not every client has `workflow_specs_run`; when it is missing, save the Workflow with `workflows_create` or `workflows_update` and run it with `workflows_run`.
 
 ### Deploy
 
@@ -394,7 +394,9 @@ pipeline.join()                       # blocks until video source ends or pipeli
 | `workflows_list` | List all workflows in the workspace |
 | `workflows_get` | Get a workflow's definition |
 | **`workflows_run`** | Run the published Workflow by `workflow_id` (URL slug); workspace comes from the connection. Optional `parameters`. |
-| `workflow_blocks_list` | List available block types (filterable by category) — use during Mode A design |
-| `workflow_blocks_get_schema` | Full schema for a block (properties, required fields) — use during Mode A design |
-| `workflow_specs_validate` | Validate an inline workflow spec without running it — use before saving in Mode A and before any inline run |
-| `workflow_specs_run` | Test an unpublished draft or run an authorized one-off from an inline specification |
+| `workflow_specs_validate` | Validate a workflow spec without running it. Use before saving in Mode A and before any inline run |
+| `workflows_create` | Save a new Workflow from a validated spec |
+| `workflows_update` | Update a saved Workflow by document ID with a validated spec |
+| `workflow_specs_run` | Optional, not on every client: test an unpublished draft or run an authorized one-off from an inline specification |
+
+The block catalog and block schemas are MCP resources, not tools: `roboflow://workflows/blocks` lists every block, and `roboflow://workflows/blocks/{type}` returns one block's full schema. Use them during Mode A design.
