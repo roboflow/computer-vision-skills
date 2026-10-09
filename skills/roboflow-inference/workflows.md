@@ -29,7 +29,7 @@ Composable, multi-step computer vision pipelines built in a visual editor. Chain
 
 Use `workflow_blocks_list` to get the live catalog. Below are the ~30 most common blocks grouped by category.
 
-> **Two block identifiers.** The "Workflow `type`" column below is the value you put in the `type` field of a workflow JSON spec (e.g. `roboflow_core/sam3@v3`). `workflow_blocks_list` also returns each block's long `manifest` key (e.g. `inference__core__workflows__core_steps__models__foundation__segment_anything3__v3__BlockManifest`). `workflow_blocks_get_schema` accepts either one, or a type alias such as `OpenAI`, and prefers a block when an alias also names a query-language operation. If an MCP server older than roboflow-mcp#218 answers "Block not found" for a `type`, pass the `manifest` key instead.
+> **Two block identifiers.** The "Workflow `type`" column below is the value you put in the `type` field of a workflow JSON spec (e.g. `roboflow_core/sam3@v3`). `workflow_blocks_list` also returns each block's long `manifest` key (e.g. `roboflow_workflows__core_steps__models__foundation__segment_anything3__v3__BlockManifest`). `workflow_blocks_get_schema` accepts either one. Prefer the versioned `type`: unversioned aliases such as `OpenAI` resolve to the oldest block version that declares them. If an MCP server older than roboflow-mcp#218 answers "Block not found" for a `type`, pass the `manifest` key instead.
 
 ### Models
 
