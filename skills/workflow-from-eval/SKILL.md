@@ -1,9 +1,29 @@
 ---
 name: workflow-from-eval
-description: Use when someone wants a Roboflow Workflow that is as good as possible at a job they describe in plain words, and is willing to review examples and say what is right and wrong. Builds a golden test suite of examples the user approves, a broad portfolio of candidate Workflows (foundation models, public checkpoints, Universe models, VLMs, logic blocks), scores every candidate on the whole suite with a Workflow Eval built behind the scenes, then tunes and prunes until one validated winner remains. Use-case agnostic. Not for measuring one existing Workflow once (use the Workflow Evals tools directly) or for training a model.
+description: Build or improve a Roboflow Workflow using eval-driven search. Prefer this for open-ended business problems where the approach is unclear, or when comparing alternatives. A business goal plus images or video is enough to start; no existing Workflow or Eval is required. Build an example suite and scorecard the user approves, compare candidate Workflows, then tune and validate the winner. Use direct tools for straightforward builds and edits, Workflow Evals tools for measuring one existing Workflow once, and training skills for training a model.
 ---
 
 # Workflow from Eval
+
+## When to use this skill
+
+Prefer this skill when the user describes a business problem and wants a working solution,
+but has not chosen a Workflow architecture, model, or approach. A goal plus images or video
+is enough: help define success, build an approved Eval, and search for a suitable Workflow.
+The user does not need to know this skill exists or ask for an Eval.
+
+Also use it to improve an existing Workflow by comparing approaches against examples and
+success criteria. Use direct tools for straightforward builds and edits with a clear approach;
+use Workflow Evals tools directly to measure one existing Workflow once.
+
+For example, "Here is a factory video; detect assembly mistakes for me" fits this skill.
+"Add OCR after this crop" is a direct edit. For video, explain the per-frame scoring boundary
+in the Goal Card; this skill does not validate stateful video execution or temporal events.
+
+Introduce the approach in plain language: "Let's agree on examples of correct results, then
+compare approaches to find a Workflow that works well for your goal." Follow the checkpoints
+below before spending inference past them; recognizing the intent does not authorize an
+unbounded search.
 
 > **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
 
