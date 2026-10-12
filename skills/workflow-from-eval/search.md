@@ -99,8 +99,10 @@ Say what the Run is before starting it: "round 1: 13 candidates × 77 examples".
 - Reuse applies only when the Spec has no runtime (latency) check and the Dataset snapshot is
   unchanged since the candidate last ran; the response echoes `executionReuse: never`
   otherwise, and every candidate is re-executed. Budget for that after a correction round.
-- Poll with `workflow_evals_runs_get(wait_seconds=25)` after a 4-minute timer; 13 × 77 took
-  5 minutes, 9 × 77 with retries 12 minutes.
+- Start polling with `workflow_evals_runs_get(wait_seconds=25)` immediately after submission
+  and continue until the Run reaches a terminal state. Show meaningful progress changes and
+  surface failures promptly; do not wait a fixed interval before the first poll. In testing,
+  13 × 77 took 5 minutes, 9 × 77 with retries 12 minutes.
 - If the server rejects the joint Run, split in halves and retry once, then one Run per
   candidate, and record the error (code, message, requestId) in the report.
 
@@ -169,9 +171,11 @@ one you applied.
 When a provider returns 500 on every call: probe each provider with a one-image caption spec
 through `workflow_specs_run`, port the design to a working provider (native Qwen 27B is a
 good stand-in), keep the down family's manifests as files so they can join a later round, and
-note the outage with reference ids in the report. A provider still down on a second day is
-not an incident: tell the user to check the workspace's managed-key status or supply a key,
-and run the search on native models meanwhile.
+record the errors and reference ids in the report. Diagnose from the returned status, code
+and message: authentication or key-configuration errors warrant checking the workspace's
+managed-key status or supplying a key; rate-limit and server errors do not establish a key
+problem. If the error is inconclusive, report the cause as unknown. How long a failure
+persists does not identify its cause; use working providers meanwhile.
 
 ## Cleanup
 
@@ -222,6 +226,6 @@ What it is, in words. Key settings. Scores. Why it beat the runner-up. Where it 
 ## Resources
 | kind | name | id | status (kept / deleted / pre-existing) |
 
-## Notes for the goal-to-workflow skill
+## Notes for the workflow-from-eval skill
 Pointer to skill-bugs.md and friction.md.
 ```

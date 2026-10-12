@@ -71,7 +71,8 @@ Runs). Remove an entry once it stops being true.
 
 - **The Roboflow-managed VLM proxy** (`heavy-api.roboflow.com/apiproxy/{openai/v2, gemini,
   anthropic, openrouter}`) was down for 15 minutes in the first test and for three days in
-  the second. Native models keep working. A second-day failure is an account or key matter.
+  the second. Native models kept working. These observations do not establish the cause;
+  diagnose from the returned error, not the duration of the failure.
 - **Native Qwen 3.8 VL 27B** reads a 640x360 scoreboard exactly (72/72) from the full frame;
   7-10 s per frame alone, 10-16 s in big joint Runs. **Qwen 3.5 VL 2B / 0.8B and Qwen 3 VL
   2B** invent numbers ("11-11") and fail exact gates; Qwen 3 VL 2B returns numbers as strings
