@@ -1,9 +1,9 @@
 ---
-name: roboflow-optimize-workflow
+name: goal-to-workflow
 description: Use when someone wants a Roboflow Workflow that is as good as possible at a job they describe in plain words, and is willing to review examples and say what is right and wrong. Builds a golden test suite of examples the user approves, a broad portfolio of candidate Workflows (foundation models, public checkpoints, Universe models, VLMs, logic blocks), scores every candidate on the whole suite with a Workflow Eval built behind the scenes, then tunes and prunes until one validated winner remains. Use-case agnostic. Not for measuring one existing Workflow once (use the Workflow Evals tools directly) or for training a model.
 ---
 
-# Optimize a Workflow
+# Goal to Workflow
 
 > **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
 

@@ -146,7 +146,7 @@ The `npx skills` CLI works with any agent that reads `SKILL.md` files from `.cla
 - **roboflow-cloud-storage**: connecting S3/GCS buckets to mirror images into a workspace
 - **roboflow-data-management**: uploading images, labeling, dataset organization
 - **roboflow-inference**: running inference, workflows, workflow templates
-- **roboflow-optimize-workflow**: going from a job described in plain words to the best Workflow for it, scored with a Workflow Eval the user approves
+- **goal-to-workflow**: going from a job described in plain words to the best Workflow for it, scored with a Workflow Eval the user approves
 - **roboflow-plans-and-pricing**: Roboflow plans and credit usage
 - **roboflow-product-navigation**: where features live in the Roboflow product
 - **roboflow-training-and-evaluation**: training models, diagnosing why a model underperforms, and improving accuracy

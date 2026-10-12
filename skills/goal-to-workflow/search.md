@@ -222,6 +222,6 @@ What it is, in words. Key settings. Scores. Why it beat the runner-up. Where it 
 ## Resources
 | kind | name | id | status (kept / deleted / pre-existing) |
 
-## Notes for the optimize-workflow skill
+## Notes for the goal-to-workflow skill
 Pointer to skill-bugs.md and friction.md.
 ```
