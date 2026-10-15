@@ -8,10 +8,10 @@ Open `src/roboflow_mcp/core/surfaces.py` on the `main` branch of the roboflow-mc
 
 ## 2. Carry over default changes
 
-Find the last release tag (`git tag --list 'chatgpt-plugin-v*'`). If there is none yet, use the "Skills baseline" commit of the latest version in `CHANGELOG.md`. List what changed in the default skills since then:
+Take the "Skills baseline" commit of the latest version in `CHANGELOG.md` and list what changed in the default skills since then:
 
 ```bash
-git diff --stat <last tag or baseline>..HEAD -- skills/
+git diff --stat <baseline>..HEAD -- skills/
 ```
 
 For every changed file that has a version in `chatgpt/skills/`, bring the relevant change into the ChatGPT version. New skills are included automatically unless they are listed in `chatgpt/exclude.txt`.
@@ -52,7 +52,7 @@ Fix problems in `skills/` when they're wrong for every client, otherwise in `cha
 
 Reviewer credentials go only in the OpenAI dashboard, never in the repo.
 
-## 7. Merge, tag and release
+## 7. Merge and build
 
 1. Open a PR with the changes. CI builds and validates the package.
 2. After merge, build from a clean checkout of the merge commit:
@@ -61,8 +61,8 @@ Reviewer credentials go only in the OpenAI dashboard, never in the repo.
    python3 chatgpt/build.py --commit "$(git rev-parse HEAD)"
    ```
 
-3. Tag that commit `chatgpt-plugin-v<version>` and create a GitHub release with `chatgpt/build/roboflow-chatgpt-<version>.zip` and its `.provenance.json`.
+   The ZIP and its provenance file land in `chatgpt/build/`.
 
-## 8. Submit
+## 8. Submit and record
 
-A person uploads the ZIP from the release in the OpenAI dashboard, waits for the review, clicks **Publish plugin**, and records the outcome (submitted, approved, published, or rejected with the reason) in `chatgpt/CHANGELOG.md`.
+A person uploads `chatgpt/build/roboflow-chatgpt-<version>.zip` in the OpenAI dashboard, waits for the review and clicks **Publish plugin**. Then update the version's entry in `chatgpt/CHANGELOG.md` with the outcome (submitted, approved, published, or rejected with the reason), and set its "Skills baseline" to the merge commit the ZIP was built from, with the `package_sha256` from the provenance file. The next version diffs from that baseline.
