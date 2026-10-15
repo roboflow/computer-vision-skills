@@ -51,7 +51,8 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], str] | None:
             if len(value) < 2 or not value.endswith("'") or "'" in value[1:-1].replace("''", ""):
                 return None
             value = value[1:-1].replace("''", "'")
-        elif value.startswith(("[", "{", "|", ">", "&", "*", "!", "%", "@", "`")) or " #" in value:
+        elif (value.startswith(("[", "{", "|", ">", "&", "*", "!", "%", "@", "`", "#", "- ", "? ", ": "))
+              or value in ("-", "?", ":") or " #" in value or ": " in value or value.endswith(":")):
             return None
         if key in fields:
             return None

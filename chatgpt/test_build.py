@@ -112,9 +112,11 @@ class BuildTests(unittest.TestCase):
         text = path.read_text()
         start = text.index("description:")
         end = text.index("\n", start)
-        path.write_text(text[:start] + 'description: "unterminated' + text[end:])
-        with self.assertRaisesRegex(ValueError, "frontmatter"):
-            build(self.root)
+        for invalid in ('"unterminated', "foo: bar", "- item", "# comment"):
+            with self.subTest(invalid=invalid):
+                path.write_text(text[:start] + f"description: {invalid}" + text[end:])
+                with self.assertRaisesRegex(ValueError, "frontmatter"):
+                    build(self.root)
 
     def test_skill_name_must_match_folder(self):
         path = self.root / "skills/roboflow-universe/SKILL.md"
