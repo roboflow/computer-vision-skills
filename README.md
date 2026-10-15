@@ -149,6 +149,7 @@ The `npx skills` CLI works with any agent that reads `SKILL.md` files from `.cla
 - **workflow-from-eval**: build or improve a Workflow using eval-driven search; for open-ended business problems with images or video, or comparing alternatives
 - **roboflow-plans-and-pricing**: Roboflow plans and credit usage
 - **roboflow-product-navigation**: where features live in the Roboflow product
+- **roboflow-supervision**: visualizing annotations, labels, and predictions on images and videos with JavaScript or Python
 - **roboflow-training-and-evaluation**: training models, diagnosing why a model underperforms, and improving accuracy
 - **roboflow-universe**: searching and using Roboflow Universe
 
