@@ -5,8 +5,6 @@ description: Diagnose why a model underperforms before changing anything — run
 
 # Diagnosing an Underperforming Model
 
-> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-training-and-evaluation`) over fetching `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
-
 "Improve my model" has no default fix. The same low mAP can come from a taxonomy that no model can learn, from mislabeled images, from labelers applying different standards, from conditions the dataset never shows, from too few examples, from leaked or duplicated data, or simply from the wrong confidence threshold. Each has a different cure, and several cures are cheaper than training again.
 
 Two rules:

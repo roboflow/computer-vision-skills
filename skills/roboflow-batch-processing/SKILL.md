@@ -3,7 +3,7 @@ name: roboflow-batch-processing
 description: Use when running a Roboflow Workflow over many images or videos with batch processing — Asset Library jobs (the platform stages workspace images for you) or staged jobs (you stage external local/cloud files with the inference-cli), plus monitoring jobs, downloading results, and routing imports to datasources (bucket mirror) instead.
 ---
 
-> **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
 
 # Batch Processing
 

@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 """Poll a Roboflow Batch Processing job until it reaches a terminal state.
 
-The script is directly executable (shebang + exec bit set in git). Invoke as:
-
-    ./poll_batch_job.py <job_id> [--interval SECONDS] [--max-wait SECONDS]
-
-Or with an explicit interpreter:
+Invoke with an explicit interpreter:
 
     python poll_batch_job.py <job_id> [--interval SECONDS] [--max-wait SECONDS]
 

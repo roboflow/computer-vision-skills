@@ -3,7 +3,7 @@ name: roboflow-custom-weights-upload
 description: Use when uploading locally trained model weights (YOLO, RF-DETR, YOLO-NAS, PaliGemma, Florence-2) to Roboflow — the client-side Python SDK upload flow, safe API key handling, per-family packaging requirements, and verifying the upload.
 ---
 
-> **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
 
 # Custom Weights Upload
 
@@ -15,8 +15,7 @@ server, Colab) so Roboflow can convert, host, and serve it.
 Packaging reads the checkpoint from disk, so the upload always runs on the
 machine that has the weights — client-side, with the Python SDK flow below.
 
-The `models_custom_weights_upload_guide` MCP tool (named
-`models_upload_custom_weights` on older servers) is a guide, not an uploader:
+The `models_custom_weights_upload_guide` MCP tool is a guide, not an uploader:
 calling it returns this recipe and echoes back the arguments you passed
 (its `upload_mode` field says whether they describe a versioned or a
 workspace upload, or `undetermined` when they pin down neither). It never

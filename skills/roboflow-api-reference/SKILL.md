@@ -3,7 +3,7 @@ name: roboflow-api-reference
 description: Protocol-level facts for Roboflow REST and Inference APIs — URL patterns, auth, parameters, error codes, and SDK quick-start. For deployment strategy and Workflow execution patterns, see roboflow-inference.
 ---
 
-> **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
 
 > **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its tools (`projects_*`, `versions_*`, `models_*`, `workflows_*`, `images_*`, …) over raw REST calls — they handle auth, pagination, and typed responses for you. The REST patterns below stay relevant if you're not using MCP.
 
