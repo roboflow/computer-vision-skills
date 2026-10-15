@@ -31,6 +31,7 @@
     { "folder": "./skills/roboflow-inference" },
     { "folder": "./skills/roboflow-plans-and-pricing" },
     { "folder": "./skills/roboflow-product-navigation" },
+    { "folder": "./skills/draw-vision" },
     { "folder": "./skills/roboflow-training-and-evaluation" },
     { "folder": "./skills/roboflow-universe" }
   ],
