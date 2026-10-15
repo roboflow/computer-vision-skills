@@ -235,7 +235,8 @@ Workflow, say so. If the top two are tied on the first criterion, say which one 
 criterion picks and why; the user may still choose.
 
 Use the saved-result visual guidance in `search.md` when it clarifies the choice. Link the
-actual completed Run/Execution page when available; never invent a results URL. Include
+Eval for browsing its history and the completed finalists Run for exploring the reported
+results, following the app-link guidance in `search.md`. Include
 remaining failures and validation limitations, and save the visual artifacts with the report.
 
 Write `report.md` in the working folder (template in `search.md`) and
