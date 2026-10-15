@@ -2,11 +2,13 @@
 
 ## 1.0.3
 
-- Status: built, not submitted.
+- Status: submitted for review on 2026-10-15. Replaces an earlier hand-built 1.0.3 upload, which was deleted before it was reviewed.
+- Built from: `56c4a88` (the first build from this repo).
+- Package SHA-256: `8a5f762341300f6ff5f51c1af1fc83b45d54364da816356977d341c8675a3196`.
+- Hidden tools: roboflow-mcp `4e046185`.
+- Skills baseline for the next version: `56c4a88`.
 - Listing: short description "AI for the physical world", new long description, three starter prompts, a 1024 px icon, and brand colors `#6706CE` / `#8315F9`.
-- Skills: same as 1.0.2.
-- Skills baseline: `09ab7a7e` (the `skills/` commit this version's overrides were taken against). Diff from here when preparing the next version.
-- This directory was seeded from this version's package. A build from this repo labeled 1.0.3 also includes skills added since (such as `draw-vision`), so never submit one as 1.0.3; the next submission is 1.0.4.
+- Skills: adds `draw-vision`; removes references to tools and MCP Apps that no longer exist (`universe_search_app`, `create_project_app`, `models_upload_custom_weights`, `api_keys_unprotect`) and rewrites the "For agents" banners. `workflow-from-eval` stays out of the package because it depends on tools `/openai/mcp` hides.
 
 ## 1.0.2
 
