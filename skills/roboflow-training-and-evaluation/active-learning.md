@@ -5,8 +5,6 @@ description: Production feedback loop — use the Project Model Workflow block w
 
 # Active Learning on Roboflow
 
-> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-training-and-evaluation`) over fetching `roboflow://skills/roboflow-training-and-evaluation/active-learning` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
-
 Active learning closes the gap between your training dataset and the real world. Run production inference through a Project Model block, collect useful images for review, annotate or correct them, retrain, and update the project's model without rebuilding the Workflow.
 
 This is the right answer when a user asks how to:

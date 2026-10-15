@@ -1,7 +1,5 @@
 # Workflows
 
-> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-inference`) over fetching `roboflow://skills/roboflow-inference/workflows` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
-
 > **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer **`workflows_run`** for a saved, published Workflow by URL slug (`workflow_id`); workspace comes from the OAuth or API-key connection. Use `workflow_specs_run` to test an unpublished draft or run an authorized one-off. See "Authoring & Deployment" below.
 
 ## What Are Workflows
