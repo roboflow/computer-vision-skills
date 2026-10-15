@@ -7,7 +7,7 @@ The plugin ZIP bundles the skills and the listing. The tools come from the live 
 | Change | New plugin version? |
 |---|---|
 | New tool, new MCP App, or a changed tool description in roboflow-mcp | No. Deploy roboflow-mcp; ChatGPT sees it after OpenAI's automated checks. |
-| A tool hidden on `/openai/mcp` (`surfaces.py`) | Only if a skill in the package names it. The next build fails until the text is fixed. |
+| A tool hidden on `/openai/mcp` (`surfaces.py`) | Only if a skill in the package names it. Once `chatgpt/tools.json` is updated from `surfaces.py` (step 1), the build fails until the text is fixed. |
 | A skill edited, added or removed in `skills/` | Yes. ChatGPT only gets skill text from the ZIP. |
 | Listing changes: description, starter prompts, icon, test cases | Yes. |
 | Teaching the skills to use a new tool or App | Yes, since that's skill text. The tool itself already works without it. |
@@ -78,16 +78,17 @@ Fix problems in `skills/` when they're wrong for every client, otherwise in `cha
 
 Reviewer credentials go only in the OpenAI dashboard, never in the repo.
 
-### 7. Merge and build
+Then open a PR with the changes. CI builds and validates the package.
 
-1. Open a PR with the changes. CI builds and validates the package.
-2. After merge, build from a clean checkout of the merge commit:
+### 7. Build after merge
 
-   ```bash
-   python3 chatgpt/build.py --commit "$(git rev-parse HEAD)"
-   ```
+After the PR is merged, build from a clean checkout of the merge commit:
 
-   The ZIP and its provenance file land in `chatgpt/build/`.
+```bash
+python3 chatgpt/build.py --commit "$(git rev-parse HEAD)"
+```
+
+The ZIP and its provenance file land in `chatgpt/build/`.
 
 ### 8. Submit and record
 
