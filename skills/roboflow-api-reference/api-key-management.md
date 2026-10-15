@@ -231,7 +231,7 @@ If you're using the Roboflow MCP server, prefer these tools over raw REST calls:
 | `api_keys_revoke` | Permanently revoke a key |
 | `api_keys_roll` | Rotate a key: revoke it and mint a same-identity replacement (returns the one-time secret) |
 
-There is intentionally no `api_keys_unprotect` tool — removing the protected flag requires a deliberate dashboard action to prevent accidental exposure.
+There is intentionally no tool to unprotect a key. Removing the protected flag requires a deliberate dashboard action, to prevent accidental exposure.
 
 ## Python CLI
 

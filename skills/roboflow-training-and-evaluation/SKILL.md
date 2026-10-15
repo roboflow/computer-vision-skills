@@ -3,7 +3,7 @@ name: roboflow-training-and-evaluation
 description: Use when training Roboflow models, diagnosing why a model underperforms, improving accuracy, or setting up a production feedback loop — covers architecture selection, model IDs, checkpoints, Model Evaluation (confusion matrix, per-class metrics, MCP eval tools), the diagnosis-first improvement playbook, and Active Learning through the Project Model Workflow block.
 ---
 
-> **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
 
 # Training & Evaluation on Roboflow
 

@@ -66,8 +66,7 @@ Snapshot of a single job: planned vs current stage, output batch IDs per stage, 
 ```bash
 pip install inference-cli
 export ROBOFLOW_API_KEY=...
-skills/roboflow-inference/bin/poll_batch_job.py JOB_ID        # direct; relative to skill dir: bin/poll_batch_job.py
-# or: python skills/roboflow-inference/bin/poll_batch_job.py JOB_ID
+python skills/roboflow-inference/bin/poll_batch_job.py JOB_ID   # relative to the skill dir: bin/poll_batch_job.py
 # optional: --interval 30 --max-wait 7200
 ```
 

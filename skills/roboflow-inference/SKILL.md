@@ -3,7 +3,7 @@ name: roboflow-inference
 description: Deployment option comparison (serverless, dedicated, self-hosted, batch) and Workflow execution patterns. For raw API URL patterns, auth, and request/response formats, see roboflow-api-reference.
 ---
 
-> **For agents — source-of-truth:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills) and shipped with the Roboflow plugin. If your client has loaded the plugin (you'll see `roboflow:<name>` skills in your available skills list), use those local skills — they're read fresh from disk every session. The same content served as MCP resources at `roboflow://skills/<name>/...` is a fallback for clients without the plugin and may lag this repo. **Don't call `ReadMcpResourceTool` for `roboflow://skills/...` URIs when a local `roboflow:<name>` skill is available.**
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
 
 > **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its inference tools over raw HTTP; auth is handled for OAuth and API-key connections. Use **`workflows_run`** for a saved, published Workflow by URL slug (`workflow_id`); the workspace comes from the connection. For single-model calls use `models_infer`. Use `workflow_specs_validate` before saving or running a new specification, and `workflow_specs_run` to test an unpublished draft or run an authorized one-off.
 
