@@ -7,3 +7,6 @@
 cowork/build/
 cowork/appPackage/build/
 cowork/__pycache__/
+
+chatgpt/build/
+chatgpt/__pycache__/

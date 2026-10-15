@@ -1,0 +1,22 @@
+{
+  "source": "roboflow/roboflow-mcp src/roboflow_mcp/core/surfaces.py, OPENAI_SURFACE.hidden_tools",
+  "mcp_commit": "4e0461854b9289dd15c9829f17bdf49e2e0b620f",
+  "hidden": [
+    "workflow_blocks_get_schema",
+    "workflow_blocks_list",
+    "workflow_evals_agent_manifest",
+    "workflow_evals_agent_resource_get",
+    "workflow_evals_agent_resources_list",
+    "workflow_evals_capabilities",
+    "workflow_evals_case_preparations_resume",
+    "workflow_evals_case_preparations_start",
+    "workflow_evals_evaluators_get",
+    "workflow_evals_evaluators_list",
+    "workflow_evals_openapi_get",
+    "workflow_evals_runs_replay",
+    "workflow_evals_runs_retry_failed",
+    "workflow_evals_runs_start",
+    "workflow_evals_schema_get",
+    "workflow_specs_run"
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "roboflow-computer-vision",
+  "version": "1.0.3",
+  "description": "Roboflow computer vision tools and workflow skills for datasets, annotation, training, inference, and deployment.",
+  "author": {
+    "name": "Roboflow, Inc.",
+    "url": "https://roboflow.com"
+  },
+  "homepage": "https://roboflow.com",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Roboflow",
+        "shortDescription": "AI for the physical world",
+        "longDescription": "Roboflow turns images and videos into intelligence. Go from idea to production right from the conversation: find a ready-made model or train one on your images, build vision applications, and deploy them as an API or on your own devices. Roboflow is an end-to-end platform for vision AI.\n\nRoboflow works inside the workspaces your connected account can access, with the same permissions. Training, auto labeling, and deployments use your workspace credits. A Roboflow account is required.",
+        "developerName": "Roboflow, Inc.",
+        "category": "Developer Tools",
+        "capabilities": [],
+        "websiteURL": "https://roboflow.com",
+        "supportURL": "https://roboflow.com/contact",
+        "privacyPolicyURL": "https://roboflow.com/privacy",
+        "termsOfServiceURL": "https://roboflow.com/terms",
+        "logo": "./assets/roboflow-icon.png",
+        "composerIcon": "./assets/roboflow-icon.png",
+        "defaultPrompt": [
+          "Find a pretrained model to detect hard hats",
+          "Train a model to count cars in my parking lot video",
+          "Show my Roboflow projects and their image counts"
+        ],
+        "brandColor": "#6706CE",
+        "brandColorDark": "#8315F9"
+      },
+      "publication": {
+        "release_notes": "New listing description and starter prompts, brand colors, and a higher resolution icon."
+      },
+      "review": {
+        "demo_recording_url": "https://www.loom.com/share/3479126a15bb49a38ba1365bc90043a8",
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Discover projects without modifying the workspace. Requires a working reviewer OAuth login with the relevant read permissions. No local files or paid jobs are required.",
+              "prompt": "List up to five projects in my connected Roboflow workspace and show their names, project types, and image counts.",
+              "tools_triggered": "projects_list",
+              "expected_behavior": "Call projects_list with limit=5 and offset=0. Return projects, total, limit, and offset. Summarize actual records; an empty list is a valid result. Do not invent projects."
+            },
+            {
+              "description": "Discover saved workflows without running them. Requires a working reviewer OAuth login with the relevant read permissions. No local files or paid jobs are required.",
+              "prompt": "List up to five saved Roboflow workflows in my workspace. Do not run or edit any workflow.",
+              "tools_triggered": "workflows_list",
+              "expected_behavior": "Call workflows_list with limit=5 and offset=0. Summarize returned names and workflow identifiers and total count. Report an empty workspace accurately. No execution or write calls."
+            },
+            {
+              "description": "Find pretrained public models without copying anything into the workspace. Requires a working reviewer OAuth login with the relevant read permissions. No local files or paid jobs are required.",
+              "prompt": "Find pretrained hard hat detection models on Roboflow Universe that I could use without training my own. Show three with their links. Do not fork or copy anything.",
+              "tools_triggered": "universe_search",
+              "expected_behavior": "Call universe_search with a hard hat query and result_type=model. Summarize up to three returned records with their names, project types, classes, and real Universe links. Report fewer results accurately. No project creation, fork, or training."
+            },
+            {
+              "description": "Check a Workflow definition without saving or running it. Requires a working reviewer OAuth login with the relevant read permissions. No local files or paid jobs are required.",
+              "prompt": "Check whether this Roboflow Workflow definition is valid, without saving or running it: {\"version\": \"1.0\", \"inputs\": [{\"type\": \"WorkflowImage\", \"name\": \"image\"}], \"steps\": [{\"type\": \"roboflow_core/roboflow_object_detection_model@v2\", \"name\": \"detector\", \"images\": \"$inputs.image\", \"model_id\": \"yolov8n-640\", \"confidence\": 0.4}], \"outputs\": [{\"type\": \"JsonField\", \"name\": \"predictions\", \"selector\": \"$steps.detector.predictions\"}]}",
+              "tools_triggered": "workflow_specs_validate",
+              "expected_behavior": "Call workflow_specs_validate once with the given definition unchanged. Report the returned status (ok for this definition), and any returned error verbatim if validation fails. Do not create, update, or run a workflow."
+            },
+            {
+              "description": "Search public datasets without copying them into a workspace. Requires a working reviewer OAuth login with the relevant read permissions. No local files or paid jobs are required.",
+              "prompt": "Search Roboflow Universe for solar panel datasets and summarize three relevant results with their links and available license information. Do not fork or upload anything.",
+              "tools_triggered": "universe_search",
+              "expected_behavior": "Call universe_search with query=solar panel, result_type=dataset, page=1, limit=3. Summarize up to three returned records. Use real public production links and returned license metadata; report missing license information explicitly. No project creation or fork."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Image editing outside Roboflow computer vision workflows.",
+              "prompt": "Make this photo look like a watercolor painting and remove its background."
+            },
+            {
+              "description": "Generic cloud-bucket administration outside dataset ingestion.",
+              "prompt": "List every object in my S3 bucket and delete last year's server log files."
+            },
+            {
+              "description": "Calendar scheduling unrelated to computer vision.",
+              "prompt": "Schedule a meeting with my team tomorrow at noon to review our model results."
+            }
+          ]
+        }
+      }
+    }
+  }
+}
