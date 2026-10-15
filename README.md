@@ -143,7 +143,9 @@ The `npx skills` CLI works with any agent that reads `SKILL.md` files from `.cla
 ## Available skills
 
 - **roboflow-api-reference**: REST API and inference API references
+- **roboflow-batch-processing**: running a Workflow over many images or videos with batch processing, monitoring jobs, and downloading results
 - **roboflow-cloud-storage**: connecting S3/GCS buckets to mirror images into a workspace
+- **roboflow-custom-weights-upload**: uploading locally trained model weights (YOLO, RF-DETR, YOLO-NAS, PaliGemma, Florence-2) with the Python SDK
 - **roboflow-data-management**: uploading images, labeling, dataset organization
 - **roboflow-inference**: running inference, workflows, workflow templates
 - **workflow-from-eval**: build or improve a Workflow using eval-driven search; for open-ended business problems with images or video, or comparing alternatives
