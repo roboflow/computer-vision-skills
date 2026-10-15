@@ -1,9 +1,9 @@
 ---
-name: roboflow-supervision
-description: Visualize annotations, labels, and predictions on images and videos using supervision-js in JavaScript/TypeScript or Supervision in Python.
+name: draw-vision
+description: Draw computer vision annotations, labels, and predictions over images and videos using supervision-js in JavaScript/TypeScript or Supervision in Python.
 ---
 
-# Visualize with Supervision
+# Draw Vision
 
 Use the library that matches the implementation environment when drawing computer
 vision annotations over images or videos, including model outputs and ground truth.
