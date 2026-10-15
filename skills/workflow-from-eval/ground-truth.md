@@ -1,6 +1,6 @@
 # The test suite and the answer key
 
-The user reviews; you label. Their job is to flag what is wrong, not to fill in a form. The
+The user reviews; you label. Their job is to correct and confirm, not to fill in a form. The
 suite is append-only: examples are added or corrected in place, never deleted by the skill.
 A mislabeled example is fixed with `workflow_evals_cases_replace`, not dropped.
 
@@ -83,41 +83,37 @@ Do not ask the user to label from zero. Draft, then let them correct.
    your own visual review and say so in the review message and the report.
 4. Mark uncertain examples: transition frames in a video, occluded objects, ambiguous counts,
    possession on wide shots. These are where the user's judgment matters most.
-5. Save the draft as `answer-key-draft.json` (name, time, each answer, note) before asking.
+5. Save the draft as `answer-key-draft.json` (name, time, each answer, note, review status)
+   before asking. Distinguish agent-drafted, uncertain, and user-confirmed answers; record
+   which answers and rules the user confirmed rather than claiming every tile was reviewed.
 
-## The review: contact sheets, then the table
+## The review: uncertain examples first, full suite available
 
-The user judges from pictures. Build contact sheets with the proposed answers printed under
-each tile and send them to the user as images (in Claude Code, `SendUserFile` with
-`display: render`). Recipe (PIL is not
-guaranteed; ffmpeg is):
+Show a small selection of uncertain examples first and ask a concrete rule question with a
+recommendation: "Does re-seating an already connected bar count as connecting or placing?"
+Keep the full suite available as readable contact sheets or a navigable grid.
 
-```
-# one labeled tile per frame (fontfile: any TTF on the machine; macOS path shown)
-ffmpeg -i frames/f_013.jpg -vf "pad=640:430:0:0:white,\
-drawtext=fontfile=/System/Library/Fonts/Helvetica.ttc:text='f_013  32.5s':x=8:y=366:fontsize=24:fontcolor=black,\
-drawtext=fontfile=/System/Library/Fonts/Helvetica.ttc:text='scene=close_up  score=0-1  possession=brazil ?':x=8:y=398:fontsize=20:fontcolor=red" review/lab/f_013.jpg
-# 12 tiles per sheet, 3 columns
-ffmpeg -f concat -safe 0 -i review/lab/list1.txt -vf "tile=3x4:padding=6:color=white" -frames:v 1 review/sheet-1.jpg
-```
-
-Red captions mark the uncertain tiles. Escape `:` in drawtext text as `\:`. Keep each sheet
-under about 1 MB.
+Use `draw-vision` as routed in `SKILL.md` for media annotations. Make Case ids, video
+timestamps, proposed answers, and review status readable. Scalar/classification answers need
+captions, not invented boxes or masks; use geometry only when present in the ground truth.
+Inspect the rendered output for legibility. Display it in the conversation when supported;
+otherwise attach or open the saved artifact. If the skill is unavailable, use simple media
+with adjacent text captions. Keep artifacts under `review/` for the report.
 
 In the message, for video, group contiguous frames with the same answers into **ranges**:
 `f_000 to f_017: phase=empty, done=false`, with the `?` frames listed separately. For a
 folder of unrelated images, one row per example. Keep it under 60 rows; paginate otherwise.
 
-Then ask exactly this: "Which tiles are wrong, and what is the right answer? Anything you do
-not mention I will treat as correct." Also ask any rule question the review raised, with a
-recommendation, and read silence as acceptance of the recommendation.
+Ask the user to flag corrections and explicitly confirm the proposed answers and rules
+before marking Cases complete. Silence or an unmentioned tile is not approval. A confirmation
+of the full draft is sufficient; do not require a separate response for every tile.
 
 Apply corrections with `workflow_evals_cases_replace` (full replacement: send name, inputs,
-ground truth, slices, `ground_truth_state: "complete"`, and the current `revision`; delegate
+ground truth, slices, ground-truth state, and the current `revision`; delegate
 batches of 15 to subagents from a `cases/replace-*.json` file). When the user's corrections
 imply a different rule ("possession on close-ups too"), update the Goal Card wording, relabel
-every example the rule touches, and tell the user which ones. Then mark every Case
-`complete`.
+every example the rule touches, and show the affected answers for confirmation. Keep
+unconfirmed proposals `incomplete`; set `ground_truth_state: "complete"` after confirmation.
 
 ## Slices
 
@@ -130,12 +126,14 @@ slice filters.
 ## Shared failures are answer-key suspects
 
 After round 1, list the examples that every gate-passing candidate gets wrong. Send them as a
-sheet with the key's answer and the candidates' answer printed on each tile. In testing, 3 of 5 such frames were key errors. Fix the key with `cases_replace`; the next Run
+sheet using `draw-vision`, with the key's answer and actual candidates' answers on each tile.
+Shared misses warrant review, not an automatic key change. Confirm any correction with the
+user and apply it with `cases_replace`; the next Run
 scores everyone on the corrected suite (and re-executes everyone, since the snapshot changed).
 
 ## Growing the suite
 
-The suite grows in four moments, all with the same draft-flag-complete flow:
+The suite grows in four moments, all with the same draft-review-confirm-complete flow:
 
 - **Coverage.** An answer value with fewer than 5 examples: first sample the same source more
   densely around those moments (1 fps in the windows that contain them added 25 frames and

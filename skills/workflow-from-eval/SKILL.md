@@ -50,6 +50,11 @@ Guides in this skill:
   tune-and-prune rounds, the finalists Run, cleanup, the report.
 - `gotchas.md`: platform behaviors, known issues, and fallbacks that waste Runs.
 
+When showing annotations, labels, or predictions over images or videos, load the installed
+`draw-vision` skill (possibly named `roboflow:draw-vision`), or the bundled
+[`../draw-vision/SKILL.md`](../draw-vision/SKILL.md). It owns library and environment choices;
+load it only when rendering media evidence. If unavailable, use simple captioned media.
+
 ## Three principles that shape everything
 
 **The test suite only grows.** Every example is a test somebody approved. Examples are added
@@ -63,7 +68,7 @@ claim about a candidate counts until a Run has scored it on the suite. Differenc
 than the run-to-run noise you measured are ties, broken on the next criterion.
 
 **The user judges from pictures.** Every message that asks "which of these are right" ships
-the images with the proposed answer printed on each one (contact sheets, recipe in
+the images with the proposed answer printed on each one (contact sheets or a grid in
 `ground-truth.md`). A table of file names is not reviewable.
 
 ## Talk like this
@@ -173,10 +178,11 @@ Follow `ground-truth.md`.
    changed while a draft Case exists (`gotchas.md`).
 3. Upload them and create Cases as `incomplete`, with the first Workflow's answers as the
    draft answer key, corrected by your own review of every example.
-4. Show the review as contact sheets (ranges in the message for video) and ask the user
-   **only to flag what is wrong**. Apply corrections with `workflow_evals_cases_replace`; when
+4. Show uncertain examples first with concrete rule questions, keeping the full suite
+   reviewable as contact sheets or a grid. Ask the user to flag errors and explicitly confirm
+   the proposed answers and rules. Apply corrections with `workflow_evals_cases_replace`; when
    a correction changes a rule, rewrite the Goal Card line and relabel every example the rule
-   touches, then list those to the user. Mark every Case `complete`.
+   touches, then list those to the user. Mark Cases `complete` only after confirmation.
 5. Coverage: if any answer value has fewer than 5 examples, sample the same source more
    densely around those moments first, then ask for new media. Ranking on a rare value
    carries that caveat until the suite grows.
@@ -213,7 +219,7 @@ Follow `search.md`. In short:
 ### Phase 5: validate on new examples and deliver
 
 1. Ask for examples the search never saw: a second video, another shift or site, the rare
-   values. Add them to the suite the same way (draft, flag, complete). If no new source
+   values. Add them to the suite the same way (draft, review, confirm, complete). If no new source
    exists, say plainly that the winner is validated only on the examples it was searched on.
    Do not fake a holdout.
 2. **Finalists Run.** The top three plus every pre-existing Workflow, alone, `execution_reuse:
@@ -227,6 +233,10 @@ and next to any pre-existing Workflow, on the whole suite and on the new example
 remaining misses as a contact sheet; what it is, in plain words. If it is a pre-existing
 Workflow, say so. If the top two are tied on the first criterion, say which one the next
 criterion picks and why; the user may still choose.
+
+Use the saved-result visual guidance in `search.md` when it clarifies the choice. Link the
+actual completed Run/Execution page when available; never invent a results URL. Include
+remaining failures and validation limitations, and save the visual artifacts with the report.
 
 Write `report.md` in the working folder (template in `search.md`) and
 `skill-bugs.md` when the run is a test of this skill. Rename the champion
