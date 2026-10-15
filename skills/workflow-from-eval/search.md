@@ -131,8 +131,21 @@ Say what the Run is before starting it: "round 1: 13 candidates × 77 examples".
    contact sheet with key and actual predictions printed for review); which are
    family-specific. To diagnose a shared miss, read the predicted values for a few of them.
 7. Tell the user: a table of candidates with errors per criterion and latency, one or two
-   sentences of insight, the completed Run link when available (otherwise its id), and what
+   sentences of insight, a link to that completed Run ("Explore results"), and what
    the next round adds and prunes. Use visual evidence below when it clarifies the result.
+
+## Linking app results
+
+After each completed round, link its exact Run so the user can browse all candidates and
+Cases in the app. In the final delivery, include both the Eval link ("Open evaluation") for
+its history and the completed finalists Run link ("Explore final results") for the scores
+being reported. Keep these links alongside the summary and in `report.md`.
+
+Prefer an app URL returned by the API; otherwise use the documented UI routes in
+`gotchas.md` with the actual workspace slug, Eval URL slug, and Run id. A signed artifact
+`readUrl` is not an app results link. If the required URL or identifiers are unavailable,
+give the known resource id and say the link is unavailable; never invent a URL or present
+pending results as complete.
 
 ## Showing saved-result evidence
 
@@ -178,7 +191,7 @@ Each round:
 - **Prune** the bottom third and every disqualified candidate that has no obvious fix.
   Pruned candidates stay in `created.json` (`pruned: round N`) for cleanup.
 - **Run** once on the whole suite, read, re-rank, re-analyze. One line to the user: round,
-  Run id, champion, errors per criterion, what changed, what the next round does.
+  completed Run link, champion, errors per criterion, what changed, what the next round does.
 
 Stop when the champion is perfect on the suite for two rounds, when two rounds in a row
 change nothing in the top three beyond the noise band, or when the budget from Checkpoint 2
@@ -232,6 +245,7 @@ propose deleting a pre-existing Workflow, the Eval, the Spec, or the Dataset.
 ## Test suite
 Eval <name> (<id>), Spec (<id>, revision), Dataset (<id>, <count> Cases). Examples by source,
 coverage per answer value, not-applicable examples, corrections the user made, caveats.
+Eval app link for browsing the suite and Run history.
 
 ## Portfolio
 | id | name | family | change | source (me / pre-existing) | status |
@@ -239,7 +253,7 @@ Dropped before any Run, and why. Families that could not enter (provider down).
 
 ## Runs
 | Run id | purpose | candidates | examples | started |
-Link actual completed Run/Execution pages when available; do not fabricate results URLs.
+Link each completed Run using the app-link guidance above.
 
 ## Round 1
 | candidate | gate | criterion 1 | criterion 2 | latency | status |
@@ -258,6 +272,7 @@ What it is, in words. Key settings. Scores. Why it beat the runner-up. Where it 
 (with the frames). Saved as <name> (<id>). Compared with pre-existing <name> (if any).
 Validation limitations, including whether any new source was available. Visual artifact paths
 and the Run/Execution and suite revision supporting each comparison or chart.
+Eval link and completed finalists Run link for exploring the final results in the app.
 
 ## Resources
 | kind | name | id | status (kept / deleted / pre-existing) |
