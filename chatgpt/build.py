@@ -57,7 +57,7 @@ def build(root: Path, commit: str | None = None) -> Path:
         staging = Path(temp)
         package = staging / "package"
         assemble(root, package)
-        warnings = validate(package, tools)
+        validate(package, tools)
         name = f"roboflow-chatgpt-{version}"
         archive = staging / f"{name}.zip"
         with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
@@ -68,15 +68,11 @@ def build(root: Path, commit: str | None = None) -> Path:
         provenance.write_text(json.dumps({
             "package_version": version,
             "skills_commit": commit,
-            "tools_server": tools["server"],
-            "tools_fetched_at": tools["fetched_at"],
+            "hidden_tools_mcp_commit": tools["mcp_commit"],
             "package_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
-            "warnings": warnings,
         }, indent=2) + "\n", encoding="utf-8")
         archive.replace(output / archive.name)
         provenance.replace(output / provenance.name)
-    for warning in warnings:
-        print(f"warning: {warning}")
     result = output / f"{name}.zip"
     print(f"Built {result}")
     return result

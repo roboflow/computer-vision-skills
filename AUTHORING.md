@@ -9,7 +9,7 @@ The ChatGPT plugin is built from the same skills, with two differences kept in [
 - [`chatgpt/skills/`](chatgpt/skills/) holds ChatGPT versions of a few files, at the same path as the default file. When the package is built, each one replaces its default file. Every other file comes from `skills/` unchanged.
 - [`chatgpt/exclude.txt`](chatgpt/exclude.txt) lists skills left out of the ChatGPT package entirely.
 
-These exist because the ChatGPT plugin connects to `https://mcp.roboflow.com/openai/mcp`, which hides some tools that `/mcp` exposes. [`chatgpt/tools.json`](chatgpt/tools.json) lists the tools that surface shows (`visible`) and hides (`hidden`).
+These exist because the ChatGPT plugin connects to `https://mcp.roboflow.com/openai/mcp`, which hides some tools that `/mcp` exposes. [`chatgpt/tools.json`](chatgpt/tools.json) lists the tools that surface hides, copied from `OPENAI_SURFACE.hidden_tools` in `src/roboflow_mcp/core/surfaces.py` of the roboflow-mcp repo.
 
 ## When you edit a skill
 
@@ -24,10 +24,10 @@ These exist because the ChatGPT plugin connects to `https://mcp.roboflow.com/ope
    python3 -m unittest discover -s chatgpt -p 'test_*.py'
    ```
 
-   The build fails if the ChatGPT package names a hidden tool, links to a missing or excluded file, has invalid skill frontmatter, or breaks OpenAI's listing rules. It also warns about names that look like tools but aren't listed.
+   The build fails if the ChatGPT package names a hidden tool, links to a missing or excluded file, has invalid skill frontmatter, or breaks OpenAI's listing rules.
 
 ## Writing for every client
 
 - Never put an API key in a URL or a command argument. Read it from the `ROBOFLOW_API_KEY` environment variable.
 - Ask the user before uploading data in bulk, starting paid jobs, deleting data, or changing shared settings.
-- Don't name tools that don't exist. `chatgpt/tools.json` is a recent list of the real ones.
+- Don't name tools that don't exist. Check the tool name against the MCP server before writing it.

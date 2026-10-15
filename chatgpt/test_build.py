@@ -1,16 +1,13 @@
 """Offline tests: python3 -m unittest discover -s chatgpt -p 'test_*.py'."""
 
-import io
 import json
 from pathlib import Path
 import shutil
 import tempfile
 import unittest
-from unittest.mock import patch
 import zipfile
 
 from build import build
-import fetch_tools
 
 
 class BuildTests(unittest.TestCase):
@@ -72,15 +69,6 @@ class BuildTests(unittest.TestCase):
         path.write_text(path.read_text() + f"\nSee `my_{hidden}_helper`.\n")
         build(self.root)
 
-    def test_stale_tool_like_name_only_warns(self):
-        path = self.root / "skills/roboflow-universe/SKILL.md"
-        path.write_text(path.read_text() + "\nUse `universe_search_v2`, `create_thing_app` and `model_id`.\n")
-        archive = build(self.root)
-        warnings = json.loads(archive.with_suffix(".provenance.json").read_text())["warnings"]
-        self.assertTrue(any("universe_search_v2" in warning for warning in warnings))
-        self.assertTrue(any("create_thing_app" in warning for warning in warnings))
-        self.assertFalse(any("model_id" in warning for warning in warnings))
-
     def test_orphan_override_fails(self):
         self.write("chatgpt/skills/roboflow-universe/missing.md", "Nothing to replace.\n")
         with self.assertRaisesRegex(ValueError, "doesn't have"):
@@ -140,13 +128,13 @@ class BuildTests(unittest.TestCase):
         self.assertIn("defaultPrompt", message)
         self.assertIn("brandColorDark", message)
 
-    def test_test_case_tools_must_be_visible(self):
+    def test_test_case_tools_must_not_be_hidden(self):
         manifest_path = self.root / "chatgpt/plugin/plugin.json"
         manifest = json.loads(manifest_path.read_text())
         cases = manifest["extensions"]["com.openai"]["review"]["test_cases"]["positive"]
         cases[0]["tools_triggered"] = self.tools["hidden"][0]
         manifest_path.write_text(json.dumps(manifest))
-        with self.assertRaisesRegex(ValueError, "not visible on /openai/mcp"):
+        with self.assertRaisesRegex(ValueError, "hidden on /openai/mcp"):
             build(self.root)
 
     def test_failure_keeps_previous_outputs(self):
@@ -158,75 +146,6 @@ class BuildTests(unittest.TestCase):
             build(self.root)
         self.assertEqual(archive.read_bytes(), original)
         self.assertEqual(provenance.read_bytes(), original_provenance)
-
-
-class FakeResponse(io.BytesIO):
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc):
-        return False
-
-
-def reply(result, stream=False, request_id=1):
-    body = json.dumps({"jsonrpc": "2.0", "id": request_id, **result})
-    return FakeResponse((f"event: message\ndata: {body}\n\n" if stream else body).encode())
-
-
-class FetchToolsTests(unittest.TestCase):
-    def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
-        self.output = Path(self.temp.name) / "tools.json"
-        self.output.write_text("previous\n")
-
-    def tools(self, *names, cursor=None):
-        result = {"tools": [{"name": name} for name in names]}
-        if cursor:
-            result["nextCursor"] = cursor
-        return {"result": result}
-
-    def test_json_and_event_stream_replies_with_pagination(self):
-        replies = [
-            reply(self.tools("a_list", "b_get", cursor="page2"), stream=True),
-            reply(self.tools("hidden_run")),
-            reply(self.tools("a_list", "b_get")),
-        ]
-        with patch("fetch_tools.urlopen", side_effect=replies) as urlopen:
-            payload = fetch_tools.refresh("https://mcp.example.com", "key", self.output)
-        self.assertEqual(payload["visible"], ["a_list", "b_get"])
-        self.assertEqual(payload["hidden"], ["hidden_run"])
-        second_request = json.loads(urlopen.call_args_list[1].args[0].data)
-        self.assertEqual(second_request["params"], {"cursor": "page2"})
-        self.assertEqual(json.loads(self.output.read_text())["hidden"], ["hidden_run"])
-
-    def test_multiline_event_matches_the_request_id(self):
-        body = json.dumps({"jsonrpc": "2.0", "id": 1, **self.tools("a_list")}, indent=1)
-        notice = json.dumps({"jsonrpc": "2.0", "method": "notifications/message", "params": {}})
-        stream = f"event: message\ndata: {notice}\n\n" + "".join(
-            f"data: {line}\n" for line in body.splitlines()) + "\n"
-        replies = [FakeResponse(stream.encode()), reply(self.tools("a_list"))]
-        with patch("fetch_tools.urlopen", side_effect=replies):
-            payload = fetch_tools.refresh("https://mcp.example.com", "key", self.output)
-        self.assertEqual(payload["visible"], ["a_list"])
-
-    def test_errors_leave_the_previous_file(self):
-        failures = [
-            [reply(self.tools("a_list")), reply({"error": {"code": -32000, "message": "nope"}})],
-            [reply(self.tools("a_list")), reply({"result": {"unexpected": True}})],
-            [reply(self.tools("a_list")), reply({"result": {"tools": [{"name": 123}]}})],
-            [OSError("offline")],
-        ]
-        for side_effect in failures:
-            with self.subTest(side_effect=side_effect):
-                with patch("fetch_tools.urlopen", side_effect=side_effect):
-                    with self.assertRaises((RuntimeError, ValueError, OSError)):
-                        fetch_tools.refresh("https://mcp.example.com", "key", self.output)
-                self.assertEqual(self.output.read_text(), "previous\n")
-
-    def test_plain_http_server_is_rejected(self):
-        with self.assertRaisesRegex(ValueError, "HTTPS"):
-            fetch_tools.refresh("http://mcp.example.com", "key", self.output)
 
 
 if __name__ == "__main__":

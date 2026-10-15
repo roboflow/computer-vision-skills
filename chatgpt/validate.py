@@ -12,8 +12,6 @@ NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 COLOR = re.compile(r"^#[0-9A-Fa-f]{6}$")
 LINK = re.compile(r"\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 REFERENCE_LINK = re.compile(r"(?m)^ {0,3}\[[^\]]+\]:\s*<?([^>\s]+)>?")
-CODE_IDENTIFIER = re.compile(r"`([a-z][a-z0-9]*(?:_[a-z0-9]+)+)`")
-TEXT_SUFFIXES = {".md", ".py", ".sh", ".txt", ".json", ".yaml", ".yml"}
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 URL_FIELDS = ("websiteURL", "supportURL", "privacyPolicyURL", "termsOfServiceURL")
 
@@ -157,14 +155,14 @@ def validate_manifest(package: Path, tools: dict, errors: list[str]) -> str:
     positive, negative = cases.get("positive", []), cases.get("negative", [])
     if len(positive) != 5 or len(negative) != 3:
         errors.append("review.test_cases needs 5 positive and 3 negative cases")
-    visible = set(tools["visible"])
+    hidden = set(tools["hidden"])
     for case in positive:
         for field in ("description", "prompt", "tools_triggered", "expected_behavior"):
             if not str(case.get(field, "")).strip():
                 errors.append(f"positive test case is missing {field}")
         for tool in re.split(r"[,\s]+", str(case.get("tools_triggered", "")).strip()):
-            if tool and tool not in visible:
-                errors.append(f"test case tool {tool} is not visible on /openai/mcp")
+            if tool in hidden:
+                errors.append(f"test case tool {tool} is hidden on /openai/mcp")
     for case in negative:
         for field in ("description", "prompt"):
             if not str(case.get(field, "")).strip():
@@ -177,13 +175,8 @@ def validate_manifest(package: Path, tools: dict, errors: list[str]) -> str:
     return name
 
 
-def validate_skills(package: Path, plugin_name: str, tools: dict,
-                    errors: list[str], warnings: list[str]) -> None:
+def validate_skills(package: Path, plugin_name: str, tools: dict, errors: list[str]) -> None:
     skills = package / "skills"
-    visible = set(tools["visible"])
-    # A backticked name sharing a tool's first two words (`universe_search_app`) is probably a
-    # stale tool reference; parameters like `model_id` or `api_key` don't match any.
-    prefixes = {"_".join(name.split("_")[:2]) for name in visible}
     names: set[str] = set()
     folders = sorted(path for path in skills.iterdir() if path.is_dir())
     if not folders:
@@ -224,25 +217,15 @@ def validate_skills(package: Path, plugin_name: str, tools: dict,
                 number = data.count(b"\n", 0, match.start()) + 1
                 errors.append(f"{relative}:{number} names {name}, which /openai/mcp hides")
 
-    for path in sorted(skills.rglob("*")):
-        if not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
-            continue
+    for path in sorted(skills.rglob("*.md")):
         relative = path.relative_to(package).as_posix()
         text = path.read_text(encoding="utf-8")
-        for number, line in enumerate(text.splitlines(), 1):
-            for identifier in CODE_IDENTIFIER.findall(line):
-                looks_like_tool = ("_".join(identifier.split("_")[:2]) in prefixes
-                                   or identifier.endswith("_app"))
-                if looks_like_tool and identifier not in visible \
-                        and identifier not in tools["hidden"]:
-                    warnings.append(f"{relative}:{number} `{identifier}` looks like a tool but isn't listed")
-        if path.suffix.lower() == ".md":
-            for target in LINK.findall(text) + REFERENCE_LINK.findall(text):
-                if re.match(r"^[a-z][a-z0-9+.-]*:", target) or target.startswith("#"):
-                    continue
-                linked = (path.parent / target.split("#", 1)[0]).resolve()
-                if not linked.is_relative_to(skills.resolve()) or not linked.exists():
-                    errors.append(f"{relative} links to {target}, which is not in the package")
+        for target in LINK.findall(text) + REFERENCE_LINK.findall(text):
+            if re.match(r"^[a-z][a-z0-9+.-]*:", target) or target.startswith("#"):
+                continue
+            linked = (path.parent / target.split("#", 1)[0]).resolve()
+            if not linked.is_relative_to(skills.resolve()) or not linked.exists():
+                errors.append(f"{relative} links to {target}, which is not in the package")
 
 
 def validate_archive_paths(package: Path, errors: list[str]) -> None:
@@ -259,13 +242,11 @@ def validate_archive_paths(package: Path, errors: list[str]) -> None:
         seen.add(folded)
 
 
-def validate(package: Path, tools: dict) -> list[str]:
-    """Raise ValidationError for anything that would break the package; return warnings."""
+def validate(package: Path, tools: dict) -> None:
+    """Raise ValidationError for anything that would break the package."""
     errors: list[str] = []
-    warnings: list[str] = []
     plugin_name = validate_manifest(package, tools, errors)
-    validate_skills(package, plugin_name, tools, errors, warnings)
+    validate_skills(package, plugin_name, tools, errors)
     validate_archive_paths(package, errors)
     if errors:
         raise ValidationError(errors)
-    return warnings

@@ -2,13 +2,9 @@
 
 Follow these steps when asked to prepare a new version of the Roboflow ChatGPT plugin. Each version needs an OpenAI review, so batch skill and listing changes into occasional versions. Hosted MCP tool changes reach ChatGPT without a new version.
 
-## 1. Refresh the tool list
+## 1. Refresh the hidden tool list
 
-```bash
-ROBOFLOW_API_KEY=<a Roboflow API key> python3 chatgpt/fetch_tools.py
-```
-
-This calls `tools/list` on production `/mcp` and `/openai/mcp` and rewrites `chatgpt/tools.json` with the names `/openai/mcp` shows and hides. API keys never see employee-only tools, so any customer key works. A failed fetch leaves the old file in place.
+Open `src/roboflow_mcp/core/surfaces.py` on the `main` branch of the roboflow-mcp repo and read `hidden_tools` in `OPENAI_SURFACE`. If it differs from `hidden` in `chatgpt/tools.json`, replace the list (sorted) and set `mcp_commit` to the roboflow-mcp commit you read it from. Make sure that commit is deployed, since ChatGPT sees the deployed server.
 
 ## 2. Carry over default changes
 
@@ -28,7 +24,7 @@ python3 chatgpt/build.py
 
 - For each hidden tool the build reports, rewrite that passage in the ChatGPT version of the file (create it in `chatgpt/skills/` by copying the default file first). Describe a flow that uses visible tools.
 - If a skill's whole flow depends on hidden tools, add it to `chatgpt/exclude.txt` instead.
-- Read the warnings. A name that looks like a tool but isn't listed is often a stale reference; fix it in `skills/` if it's wrong for every client.
+- Check that every tool the ChatGPT package names still exists. A stale name is usually wrong for every client, so fix it in `skills/`.
 
 ## 4. Review the content
 
@@ -45,14 +41,14 @@ Fix problems in `skills/` when they're wrong for every client, otherwise in `cha
 
 - Bump `version` in `chatgpt/plugin/plugin.json`. Never reuse a version number for a different package.
 - Update `extensions.com.openai.publication.release_notes` in `plugin.json` with what changed for users.
-- Add an entry to `chatgpt/CHANGELOG.md` with the status, the user-facing changes, the skills baseline (the commit you diffed against in step 2), and the `tools.json` server and fetch date.
+- Add an entry to `chatgpt/CHANGELOG.md` with the status, the user-facing changes, the skills baseline (the commit you diffed against in step 2), and the roboflow-mcp commit in `tools.json`.
 
 ## 6. Check the review material
 
 - Run each positive test case in `plugin.json` with a dedicated reviewer account and confirm the result matches `expected_behavior`.
 - Confirm each negative test case leaves the plugin unused.
 - Confirm the demo recording still matches the plugin.
-- Confirm the tools in the test cases are listed by production `/openai/mcp` (step 1 does this through `tools.json`).
+- Confirm the tools in the test cases exist on production `/openai/mcp`. The build only checks that they aren't hidden.
 
 Reviewer credentials go only in the OpenAI dashboard, never in the repo.
 
