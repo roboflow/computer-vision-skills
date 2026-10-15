@@ -12,7 +12,7 @@ The plugin ZIP bundles the skills and the listing. The tools come from the live 
 | Listing changes: description, starter prompts, icon, test cases | Yes. |
 | Teaching the skills to use a new tool or App | Yes, since that's skill text. The tool itself already works without it. |
 
-Each version needs an OpenAI review, so batch changes into occasional versions.
+Each version needs an OpenAI review, so batch changes into occasional versions. The ChatGPT version in `chatgpt/plugin/plugin.json` is independent of the Claude Code, Codex and Cowork versions; don't bump or align them together.
 
 ## Overview
 

@@ -2,16 +2,18 @@
 
 Agent-ready Roboflow plugin that contains skills and MCP configuration for computer vision workflows: data management, training, evaluation, inference, model selection, Workflows, Universe, plans, and Roboflow platform APIs.
 
-This repository is a plugin-shaped source of truth for AI agents (Claude Code, Codex, Cursor, OpenCode, and others). The canonical skill content lives in [`skills/`](skills/); plugin manifests point at those files instead of copying them elsewhere.
+This repository is a plugin-shaped source of truth for AI agents (Claude Code, Codex, Cursor, OpenCode, and others). The canonical skill content lives in [`skills/`](skills/). The Claude Code and Codex manifests point at those files directly. The Cowork and ChatGPT packages are built from them: Cowork copies the skills it lists, and ChatGPT replaces a few files with ChatGPT versions from [`chatgpt/`](chatgpt/).
 
 ## Install as a plugin
 
-The repo ships both plugin manifests pointing at the same skill content and MCP config:
+The repo ships four plugin packages:
 
 - Claude Code: [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) — plugin name `roboflow`
 - Codex: [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json) — plugin name `roboflow`
+- Microsoft Copilot Cowork: [`cowork/`](cowork/), built into a ZIP
+- ChatGPT: [`chatgpt/`](chatgpt/), built into a ZIP and submitted to the ChatGPT plugin directory
 
-Both manifests load skills from [`skills/`](skills/) and bundle the Roboflow MCP server config from [`.mcp.json`](.mcp.json).
+The Claude Code and Codex manifests load skills from [`skills/`](skills/) and bundle the Roboflow MCP server config from [`.mcp.json`](.mcp.json).
 
 The bundled connection uses OAuth: sign in to Roboflow when your client prompts
 you. No API key is needed. Clients that cannot complete OAuth can configure the
