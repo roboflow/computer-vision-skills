@@ -12,10 +12,10 @@ This calls `tools/list` on production `/mcp` and `/openai/mcp` and rewrites `cha
 
 ## 2. Carry over default changes
 
-Find the last release tag (`git tag --list 'chatgpt-plugin-v*'`) and list what changed in the default skills since then:
+Find the last release tag (`git tag --list 'chatgpt-plugin-v*'`). If there is none yet, use the "Skills baseline" commit of the latest version in `CHANGELOG.md`. List what changed in the default skills since then:
 
 ```bash
-git diff --stat chatgpt-plugin-v<last>..HEAD -- skills/
+git diff --stat <last tag or baseline>..HEAD -- skills/
 ```
 
 For every changed file that has a version in `chatgpt/skills/`, bring the relevant change into the ChatGPT version. New skills are included automatically unless they are listed in `chatgpt/exclude.txt`.
@@ -45,7 +45,7 @@ Fix problems in `skills/` when they're wrong for every client, otherwise in `cha
 
 - Bump `version` in `chatgpt/plugin/plugin.json`. Never reuse a version number for a different package.
 - Update `extensions.com.openai.publication.release_notes` in `plugin.json` with what changed for users.
-- Add an entry to `chatgpt/CHANGELOG.md`.
+- Add an entry to `chatgpt/CHANGELOG.md` with the status, the user-facing changes, the skills baseline (the commit you diffed against in step 2), and the `tools.json` server and fetch date.
 
 ## 6. Check the review material
 

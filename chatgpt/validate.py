@@ -231,7 +231,9 @@ def validate_skills(package: Path, plugin_name: str, tools: dict,
         text = path.read_text(encoding="utf-8")
         for number, line in enumerate(text.splitlines(), 1):
             for identifier in CODE_IDENTIFIER.findall(line):
-                if "_".join(identifier.split("_")[:2]) in prefixes and identifier not in visible \
+                looks_like_tool = ("_".join(identifier.split("_")[:2]) in prefixes
+                                   or identifier.endswith("_app"))
+                if looks_like_tool and identifier not in visible \
                         and identifier not in tools["hidden"]:
                     warnings.append(f"{relative}:{number} `{identifier}` looks like a tool but isn't listed")
         if path.suffix.lower() == ".md":

@@ -74,10 +74,11 @@ class BuildTests(unittest.TestCase):
 
     def test_stale_tool_like_name_only_warns(self):
         path = self.root / "skills/roboflow-universe/SKILL.md"
-        path.write_text(path.read_text() + "\nUse `universe_search_v2` and `model_id`.\n")
+        path.write_text(path.read_text() + "\nUse `universe_search_v2`, `create_thing_app` and `model_id`.\n")
         archive = build(self.root)
         warnings = json.loads(archive.with_suffix(".provenance.json").read_text())["warnings"]
         self.assertTrue(any("universe_search_v2" in warning for warning in warnings))
+        self.assertTrue(any("create_thing_app" in warning for warning in warnings))
         self.assertFalse(any("model_id" in warning for warning in warnings))
 
     def test_orphan_override_fails(self):

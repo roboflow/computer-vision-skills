@@ -220,10 +220,9 @@ Export via Python SDK:
 project.version(1).download("yolov8")
 ```
 
-## MCP apps vs plain tools
+## Project type and license
 
-Prefab MCP apps (`create_project_app`) exist when parameters are unclear, you need real UX, or a human must confirm after seeing form fields — plain chat/MCP calls should not guess project type and license alone.
-
+Don't guess a project's type or license. Confirm both with the user before calling `projects_create`.
 
 ## MCP Tools Available
 
