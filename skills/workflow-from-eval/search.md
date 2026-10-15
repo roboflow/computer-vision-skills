@@ -147,8 +147,12 @@ reconstruct them from pass/fail. This presentation sample does not replace whole
 
 When a tradeoff needs explaining, plot the Goal Card's quality metric against measured
 latency with ordinary plotting tools suited to the environment. Name the metric, its better
-direction, and latency units/statistic (median or p90); highlight finalists and the latency
-budget. Compare only compatible checks, ground-truth snapshots, scoring populations, and
+direction, and latency units/statistic (median or p90). Default to a scatter plot with latency
+on X and the selected Goal Card quality metric on Y: one point per candidate Workflow,
+colored by family, with finalists labeled and the latency budget drawn as a vertical line
+when specified. Prefer PNG/SVG for display and sharing; use interactive HTML only when the
+interaction adds value and the host supports it.
+Compare only compatible checks, ground-truth snapshots, scoring populations, and
 measured runtime/reuse conditions. Separate and label incompatible historical runs; show
 latency as unavailable when unmeasured, and do not invent an aggregate quality score. Trace
 metrics to saved Run/Execution ids and suite revisions, not screenshot captions.
