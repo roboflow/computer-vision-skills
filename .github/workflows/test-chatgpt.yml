@@ -1,0 +1,61 @@
+name: Test ChatGPT package
+
+on:
+  pull_request:
+    paths:
+      - "chatgpt/**"
+      - "skills/**"
+      - ".github/workflows/test-chatgpt.yml"
+  push:
+    branches: [main]
+    paths:
+      - "chatgpt/**"
+      - "skills/**"
+      - ".github/workflows/test-chatgpt.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Test build and validation
+        run: python -m unittest discover -s chatgpt -p "test_*.py"
+      - name: Build plugin ZIP
+        run: python chatgpt/build.py
+
+  overrides:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: List default files changed without their ChatGPT version
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE"...HEAD)
+          stale=""
+          for file in $(echo "$changed" | grep '^skills/' || true); do
+            override="chatgpt/$file"
+            if [ -f "$override" ] && ! echo "$changed" | grep -qx "$override"; then
+              stale="$stale\n- \`$file\` (ChatGPT version: \`$override\`)"
+            fi
+          done
+          if [ -n "$stale" ]; then
+            {
+              echo "### ChatGPT versions to review"
+              echo "These default files changed, but their ChatGPT versions didn't. Check whether the change applies there too:"
+              echo -e "$stale"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Default skill files with a ChatGPT version changed without it. See the job summary."
+          fi

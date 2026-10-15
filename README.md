@@ -27,6 +27,16 @@ The [`cowork/`](cowork/) directory contains a Microsoft 365 app manifest, valida
 
 See [`cowork/README.md`](cowork/README.md) for build and installation instructions.
 
+### ChatGPT
+
+The [`chatgpt/`](chatgpt/) directory builds the Roboflow plugin for ChatGPT: the skills in `skills/`, with a few files replaced by ChatGPT versions and some skills left out, plus the plugin listing. Users install it from the ChatGPT plugin directory.
+
+```bash
+python3 chatgpt/build.py
+```
+
+See [`chatgpt/RELEASE.md`](chatgpt/RELEASE.md) for how a new version is prepared and submitted.
+
 ### Claude Code
 
 Install from GitHub — no clone required:
@@ -204,7 +214,7 @@ API-key header configuration and reconnect.
 
 ## Contributing
 
-Skills are markdown. Open a PR with edits or a new folder under [`skills/`](skills/). Each new skill must have a `SKILL.md` at its root with `name` and `description` frontmatter.
+Skills are markdown. Open a PR with edits or a new folder under [`skills/`](skills/). Each new skill must have a `SKILL.md` at its root with `name` and `description` frontmatter. Read [`AUTHORING.md`](AUTHORING.md) before editing: some files also have a ChatGPT version that may need the same change.
 
 ## License
 

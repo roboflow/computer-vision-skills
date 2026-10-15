@@ -1,0 +1,72 @@
+# Releasing a ChatGPT plugin version
+
+Follow these steps when asked to prepare a new version of the Roboflow ChatGPT plugin. Each version needs an OpenAI review, so batch skill and listing changes into occasional versions. Hosted MCP tool changes reach ChatGPT without a new version.
+
+## 1. Refresh the tool list
+
+```bash
+ROBOFLOW_API_KEY=<a Roboflow API key> python3 chatgpt/fetch_tools.py
+```
+
+This calls `tools/list` on production `/mcp` and `/openai/mcp` and rewrites `chatgpt/tools.json` with the names `/openai/mcp` shows and hides. API keys never see employee-only tools, so any customer key works. A failed fetch leaves the old file in place.
+
+## 2. Carry over default changes
+
+Find the last release tag (`git tag --list 'chatgpt-plugin-v*'`) and list what changed in the default skills since then:
+
+```bash
+git diff --stat chatgpt-plugin-v<last>..HEAD -- skills/
+```
+
+For every changed file that has a version in `chatgpt/skills/`, bring the relevant change into the ChatGPT version. New skills are included automatically unless they are listed in `chatgpt/exclude.txt`.
+
+## 3. Build and fix
+
+```bash
+python3 chatgpt/build.py
+```
+
+- For each hidden tool the build reports, rewrite that passage in the ChatGPT version of the file (create it in `chatgpt/skills/` by copying the default file first). Describe a flow that uses visible tools.
+- If a skill's whole flow depends on hidden tools, add it to `chatgpt/exclude.txt` instead.
+- Read the warnings. A name that looks like a tool but isn't listed is often a stale reference; fix it in `skills/` if it's wrong for every client.
+
+## 4. Review the content
+
+Read the assembled skills in `chatgpt/build/` against the [OpenAI plugin guidelines](https://developers.openai.com/plugins/plugin-guidelines):
+
+- No API keys in URLs, command arguments or code literals. Use the `ROBOFLOW_API_KEY` environment variable.
+- No creating API keys unless the user asks for one.
+- No plan tables, prices, upgrade prompts or purchase paths. Factual explanations of credits are fine.
+- No comparative or unverifiable claims.
+
+Fix problems in `skills/` when they're wrong for every client, otherwise in `chatgpt/skills/`.
+
+## 5. Version and notes
+
+- Bump `version` in `chatgpt/plugin/plugin.json`. Never reuse a version number for a different package.
+- Update `extensions.com.openai.publication.release_notes` in `plugin.json` with what changed for users.
+- Add an entry to `chatgpt/CHANGELOG.md`.
+
+## 6. Check the review material
+
+- Run each positive test case in `plugin.json` with a dedicated reviewer account and confirm the result matches `expected_behavior`.
+- Confirm each negative test case leaves the plugin unused.
+- Confirm the demo recording still matches the plugin.
+- Confirm the tools in the test cases are listed by production `/openai/mcp` (step 1 does this through `tools.json`).
+
+Reviewer credentials go only in the OpenAI dashboard, never in the repo.
+
+## 7. Merge, tag and release
+
+1. Open a PR with the changes. CI builds and validates the package.
+2. After merge, build from a clean checkout of the merge commit:
+
+   ```bash
+   python3 chatgpt/build.py --commit "$(git rev-parse HEAD)"
+   ```
+
+3. Tag that commit `chatgpt-plugin-v<version>` and create a GitHub release with `chatgpt/build/roboflow-chatgpt-<version>.zip` and its `.provenance.json`.
+
+## 8. Submit
+
+A person uploads the ZIP from the release in the OpenAI dashboard, waits for the review, clicks **Publish plugin**, and records the outcome (submitted, approved, published, or rejected with the reason) in `chatgpt/CHANGELOG.md`.
