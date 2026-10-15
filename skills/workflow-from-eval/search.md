@@ -128,10 +128,39 @@ Say what the Run is before starting it: "round 1: 13 candidates × 77 examples".
    criterion; say so in the round line.
 6. Analysis, written to `rounds/r<N>/analysis.md`: per family, what it gets right and wrong,
    with example ids; which failures are shared by everyone (send them to the user as a
-   contact sheet with key and prediction printed; suspect the answer key); which are
+   contact sheet with key and actual predictions printed for review); which are
    family-specific. To diagnose a shared miss, read the predicted values for a few of them.
 7. Tell the user: a table of candidates with errors per criterion and latency, one or two
-   sentences of insight, the Run id, and what the next round adds and prunes.
+   sentences of insight, the completed Run link when available (otherwise its id), and what
+   the next round adds and prunes. Use visual evidence below when it clarifies the result.
+
+## Showing saved-result evidence
+
+Reuse the completed Run's saved results; never rerun inference solely to render a visual.
+Choose a small set of same-Case comparisons covering gains, regressions, and remaining
+failures when present. Fetch actual predictions only for these examples with
+`workflow_evals_results_case_get`. Use `draw-vision` as routed in `SKILL.md` to show ground
+truth beside named candidates' predictions and check outcomes, with Case ids and video
+timestamps. Caption scalar labels; overlay boxes or masks only when retained predictions
+or ground truth contain that geometry. Mark missing predictions/geometry unavailable; never
+reconstruct them from pass/fail. This presentation sample does not replace whole-suite scoring.
+
+When a tradeoff needs explaining, plot the Goal Card's quality metric against measured
+latency with ordinary plotting tools suited to the environment. Name the metric, its better
+direction, and latency units/statistic (median or p90); highlight finalists and the latency
+budget. Compare only compatible checks, ground-truth snapshots, scoring populations, and
+measured runtime/reuse conditions. Separate and label incompatible historical runs; show
+latency as unavailable when unmeasured, and do not invent an aggregate quality score. Trace
+metrics to saved Run/Execution ids and suite revisions, not screenshot captions.
+
+If temporal context helps explain a transition, optionally render a short saved clip or frame
+sequence with `draw-vision`. Align predictions to actual source timestamps and mark unscored
+gaps; do not interpolate predictions. Per-frame evidence is not stateful video validation or
+live inference, and recorded latency replay is not camera/edge FPS.
+
+Inspect visual artifacts for legibility and save them with the report. Display them in the
+conversation when supported; otherwise attach or open the saved files. Choose only visuals
+that help the current question; charts and clips are not required for every round.
 
 ## Tune and prune rounds
 
@@ -206,6 +235,7 @@ Dropped before any Run, and why. Families that could not enter (provider down).
 
 ## Runs
 | Run id | purpose | candidates | examples | started |
+Link actual completed Run/Execution pages when available; do not fabricate results URLs.
 
 ## Round 1
 | candidate | gate | criterion 1 | criterion 2 | latency | status |
@@ -222,6 +252,8 @@ Per-Case diff champion vs runner-up. Or: no new source; validated on search exam
 ## Winner
 What it is, in words. Key settings. Scores. Why it beat the runner-up. Where it still fails
 (with the frames). Saved as <name> (<id>). Compared with pre-existing <name> (if any).
+Validation limitations, including whether any new source was available. Visual artifact paths
+and the Run/Execution and suite revision supporting each comparison or chart.
 
 ## Resources
 | kind | name | id | status (kept / deleted / pre-existing) |
