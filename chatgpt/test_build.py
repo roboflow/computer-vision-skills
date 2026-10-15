@@ -60,6 +60,12 @@ class BuildTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, f"names {hidden}"):
             build(self.root)
 
+    def test_hidden_tool_name_in_any_file_type_fails(self):
+        hidden = self.tools["hidden"][0]
+        self.write("skills/roboflow-universe/helper.js", f"call('{hidden}')\n")
+        with self.assertRaisesRegex(ValueError, f"helper.js:1 names {hidden}"):
+            build(self.root)
+
     def test_hidden_name_inside_a_longer_identifier_is_not_flagged(self):
         hidden = self.tools["hidden"][0]
         path = self.root / "skills/roboflow-universe/SKILL.md"
@@ -93,6 +99,21 @@ class BuildTests(unittest.TestCase):
         path = self.root / "skills/roboflow-universe/SKILL.md"
         path.write_text(path.read_text() + "\nSee [evals](../workflow-from-eval/SKILL.md).\n")
         with self.assertRaisesRegex(ValueError, "not in the package"):
+            build(self.root)
+
+    def test_reference_link_into_excluded_skill_fails(self):
+        path = self.root / "skills/roboflow-universe/SKILL.md"
+        path.write_text(path.read_text() + "\nSee [evals][ref].\n\n[ref]: ../workflow-from-eval/SKILL.md\n")
+        with self.assertRaisesRegex(ValueError, "not in the package"):
+            build(self.root)
+
+    def test_malformed_frontmatter_fails(self):
+        path = self.root / "skills/roboflow-universe/SKILL.md"
+        text = path.read_text()
+        start = text.index("description:")
+        end = text.index("\n", start)
+        path.write_text(text[:start] + 'description: "unterminated' + text[end:])
+        with self.assertRaisesRegex(ValueError, "frontmatter"):
             build(self.root)
 
     def test_skill_name_must_match_folder(self):
@@ -176,10 +197,21 @@ class FetchToolsTests(unittest.TestCase):
         self.assertEqual(second_request["params"], {"cursor": "page2"})
         self.assertEqual(json.loads(self.output.read_text())["hidden"], ["hidden_run"])
 
+    def test_multiline_event_matches_the_request_id(self):
+        body = json.dumps({"jsonrpc": "2.0", "id": 1, **self.tools("a_list")}, indent=1)
+        notice = json.dumps({"jsonrpc": "2.0", "method": "notifications/message", "params": {}})
+        stream = f"event: message\ndata: {notice}\n\n" + "".join(
+            f"data: {line}\n" for line in body.splitlines()) + "\n"
+        replies = [FakeResponse(stream.encode()), reply(self.tools("a_list"))]
+        with patch("fetch_tools.urlopen", side_effect=replies):
+            payload = fetch_tools.refresh("https://mcp.example.com", "key", self.output)
+        self.assertEqual(payload["visible"], ["a_list"])
+
     def test_errors_leave_the_previous_file(self):
         failures = [
             [reply(self.tools("a_list")), reply({"error": {"code": -32000, "message": "nope"}})],
             [reply(self.tools("a_list")), reply({"result": {"unexpected": True}})],
+            [reply(self.tools("a_list")), reply({"result": {"tools": [{"name": 123}]}})],
             [OSError("offline")],
         ]
         for side_effect in failures:

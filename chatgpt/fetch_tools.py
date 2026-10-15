@@ -14,15 +14,19 @@ OUTPUT = Path(__file__).resolve().parent / "tools.json"
 PROTOCOL_VERSION = "2025-06-18"
 
 
-def parse_response(body: str) -> dict:
-    """Read a JSON-RPC reply sent either as plain JSON or as a server-sent event stream."""
-    text = body.strip()
+def parse_response(body: str, request_id: int) -> dict:
+    """Read the JSON-RPC reply to `request_id`, sent as plain JSON or as a server-sent event stream."""
+    text = body.replace("\r\n", "\n").strip()
     if text.startswith("{"):
         return json.loads(text)
-    events = [line[len("data:"):].strip() for line in text.splitlines() if line.startswith("data:")]
-    if not events:
-        raise ValueError("MCP server returned neither JSON nor an event stream")
-    return json.loads(events[-1])
+    for event in text.split("\n\n"):
+        lines = [line[len("data:"):] for line in event.split("\n") if line.startswith("data:")]
+        if not lines:
+            continue
+        message = json.loads("\n".join(line[1:] if line.startswith(" ") else line for line in lines))
+        if isinstance(message, dict) and message.get("id") == request_id:
+            return message
+    raise ValueError("MCP server returned no JSON-RPC reply to the tools/list request")
 
 
 def list_tool_names(endpoint: str, api_key: str) -> set[str]:
@@ -41,13 +45,16 @@ def list_tool_names(endpoint: str, api_key: str) -> set[str]:
             },
         )
         with urlopen(request, timeout=60) as response:
-            message = parse_response(response.read().decode("utf-8"))
+            message = parse_response(response.read().decode("utf-8"), 1)
         if "error" in message:
             raise RuntimeError(f"{endpoint} tools/list failed: {message['error']}")
         result = message.get("result")
         if not isinstance(result, dict) or not isinstance(result.get("tools"), list):
             raise ValueError(f"{endpoint} returned a malformed tools/list result")
-        names.update(tool["name"] for tool in result["tools"])
+        for tool in result["tools"]:
+            if not isinstance(tool, dict) or not isinstance(tool.get("name"), str) or not tool["name"]:
+                raise ValueError(f"{endpoint} listed a tool without a name")
+            names.add(tool["name"])
         cursor = result.get("nextCursor")
         if not cursor:
             return names

@@ -11,6 +11,7 @@ SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
 NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 COLOR = re.compile(r"^#[0-9A-Fa-f]{6}$")
 LINK = re.compile(r"\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+REFERENCE_LINK = re.compile(r"(?m)^ {0,3}\[[^\]]+\]:\s*<?([^>\s]+)>?")
 CODE_IDENTIFIER = re.compile(r"`([a-z][a-z0-9]*(?:_[a-z0-9]+)+)`")
 TEXT_SUFFIXES = {".md", ".py", ".sh", ".txt", ".json", ".yaml", ".yml"}
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
@@ -39,9 +40,20 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], str] | None:
         if not match:
             return None
         key, value = match.group(1), match.group(2).strip()
-        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
-            value = value[1:-1]
-        elif value.startswith(("[", "{", "|", ">", "&", "*", "!")):
+        if value.startswith('"'):
+            try:
+                value = json.loads(value)
+            except ValueError:
+                return None
+            if not isinstance(value, str):
+                return None
+        elif value.startswith("'"):
+            if len(value) < 2 or not value.endswith("'") or "'" in value[1:-1].replace("''", ""):
+                return None
+            value = value[1:-1].replace("''", "'")
+        elif value.startswith(("[", "{", "|", ">", "&", "*", "!", "%", "@", "`")) or " #" in value:
+            return None
+        if key in fields:
             return None
         fields[key] = value
     return fields, text[end + 5:]
@@ -167,8 +179,6 @@ def validate_manifest(package: Path, tools: dict, errors: list[str]) -> str:
 def validate_skills(package: Path, plugin_name: str, tools: dict,
                     errors: list[str], warnings: list[str]) -> None:
     skills = package / "skills"
-    hidden = {name: re.compile(rf"(?<![A-Za-z0-9_]){re.escape(name)}(?![A-Za-z0-9_])")
-              for name in tools["hidden"]}
     visible = set(tools["visible"])
     # A backticked name sharing a tool's first two words (`universe_search_app`) is probably a
     # stale tool reference; parameters like `model_id` or `api_key` don't match any.
@@ -200,21 +210,31 @@ def validate_skills(package: Path, plugin_name: str, tools: dict,
         if not body.strip():
             errors.append(f"skills/{folder.name}/SKILL.md has an empty body")
 
+    hidden_bytes = {name: re.compile(rf"(?<![A-Za-z0-9_]){re.escape(name)}(?![A-Za-z0-9_])".encode())
+                    for name in tools["hidden"]}
+    for path in sorted(package.rglob("*")):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(package).as_posix()
+        data = path.read_bytes()
+        for name, pattern in hidden_bytes.items():
+            match = pattern.search(data)
+            if match:
+                number = data.count(b"\n", 0, match.start()) + 1
+                errors.append(f"{relative}:{number} names {name}, which /openai/mcp hides")
+
     for path in sorted(skills.rglob("*")):
         if not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
             continue
         relative = path.relative_to(package).as_posix()
         text = path.read_text(encoding="utf-8")
         for number, line in enumerate(text.splitlines(), 1):
-            for name, pattern in hidden.items():
-                if pattern.search(line):
-                    errors.append(f"{relative}:{number} names {name}, which /openai/mcp hides")
             for identifier in CODE_IDENTIFIER.findall(line):
                 if "_".join(identifier.split("_")[:2]) in prefixes and identifier not in visible \
                         and identifier not in tools["hidden"]:
                     warnings.append(f"{relative}:{number} `{identifier}` looks like a tool but isn't listed")
         if path.suffix.lower() == ".md":
-            for target in LINK.findall(text):
+            for target in LINK.findall(text) + REFERENCE_LINK.findall(text):
                 if re.match(r"^[a-z][a-z0-9+.-]*:", target) or target.startswith("#"):
                     continue
                 linked = (path.parent / target.split("#", 1)[0]).resolve()
