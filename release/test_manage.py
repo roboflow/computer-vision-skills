@@ -8,7 +8,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from manage import MANIFESTS, build, bump, check, check_tag, git
+from manage import MANIFESTS, build, bump, check, check_tag, git, prepare
 
 
 class ReleaseTests(unittest.TestCase):
@@ -24,6 +24,7 @@ class ReleaseTests(unittest.TestCase):
         for path in ("skills/example/SKILL.md", ".mcp.json", ".agents/plugins/marketplace.json", "LICENSE"):
             self.write(path, "original\n")
         self.write("chatgpt/plugin/plugin.json", '{"version": "1.0.3"}')
+        self.write(".gitignore", "release/build/\n")
         self.commit()
         self.base = git(self.root, "rev-parse", "HEAD").decode().strip()
 
@@ -41,7 +42,7 @@ class ReleaseTests(unittest.TestCase):
         self.write("chatgpt/plugin/plugin.json", '{"version": "1.0.4"}')
         self.assertEqual(check(self.root, self.base), "1.0.2")
 
-    def test_shipped_changes_require_increase(self):
+    def test_shipped_changes_pass_pr_checks_without_manual_bump(self):
         for path in ("skills/example/SKILL.md", "skills/new/SKILL.md", ".mcp.json",
                      ".agents/plugins/marketplace.json", MANIFESTS[0]):
             with self.subTest(path=path):
@@ -51,15 +52,103 @@ class ReleaseTests(unittest.TestCase):
                     self.write(path, '{"version": "1.0.2", "name": "changed"}')
                 else:
                     self.write(path, "changed")
-                with self.assertRaisesRegex(ValueError, "without a version increase"):
-                    check(self.root, self.base)
-                bump(self.root, "1.0.3")
-                self.assertEqual(check(self.root, self.base), "1.0.3")
+                self.assertEqual(check(self.root, self.base), "1.0.2")
 
-    def test_deleted_skill_requires_increase(self):
+    def test_deleted_skill_passes_pr_checks_without_manual_bump(self):
         (self.root / "skills/example/SKILL.md").unlink()
-        with self.assertRaisesRegex(ValueError, "without a version increase"):
-            check(self.root, self.base)
+        self.assertEqual(check(self.root, self.base), "1.0.2")
+
+    def test_first_release_commits_both_versions_and_builds_from_tag(self):
+        tag = prepare(self.root)
+        self.assertEqual(tag, "plugin-v1.0.3")
+        self.assertEqual(check(self.root), "1.0.3")
+        self.assertEqual(git(self.root, "status", "--porcelain"), b"")
+        self.assertEqual(git(self.root, "diff", "--name-only", self.base).decode().splitlines(),
+                         sorted(MANIFESTS))
+        self.assertEqual(git(self.root, "rev-parse", tag), git(self.root, "rev-parse", "HEAD"))
+        archive = build(self.root, tag)
+        with zipfile.ZipFile(archive) as bundle:
+            for path in MANIFESTS:
+                self.assertEqual(json.loads(bundle.read(path))["version"], "1.0.3")
+
+    def test_retry_reuses_tag_and_commit_after_artifact_failure(self):
+        tag = prepare(self.root)
+        commit = git(self.root, "rev-parse", "HEAD")
+        original = build(self.root, tag).read_bytes()
+        self.assertEqual(prepare(self.root), tag)
+        self.assertEqual(git(self.root, "rev-parse", "HEAD"), commit)
+        self.assertEqual(build(self.root, tag).read_bytes(), original)
+
+    def test_docs_and_chatgpt_merges_do_not_bump_native_version(self):
+        tag = prepare(self.root)
+        self.write("README.md", "updated docs")
+        self.write("chatgpt/plugin/plugin.json", '{"version": "1.0.4"}')
+        self.commit()
+        commit = git(self.root, "rev-parse", "HEAD")
+        self.assertEqual(prepare(self.root), tag)
+        self.assertEqual(check(self.root), "1.0.3")
+        self.assertEqual(git(self.root, "rev-parse", "HEAD"), commit)
+
+    def test_each_shipped_change_gets_next_patch(self):
+        prepare(self.root)
+        changes = (("skills/example/SKILL.md", "changed"),
+                   ("skills/new/SKILL.md", "new skill"),
+                   (".mcp.json", "new connection"),
+                   (".agents/plugins/marketplace.json", "new marketplace"),
+                   ("LICENSE", "new license"))
+        for patch, (path, text) in enumerate(changes, start=4):
+            with self.subTest(path=path):
+                self.write(path, text)
+                self.commit()
+                tag = prepare(self.root)
+                self.assertEqual(tag, f"plugin-v1.0.{patch}")
+                self.assertEqual(check(self.root), f"1.0.{patch}")
+                build(self.root, tag)
+        (self.root / "skills/new/SKILL.md").unlink()
+        self.commit()
+        self.assertEqual(prepare(self.root), "plugin-v1.0.9")
+
+    def test_explicit_major_or_minor_bump_is_respected(self):
+        prepare(self.root)
+        bump(self.root, "2.0.0")
+        self.commit()
+        commit = git(self.root, "rev-parse", "HEAD")
+        self.assertEqual(prepare(self.root), "plugin-v2.0.0")
+        self.assertEqual(git(self.root, "rev-parse", "HEAD"), commit)
+
+    def test_dirty_checkout_is_not_committed_by_prepare(self):
+        self.write("README.md", "user work")
+        with self.assertRaisesRegex(ValueError, "clean checkout"):
+            prepare(self.root)
+        self.assertEqual(git(self.root, "rev-parse", "HEAD").decode().strip(), self.base)
+
+    def test_atomic_push_rejects_stale_main_without_publishing_tag(self):
+        with tempfile.TemporaryDirectory() as directory:
+            remote = Path(directory) / "remote.git"
+            subprocess.check_output(["git", "init", "--bare", "-q", str(remote)])
+            git(self.root, "remote", "add", "origin", str(remote))
+            git(self.root, "push", "-q", "origin", "HEAD:refs/heads/main")
+            # Another merge reaches main before this runner publishes its bump.
+            self.write("skills/example/SKILL.md", "concurrent merge")
+            self.commit()
+            other = git(self.root, "rev-parse", "HEAD").decode().strip()
+            git(self.root, "push", "-q", "origin", "HEAD:refs/heads/main")
+            git(self.root, "checkout", "--detach", self.base)
+            tag = prepare(self.root)
+            with self.assertRaises(subprocess.CalledProcessError):
+                git(self.root, "push", "--atomic", "origin", "HEAD:refs/heads/main", f"refs/tags/{tag}")
+            self.assertEqual(git(remote, "tag", "--list"), b"")
+            self.assertEqual(git(remote, "rev-parse", "refs/heads/main").decode().strip(), other)
+            # Retry follows the workflow: drop only its local tag, fetch main,
+            # and prepare against the newest commit without losing that merge.
+            git(self.root, "tag", "-d", tag)
+            git(self.root, "fetch", "origin", "main", "--tags")
+            git(self.root, "checkout", "--detach", "origin/main")
+            tag = prepare(self.root)
+            git(self.root, "push", "--atomic", "origin", "HEAD:refs/heads/main", f"refs/tags/{tag}")
+            self.assertEqual(tag, "plugin-v1.0.3")
+            self.assertEqual(git(remote, "show", f"{tag}:skills/example/SKILL.md"), b"concurrent merge")
+            self.assertEqual(git(remote, "rev-parse", tag), git(remote, "rev-parse", "refs/heads/main"))
 
     def test_mismatch_and_decrease_fail(self):
         self.write(MANIFESTS[1], '{"version": "1.0.3"}')

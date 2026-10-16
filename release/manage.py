@@ -10,7 +10,7 @@ import subprocess
 from pathlib import Path
 
 MANIFESTS = (".claude-plugin/plugin.json", ".codex-plugin/plugin.json")
-PLUGIN_PATHS = ("skills", ".mcp.json", ".claude-plugin", ".codex-plugin", ".agents/plugins")
+PLUGIN_PATHS = ("skills", ".mcp.json", ".claude-plugin", ".codex-plugin", ".agents/plugins", "LICENSE")
 
 
 def git(root: Path, *args: str) -> bytes:
@@ -37,10 +37,6 @@ def check(root: Path, base: str | None = None) -> str:
         previous = [json.loads(git(root, "show", f"{base}:{path}"))["version"] for path in MANIFESTS]
         if any(version(current) < version(old) for old in previous):
             raise ValueError("Plugin versions must not decrease")
-        changed = git(root, "diff", "--name-only", base, "--", *PLUGIN_PATHS)
-        changed += git(root, "ls-files", "--others", "--exclude-standard", "--", *PLUGIN_PATHS)
-        if changed and any(version(current) <= version(old) for old in previous):
-            raise ValueError("Shipped plugin files changed without a version increase. Run python3 release/manage.py bump X.Y.Z")
     return current
 
 
@@ -51,6 +47,36 @@ def bump(root: Path, target: str) -> None:
     for path, value in zip(MANIFESTS, values):
         value["version"] = target
         (root / path).write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def prepare(root: Path) -> str:
+    """Prepare a local release commit and tag; the workflow pushes both atomically."""
+    if git(root, "status", "--porcelain"):
+        raise ValueError("Prepare releases from a clean checkout")
+    current = check(root)
+    tags = git(root, "tag", "--merged", "HEAD", "--list", "plugin-v*").decode().splitlines()
+    latest = max(tags, key=lambda tag: version(tag.removeprefix("plugin-v"))) if tags else None
+    if latest:
+        released = latest.removeprefix("plugin-v")
+        if version(current) < version(released):
+            raise ValueError("Plugin version is older than the latest release")
+        if not git(root, "diff", "--name-only", latest, "HEAD", "--", *PLUGIN_PATHS):
+            return latest  # Retry artifact creation without another bump.
+    else:
+        released = current
+    if version(current) == version(released):
+        major, minor, patch = version(current)
+        current = f"{major}.{minor}.{patch + 1}"
+    tag = f"plugin-v{current}"
+    existing = git(root, "tag", "--list", tag).strip()
+    if existing:
+        raise ValueError(f"Tag {tag} already exists outside this release history")
+    if current != check(root):
+        bump(root, current)
+        git(root, "add", "--", *MANIFESTS)
+        git(root, "commit", "-m", f"chore: release plugin {current}")
+    git(root, "tag", tag, "HEAD")
+    return tag
 
 
 def check_tag(root: Path, tag: str) -> str:
@@ -78,7 +104,7 @@ def build(root: Path, tag: str) -> Path:
     output = root / "release/build"
     output.mkdir(parents=True, exist_ok=True)
     archive = output / f"roboflow-plugin-{current}.zip"
-    archive.write_bytes(git(root, "archive", "--format=zip", "HEAD", *PLUGIN_PATHS, "LICENSE"))
+    archive.write_bytes(git(root, "archive", "--format=zip", "HEAD", *PLUGIN_PATHS))
     archive.with_suffix(".provenance.json").write_text(json.dumps({
         "package_version": current,
         "skills_commit": git(root, "rev-parse", "HEAD").decode().strip(),
@@ -92,6 +118,7 @@ if __name__ == "__main__":
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("check").add_argument("--base")
     commands.add_parser("bump").add_argument("version")
+    commands.add_parser("prepare")
     commands.add_parser("check-tag").add_argument("tag")
     commands.add_parser("build").add_argument("tag")
     args = parser.parse_args()
@@ -101,6 +128,8 @@ if __name__ == "__main__":
             print(check(root, args.base))
         elif args.command == "bump":
             bump(root, args.version)
+        elif args.command == "prepare":
+            print(prepare(root))
         elif args.command == "check-tag":
             print(check_tag(root, args.tag))
         else:

@@ -1,62 +1,76 @@
 # Plugin releases
 
 Claude Code and Codex share a version because they ship the same default skills.
-The Claude manifest is the version source; the release command updates both manifests.
 ChatGPT and Cowork have independent versions and release processes.
 
-## Claude Code and Codex
+## Automatic Claude Code and Codex releases
 
-When changing `skills/`, `.mcp.json`, `.claude-plugin/`, `.codex-plugin/`, or
-`.agents/plugins/`, increase the shared version in the same PR:
+Merge your skill or plugin change into `main`. No version bump or tag command
+is needed in the PR. The **Plugin releases** workflow:
+
+1. Checks out the latest `main`, including merges that arrived while it waited.
+2. Compares the shipped plugin files with the latest `plugin-vX.Y.Z` release.
+3. If they changed, increases the patch version in both manifests and commits
+   those two files. The first run also creates an initial patch release.
+4. Pushes the version commit and its tag together, atomically. A competing merge
+   causes a retry against the latest `main`, never a force push.
+5. Checks out the exact tag and builds the plugin ZIP and provenance JSON.
+6. Creates a draft GitHub release containing both files.
+
+Shipped files are `skills/`, `.mcp.json`, `.claude-plugin/`, `.codex-plugin/`,
+`.agents/plugins/`, and `LICENSE`. Other documentation and ChatGPT-only changes
+don't increase the Claude/Codex version. A retry reuses the existing tag and
+commit; it can restore draft release assets without another version bump.
+Published release assets are left intact.
+
+Both the version commit and tag use `GITHUB_TOKEN`, so their pushes don't start
+another workflow run. The build runs in this same workflow and doesn't rely on
+the tag push triggering another run. See [GitHub's workflow trigger rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow#triggering-a-workflow-from-a-workflow).
+
+The automatic job needs `contents: write` and permission to push to `main` and
+create tags. No extra account secret is required. If repository rules later
+block the bot's push, the workflow fails without publishing either ref. After
+fixing access, rerun **Plugin releases** with **Run workflow** on `main`.
+Do the same to recover a failed build or release upload; the existing version
+and tag will be reused if the shipped files haven't changed.
+
+Review the draft release and add user-facing release notes before publishing.
+Claude users can receive the new skills when their marketplace and plugin
+update, even before the GitHub draft is published, because they install from
+`main`. Auto-update must be enabled in Claude's marketplace settings.
+
+CI checks that both manifests agree and that a PR doesn't decrease versions.
+For an intentional major or minor release, you can still set a higher version
+in the PR:
 
 ```bash
-python3 release/manage.py bump 1.0.3
-python3 release/manage.py check --base origin/main
+python3 release/manage.py bump 2.0.0
+```
+
+The automatic release respects that higher version instead of adding a patch.
+Versions use stable `X.Y.Z` numbers. Never move a release tag or reuse a version
+for changed contents.
+
+For local verification and a ZIP from a clean release checkout:
+
+```bash
 python3 -m unittest discover -s release -p 'test_*.py'
-```
-
-Choose a version greater than the current versions in both manifests. Stable
-`X.Y.Z` versions are supported. CI rejects mismatches, decreases, and shipped
-changes without an increase. If another plugin change merges first, update the
-PR's version again. Documentation outside the shipped paths and ChatGPT-only
-changes don't require a Claude/Codex version bump.
-
-Once merged, Claude users can receive the new skills when their marketplace and
-plugin update. Auto-update must be enabled in Claude's marketplace settings.
-The GitHub release is a downloadable record; clients installing from `main`
-can receive the change before that release is published.
-
-To record a release, tag the merged commit with its manifest version:
-
-```bash
-git fetch origin main
-git tag plugin-v1.0.3 origin/main
-git push origin plugin-v1.0.3
-```
-
-The **Plugin releases** workflow tests the tooling, verifies the tag version and
-that the commit is on `main`, and builds a ZIP containing the committed plugin
-files and license. It creates a draft GitHub release with the ZIP and a
-provenance JSON containing the version, source commit, and ZIP SHA-256. Review
-the draft and add user-facing release notes before publishing. Never move a
-release tag or reuse a version for changed contents.
-
-For a local artifact from a clean release checkout:
-
-```bash
+python3 release/manage.py check
 python3 release/manage.py build plugin-v1.0.3
 ```
 
-Outputs land in `release/build/`. The archive excludes untracked and ignored
-files, ChatGPT overrides, and development tools.
+Outputs land in `release/build/`. The ZIP contains committed plugin files and
+the license, excluding ChatGPT overrides and development tools. The provenance
+records the version, source commit, and ZIP SHA-256.
 
 ## ChatGPT
 
 Follow [`chatgpt/RELEASE.md`](../chatgpt/RELEASE.md) to prepare and review the
 package contents, version, and release notes. Batch skill changes into a store
-release rather than bumping ChatGPT for every skill PR.
+release rather than bumping ChatGPT for every skill PR. The automatic
+Claude/Codex release does not change a ChatGPT version already under review.
 
-After merging, tag that commit with the ChatGPT manifest version, for example:
+After merging a prepared ChatGPT version, tag its commit, for example:
 
 ```bash
 git fetch origin main
@@ -64,12 +78,8 @@ git tag chatgpt-v1.0.4 origin/main
 git push origin chatgpt-v1.0.4
 ```
 
-The same workflow verifies the tag and runs the existing ChatGPT tests and
+The workflow verifies that tag and runs Lean's existing ChatGPT tests and
 builder. Download the ZIP and provenance from the draft GitHub release. Upload
 that exact ZIP in the OpenAI dashboard, complete review and publication, and
 record the source commit, checksum, and outcome in `chatgpt/CHANGELOG.md`.
 Creating a GitHub release does not publish to the OpenAI store.
-
-The workflow needs the standard `GITHUB_TOKEN` permission to write releases;
-it needs no new account secret. Only the final job has `contents: write`, after
-the build succeeds, and that job does not check out or execute repository code.
