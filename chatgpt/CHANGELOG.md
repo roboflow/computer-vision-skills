@@ -2,7 +2,7 @@
 
 ## 1.0.3
 
-- Status: submitted for review on 2026-10-15. Replaces an earlier hand-built 1.0.3 upload, which was deleted before it was reviewed.
+- Status: published on 2026-10-16, after review (submitted on 2026-10-15). Replaces an earlier hand-built 1.0.3 upload, which was deleted before it was reviewed.
 - Built from: `56c4a88` (the first build from this repo).
 - Package SHA-256: `8a5f762341300f6ff5f51c1af1fc83b45d54364da816356977d341c8675a3196`.
 - Hidden tools: roboflow-mcp `4e046185`.
