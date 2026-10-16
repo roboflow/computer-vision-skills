@@ -1,0 +1,152 @@
+name: Plugin releases
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ["plugin-v*", "chatgpt-v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Test release tooling
+        run: python -m unittest discover -s release -p "test_*.py"
+      - name: Check manifest versions
+        run: python release/manage.py check
+      - name: Reject version decreases in PRs
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: python release/manage.py check --base "$BASE"
+
+  automatic:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: versions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.prepare.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Prepare and push the patch version and tag
+        id: prepare
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            git fetch origin main --tags
+            # This is an ephemeral runner checkout. Include newer merges rather
+            # than overwriting them when a run waited in the concurrency queue.
+            git checkout --detach origin/main
+            python -m unittest discover -s release -p "test_*.py"
+            tag=$(python release/manage.py prepare)
+            if git push --atomic origin HEAD:refs/heads/main "refs/tags/$tag"; then
+              echo "tag=$tag" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            # The atomic push updated neither ref. Discard only the local tag
+            # and retry from the latest main if another merge won the race.
+            git tag -d "$tag"
+          done
+          echo 'Could not publish the release commit and tag after three attempts.' >&2
+          exit 1
+      - name: Build the exact tagged commit
+        env:
+          TAG: ${{ steps.prepare.outputs.tag }}
+        run: |
+          git checkout --detach "$TAG"
+          python release/manage.py build "$TAG"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-package
+          if-no-files-found: error
+          path: |
+            release/build/*.zip
+            release/build/*.provenance.json
+
+  package:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: versions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Verify release commit and tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          python release/manage.py check-tag "$TAG"
+      - name: Build Claude and Codex release
+        if: startsWith(github.ref_name, 'plugin-v')
+        env:
+          TAG: ${{ github.ref_name }}
+        run: python release/manage.py build "$TAG"
+      - name: Test and build ChatGPT release
+        if: startsWith(github.ref_name, 'chatgpt-v')
+        run: |
+          python -m unittest discover -s chatgpt -p "test_*.py"
+          python chatgpt/build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-package
+          if-no-files-found: error
+          path: |
+            release/build/*.zip
+            release/build/*.provenance.json
+            chatgpt/build/*.zip
+            chatgpt/build/*.provenance.json
+
+  release:
+    if: always() && (needs.automatic.result == 'success' || needs.package.result == 'success')
+    needs: [automatic, package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-package
+          path: artifacts
+      - name: Create draft release with ZIP and provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.automatic.outputs.tag || github.ref_name }}
+        run: |
+          mapfile -d '' files < <(find artifacts -type f -print0)
+          if draft=$(gh release view "$TAG" --json isDraft --jq .isDraft); then
+            if [ "$draft" = true ]; then
+              gh release upload "$TAG" "${files[@]}" --clobber
+            fi
+          else
+            gh release create "$TAG" "${files[@]}" --verify-tag --draft --title "$TAG" --notes "Built from tag $TAG. See the attached provenance for the source commit and package checksum. ChatGPT packages still require dashboard upload and review."
+          fi

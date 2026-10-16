@@ -10,3 +10,6 @@ cowork/__pycache__/
 
 chatgpt/build/
 chatgpt/__pycache__/
+
+release/build/
+release/__pycache__/

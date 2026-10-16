@@ -82,7 +82,13 @@ Then open a PR with the changes. CI builds and validates the package.
 
 ### 7. Build after merge
 
-After the PR is merged, build from a clean checkout of the merge commit:
+After the PR is merged, tag its commit as `chatgpt-v<version>` and push the tag.
+The **Plugin releases** workflow verifies the version, tests and builds the
+package, and attaches the ZIP and provenance to a draft GitHub release. See
+[`release/README.md`](../release/README.md) for commands. Use those artifacts
+for submission so the uploaded ZIP matches the recorded commit and checksum.
+
+Alternatively, build from a clean checkout of the merge commit:
 
 ```bash
 python3 chatgpt/build.py --commit "$(git rev-parse HEAD)"
