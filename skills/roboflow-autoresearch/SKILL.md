@@ -49,7 +49,9 @@ approve production promotion, replacement, or rollback.
    test counts. Keep the test split out of candidate tuning. If there is not enough reviewed data
    for a meaningful test, say so and collect more before making a strong claim.
 5. Generate and inspect a frozen Dataset version with `versions_generate` and `versions_get` when
-   training needs it. Use the user's selected Project and version.
+   training needs it. Use the user's selected Project and version. For model options, readiness,
+   and training configuration, follow `roboflow-training-and-evaluation`; native training owns
+   the supported models and configuration schema.
 6. Build a seed Workflow and native Workflow Eval using `workflow-from-eval` and `workflow_evals_*`
    tools. Read the Eval resources for valid case, check, and runtime schemas. Run the seed
    Workflow on the Eval and save its completed baseline Run and Execution before creating the
@@ -77,11 +79,15 @@ start a large candidate portfolio.
 1. For a Workflow candidate, start from the seed or another saved Workflow. Save the proposed
    version as an unpublished draft with `workflows_save_draft`. Pass its `workflowId` and
    `draftVersionId` as `candidateWorkflow: {workflowId, versionId}`. For a training candidate,
-   use the proposal schema's supported model and parameters. The current pilot accepts
-   `rfdetr-nano` with an `extra` object. Training also needs a Project dataset version;
-   Workflow-only proposals omit it. After training finishes, save a candidate draft from the
-   frozen Workflow template that references the returned model weights. For combined changes,
-   start from the exact `candidateWorkflow` template saved in the proposal.
+   use a model and configuration supported by native training. For object detection, prefer
+   RF-DETR NAS when available because it searches the accuracy/latency Pareto frontier. Use
+   native availability and preflight checks for workspace access and data requirements. If NAS
+   is unavailable, choose a supported model that fits the user's constraints. Put the exact native
+   training configuration in `training.extra`, excluding `modelType`. Preserve its fields for the native launch.
+   Training also needs a Project dataset version; Workflow-only proposals omit it. After
+   training finishes, save a candidate draft from the frozen Workflow template that references
+   the returned model weights. For combined changes, start from the exact `candidateWorkflow`
+   template saved in the proposal.
 2. Call `autoresearch_experiment_propose` with a stable request ID, current Objective
    revision, Objective Project ID, hypothesis, and candidate reference. Include `training`
    and `version_id` only when the candidate includes training. The server calculates native
@@ -89,10 +95,15 @@ start a large candidate portfolio.
    estimate, or start tool exists.
 3. Read the Experiment for its stable training child request ID. For a training candidate,
    call native `trainings_create` with `training_config` made from `training.modelType` and
-   the fields in `training.extra`, plus `expected_credits`, `expected_billing_system`, and
+   the exact fields in `training.extra`, plus `expected_credits`, `expected_billing_system`, and
    `idempotency_key` from the Experiment. Do not ask for per-training approval. Read queued
    work with `trainings_get` using `task_id` and `launch_request_id`; use its native training
-   ID after it starts.
+   ID after it starts. If the run is NAS, select one concrete child from the completed frontier
+   using the user's hardware, accuracy, and latency constraints. Read
+   [NAS results](../roboflow-training-and-evaluation/nas-results.md) for child metrics and recommendation limits.
+   Mining metrics help select the model; they are not
+   the Workflow Eval result. Bind the selected child into the saved Workflow and compare that
+   Workflow on the fixed Eval.
 4. Read the stable Evaluation child request ID from the Experiment. Select the source Run and
    Execution from the best kept candidate in this epoch, or from the Objective's baseline
    evidence when no candidate is kept. Replay that Run with `workflow_evals_runs_replay`, using
