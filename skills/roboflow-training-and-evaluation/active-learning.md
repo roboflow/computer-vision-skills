@@ -27,7 +27,23 @@ Image Input
 
 The Project Model block is managed by the Roboflow Workflow builder rather than exposed as a normal block manifest through `workflow_blocks_list`. Do not substitute a regular model block plus Dataset Upload just because Project Model is absent from that catalog.
 
-Use a **Dataset Upload block** only when the user explicitly needs bespoke collection routing or a different target project that project-level Active Learning does not cover. For that exception, use `workflow_blocks_get_schema` with the block's `type` (or its manifest key from `workflow_blocks_list`) instead of relying on hardcoded properties. Follow the Mode A or Mode B authoring flow in `roboflow://skills/roboflow-inference/SKILL` to create and save the Workflow.
+Use a **Dataset Upload block** only for explicit custom routing or a target Project that native Active Learning cannot cover.
+For that exception, read the block's current schema with `workflow_blocks_get_schema`.
+Follow the authoring flow in [Roboflow Inference](../roboflow-inference/SKILL.md).
+
+## Native tools
+
+Prefer the installed [Training and Evaluation](SKILL.md) skill and its local references. Use MCP resources only as a fallback.
+
+- Read the default model, BASE Workflow identity, collection limits, and filters with `project_deployment_get`.
+- Configure native limits and filters with `project_deployment_configure_active_learning`.
+- Read collected batches and annotation jobs with `project_deployment_list_review_queues`.
+- Review predictions with native annotation tools. Use Label Assist in the annotator for corrections and ambiguous examples.
+
+For experiments, pin the BASE Workflow and concrete model dependencies before evaluation or production approval.
+Use `workflows_list_versions` and `workflows_get` with `version_id` to inspect saved dependencies.
+An outer Workflow version alone does not freeze its nested Workflows or the Project's default model.
+Preserve Active Learning in the production candidate. Native Eval execution suppresses collection sinks automatically.
 
 ## Filtering What Gets Collected
 
@@ -47,7 +63,7 @@ Collecting every frame is rarely useful. Three common approaches:
 
 ## Connecting to Model Diagnosis
 
-Active learning is most effective when it's targeted, not random. Diagnose the model first (`roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`) and use the finding to decide what to collect:
+Use [model diagnosis](model-diagnosis.md) to decide which production examples to collect:
 
 | Diagnosis finding | What to upload |
 |---|---|
@@ -57,7 +73,8 @@ Active learning is most effective when it's targeted, not random. Diagnose the m
 | Small objects missed | High-resolution images with small instances |
 | Dataset distribution mismatch (new environment) | Random sample from the new deployment context |
 
-See the "Which Data to Add" table in `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis` for the full mapping, and `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` for the compact decision tree and training-side fixes.
+Read the "Which Data to Add" table in [model diagnosis](model-diagnosis.md) for the full mapping.
+Read the [improvement playbook](improvement-playbook.md) for the decision tree and training fixes.
 
 ## Common Mistakes
 
