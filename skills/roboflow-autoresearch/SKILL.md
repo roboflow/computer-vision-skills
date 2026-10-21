@@ -1,9 +1,9 @@
 ---
-name: autoresearch
+name: roboflow-autoresearch
 description: Improve a Roboflow stream-based vision task with a bounded loop over native data collection, a fixed Workflow Eval, and one Workflow or model-training candidate at a time. Use when a user gives a stream, goal, and constraints and wants evidence-led improvement and production deployment.
 ---
 
-# Autoresearch
+# Roboflow Autoresearch
 
 Use this skill with `workflow-from-eval` for Workflow design and
 `roboflow-training-and-evaluation` for model training. Autoresearch adds an Objective and

@@ -1,5 +1,5 @@
 # Skills left out of the ChatGPT package, one folder name per line.
 # workflow-from-eval depends on Workflow Evals and inline-run tools that /openai/mcp hides.
 workflow-from-eval
-# autoresearch composes native training with Workflow Evals tools hidden on /openai/mcp.
-autoresearch
+# roboflow-autoresearch composes native training with Workflow Evals tools hidden on /openai/mcp.
+roboflow-autoresearch
