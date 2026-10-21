@@ -1,7 +1,8 @@
 {
   "source": "roboflow/roboflow-mcp src/roboflow_mcp/core/surfaces.py, OPENAI_SURFACE.hidden_tools",
-  "mcp_commit": "4e0461854b9289dd15c9829f17bdf49e2e0b620f",
+  "mcp_commit": "56d90f614fe32eca8aa65559de586e301c6d4f32",
   "hidden": [
+    "video_jobs_create",
     "workflow_blocks_get_schema",
     "workflow_blocks_list",
     "workflow_evals_agent_manifest",
