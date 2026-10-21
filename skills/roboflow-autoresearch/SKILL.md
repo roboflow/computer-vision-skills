@@ -3,10 +3,13 @@ name: roboflow-autoresearch
 description: Improve a Roboflow stream-based vision task with a bounded loop over native data collection, a fixed Workflow Eval, and one Workflow or model-training candidate at a time. Use when a user gives a stream, goal, and constraints and wants evidence-led improvement and production deployment.
 ---
 
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
+
 # Roboflow Autoresearch
 
-Use this skill with `workflow-from-eval` for Workflow design and
-`roboflow-training-and-evaluation` for model training. Autoresearch adds an Objective and
+Use this skill with [`workflow-from-eval`](../workflow-from-eval/SKILL.md) for Workflow design and
+[`roboflow-training-and-evaluation`](../roboflow-training-and-evaluation/SKILL.md) for model training.
+Those skills own model selection, training, and diagnosis guidance. Autoresearch adds an Objective and
 Experiment journal. It uses native Workflows, video jobs, data management, training, and Eval
 operations. Do not create separate capture, retry, cancel, estimate, start, or deployment
 systems.
@@ -49,9 +52,9 @@ approve production promotion, replacement, or rollback.
    test counts. Keep the test split out of candidate tuning. If there is not enough reviewed data
    for a meaningful test, say so and collect more before making a strong claim.
 5. Generate and inspect a frozen Dataset version with `versions_generate` and `versions_get` when
-   training needs it. Use the user's selected Project and version. For model options, readiness,
-   and training configuration, follow `roboflow-training-and-evaluation`; native training owns
-   the supported models and configuration schema.
+   training needs it. Use the user's selected Project and version. Follow the training skill for
+   model selection, checkpoints, version readiness, and training configuration. Native tools
+   determine current task support and workspace availability.
 6. Build a seed Workflow and native Workflow Eval using `workflow-from-eval` and `workflow_evals_*`
    tools. Read the Eval resources for valid case, check, and runtime schemas. Run the seed
    Workflow on the Eval and save its completed baseline Run and Execution before creating the
@@ -79,13 +82,16 @@ start a large candidate portfolio.
 1. For a Workflow candidate, start from the seed or another saved Workflow. Save the proposed
    version as an unpublished draft with `workflows_save_draft`. Pass its `workflowId` and
    `draftVersionId` as `candidateWorkflow: {workflowId, versionId}`. For a training candidate,
-   use a model and configuration supported by native training. Prefer NAS whenever native
-   training supports it for the task because it searches the accuracy/latency Pareto frontier.
+   follow the training skill's model-selection guidance and read its
+   [model IDs](../roboflow-training-and-evaluation/model-ids.md) before choosing an architecture.
+   Prefer NAS whenever native training supports it for the task because it searches the accuracy/latency Pareto frontier.
    This includes object detection, instance segmentation, semantic segmentation, and future
-   tasks with native NAS support. Use
-   native availability and preflight checks for workspace access and data requirements. If NAS
-   is unavailable, choose a supported model that fits the user's constraints. Put the exact native
-   training configuration in `training.extra`, excluding `modelType`. Preserve its fields for the native launch.
+   tasks with native NAS support. Use native availability and preflight checks for workspace
+   access and data requirements. Respect an explicit model choice. If NAS is unavailable, use
+   the training skill's fallback guidance. Retain native defaults unless the hypothesis needs a
+   specific change. For recipe tuning, read `trainings_describe_recipe` before changing its template.
+   Store the complete native configuration directly in `training`, including `modelType` and any
+   native `trainRecipe`. Preserve the configuration unchanged for the native launch.
    Training also needs a Project dataset version; Workflow-only proposals omit it. After
    training finishes, save a candidate draft from the frozen Workflow template that references
    the returned model weights. For combined changes, start from the exact `candidateWorkflow`
@@ -96,8 +102,8 @@ start a large candidate portfolio.
    estimates and checks the cumulative Objective estimate budget. No Experiment approval,
    estimate, or start tool exists.
 3. Read the Experiment for its stable training child request ID. For a training candidate,
-   call native `trainings_create` with `training_config` made from `training.modelType` and
-   the exact fields in `training.extra`, plus `expected_credits`, `expected_billing_system`, and
+   call native `trainings_create` with the proposal's `training` object unchanged as
+   `training_config`, plus `expected_credits`, `expected_billing_system`, and
    `idempotency_key` from the Experiment. Do not ask for per-training approval. Read queued
    work with `trainings_get` using `task_id` and `launch_request_id`; use its native training
    ID after it starts. If the run is NAS, select one concrete child from the completed frontier

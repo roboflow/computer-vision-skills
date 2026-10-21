@@ -102,9 +102,9 @@ Read [`model-ids.md`](./model-ids.md) before calling a training tool. It contain
 
 ## Model Selection Quick Guide
 
-**When you are training a model on the user's data for detection or instance segmentation, start
-with NAS.** Neural Architecture Search searches the RF-DETR space against that data and reports a
-speed/accuracy frontier, so it is the option most likely to land on the best model for it. Reach
+**When native training supports NAS for the task, start with NAS.** Neural Architecture Search
+searches architectures against the user's data and reports an accuracy/latency frontier. This
+includes detection, instance segmentation, semantic segmentation, and future supported tasks. Reach
 for a single named architecture when NAS is unavailable (see prerequisites below), when the user
 asks for a specific one, or when a quick throwaway baseline is all that's wanted.
 
@@ -123,9 +123,9 @@ trains a model — NAS only applies once custom training is the chosen path.
 | Classification | ViT or DINOv3 |
 | Multimodal / text prompts | Qwen3.5 or SmolVLM |
 
-NAS parents exist only for object detection and instance segmentation. Keypoint,
-classification, semantic segmentation, and VLM tasks have no NAS option — use the named
-models above.
+Native model availability is authoritative when this guide's static lists are incomplete.
+Read the native model options for the Project's task and workspace before choosing a NAS parent.
+If NAS is unavailable, use the task's supported named models.
 
 ### Comparing architectures (sweeps)
 
@@ -143,7 +143,7 @@ finish rather than blocking on NAS.
 Instead of picking a single RF-DETR size manually, NAS trains one parent model and mines many architectures out of it, reporting the speed/accuracy frontier so you can pick the one that fits your hardware budget.
 
 - **What:** A NAS run trains a single parent model, then searches the RF-DETR architecture space *within* that trained parent to identify frontier candidates, reporting each one's mAP and measured latency on target hardware (e.g., Jetson, T4 GPU). The output is a set of models on a Pareto frontier, plus a winner auto-selected per (metric, hardware) bucket using Roboflow's current ranking heuristic to balance validation accuracy against measured latency. Those per-bucket winners are not exposed individually: `models_list` flattens them into one `recommended` boolean per child (see **Picking for a specific hardware target**).
-- **Tasks:** Object Detection (`rfdetr-nas`) and Instance Segmentation (`rfdetr-nas-seg`).
+- **Tasks:** Object detection, instance segmentation, semantic segmentation, and any other task with native NAS support. Use native model discovery for current IDs and availability.
 - **When to use:** When you want the best speed/accuracy tradeoff for a specific deployment target and don't want to A/B-test sizes manually. Especially valuable for edge hardware where latency budgets are tight.
 - **Phases:**
   1. **Parent training** — trains the one parent model the search draws from. This is the bulk of the wall-clock.
