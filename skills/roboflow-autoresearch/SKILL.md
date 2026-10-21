@@ -79,8 +79,10 @@ start a large candidate portfolio.
 1. For a Workflow candidate, start from the seed or another saved Workflow. Save the proposed
    version as an unpublished draft with `workflows_save_draft`. Pass its `workflowId` and
    `draftVersionId` as `candidateWorkflow: {workflowId, versionId}`. For a training candidate,
-   use a model and configuration supported by native training. For object detection, prefer
-   RF-DETR NAS when available because it searches the accuracy/latency Pareto frontier. Use
+   use a model and configuration supported by native training. Prefer NAS whenever native
+   training supports it for the task because it searches the accuracy/latency Pareto frontier.
+   This includes object detection, instance segmentation, semantic segmentation, and future
+   tasks with native NAS support. Use
    native availability and preflight checks for workspace access and data requirements. If NAS
    is unavailable, choose a supported model that fits the user's constraints. Put the exact native
    training configuration in `training.extra`, excluding `modelType`. Preserve its fields for the native launch.
