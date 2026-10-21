@@ -33,22 +33,32 @@ approve production promotion, replacement, or rollback.
    naming with the user. Enable `persist_predictions` only when predictions are useful pre-labels.
    Native sink quotas control collection volume. Poll the job with `video_jobs_get`.
 3. When enough data is collected, stop the collector with `video_jobs_cancel` and verify its
-   terminal state with `video_jobs_get`. Then review incoming batches with native annotation job
-   and image tools. Correct labels with the matching annotation tool. Accept reviewed images into
-   the Dataset with `annotation_jobs_accept_into_dataset`, setting explicit train, valid, and
+   terminal state with `video_jobs_get`. Reuse useful captured pre-labels. Prefer native Auto
+   Label for batches that need initial labels. For foundation models, call `autolabel_models_list`
+   to check availability, supported
+   Project types, guidance, and cost. Use `autolabel_preview` on representative samples to select
+   a model and ontology; previews are for model selection, not bulk labeling. Start the batch
+   with `autolabel_start`, using `model_type="foundational"`, the selected model, and an explicit
+   `num_images_to_label` within the agreed labeling budget. A suitable trained Roboflow model
+   can instead use `model_type="roboflow"`. Poll `autolabel_job_get` with the returned `jobId`.
+4. Review the returned `annotationJobId`, or the existing annotation job for captured pre-labels,
+   with native annotation job and image tools. Check generated labels against the images and
+   correct errors with the matching annotation tool. Use Label Assist in the native annotator
+   for interactive corrections. Model predictions alone are not Eval ground truth. Accept reviewed
+   images into the Dataset with `annotation_jobs_accept_into_dataset`, setting explicit train, valid, and
    test counts. Keep the test split out of candidate tuning. If there is not enough reviewed data
    for a meaningful test, say so and collect more before making a strong claim.
-4. Generate and inspect a frozen Dataset version with `versions_generate` and `versions_get` when
+5. Generate and inspect a frozen Dataset version with `versions_generate` and `versions_get` when
    training needs it. Use the user's selected Project and version.
-5. Build a seed Workflow and native Workflow Eval using `workflow-from-eval` and `workflow_evals_*`
+6. Build a seed Workflow and native Workflow Eval using `workflow-from-eval` and `workflow_evals_*`
    tools. Read the Eval resources for valid case, check, and runtime schemas. Run the seed
    Workflow on the Eval and save its completed baseline Run and Execution before creating the
    Objective. The baseline must be measured and bound before any Experiment can be proposed.
-6. Create the Objective with `autoresearch_objective_create`, using a stable `request_id`, source
+7. Create the Objective with `autoresearch_objective_create`, using a stable `request_id`, source
    ID, goal, and selected Project IDs. It claims the source and Projects. Stop the collector first:
    after the claim, native jobs on this source require a quoted production change. Read it with
    `autoresearch_objective_get`.
-7. Configure the Objective with the exact baseline Run and Execution IDs, plus
+8. Configure the Objective with the exact baseline Run and Execution IDs, plus
    `baselineWorkflow`, `evalId`, `scorePolicy`,
    `runtimePolicy: {kind: "serverless", fingerprint: ...}`, and
    `limits: {roboflowCredits, externalCosts}`. Confirm the Objective is `ready` and has bound
@@ -130,6 +140,7 @@ Objective and Experiment: `autoresearch_objective_create`, `autoresearch_objecti
 
 Native collection and data: `video_jobs_create`, `video_jobs_get`, `video_jobs_cancel`,
 `image_upload`, `image_upload_status`, `video_upload`, `video_upload_status`,
+`autolabel_models_list`, `autolabel_preview`, `autolabel_start`, `autolabel_job_get`,
 `annotation_jobs_list`, `annotation_jobs_get`, `annotation_jobs_review_images`,
 `annotation_jobs_accept_into_dataset`, `annotations_save`, `versions_generate`, and
 `versions_get`. Native Workflow authoring: `workflows_create`, `workflows_update`, and
