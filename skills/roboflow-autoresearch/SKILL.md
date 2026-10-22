@@ -23,8 +23,8 @@ Do not ask users to enter native IDs or bookkeeping forms.
 1. Inspect the supplied video clip and resolve the named Projects through native lookup tools or saved links.
    If no suitable Project exists, create one through native data management before saving the Objective.
    Agree on per-frame success criteria, important failure cases, hardware, latency, and experiment constraints.
-   Explain estimated labeling, training, and inference costs before the relevant work.
-   Estimates are advisory. Normal native billing and credit checks apply.
+   Share optional, advisory estimates for labeling, training, and inference before the relevant work.
+   Native billing and credit checks apply when work starts.
    Once the user authorizes experiments within these constraints, do not request separate approval for each training or Eval run.
 2. Find an existing saved goal with `autoresearch_objectives_list` and `autoresearch_objective_get`.
    Otherwise, use `autoresearch_objective_create` to save the goal, constraints, and Project references (`projectIds`).
@@ -52,19 +52,19 @@ Use the native tools directly. No preliminary Autoresearch record or approval is
 | Hypothesis | Native work | Evidence |
 |---|---|---|
 | A Workflow change helps | Change logic, thresholds, prompts, crops, or models that native execution supports. Save a fixed candidate. | Evaluate the complete Workflow on the same reviewed examples and scorecard as the baseline. |
-| Training helps | Train on a frozen native dataset version and bind the resulting model into a fixed Workflow. | Retain the exact native configuration and resulting training/model references. Evaluate the complete Workflow. |
+| Training helps | Train on a frozen native dataset version and bind the resulting model into a fixed Workflow. | Retain the exact native training parameters and resulting training/model references. Evaluate the complete Workflow. |
 | Both changes help | Change the Workflow and train a model, retaining both exact inputs. | Verify the resulting complete Workflow before comparing measured outcomes. |
 
 For training, read the training skill's [model IDs](../roboflow-training-and-evaluation/model-ids.md) and native availability.
 Prefer NAS whenever native training supports the task, including detection, instance segmentation, and semantic segmentation.
 Apply the same rule to future supported tasks. Respect the user's explicit model choice.
 For recipe changes, read `trainings_describe_recipe` first. Keep native defaults unless the hypothesis requires a change.
-Pass the complete native configuration directly as `training_config`, including `modelType` and any `trainRecipe`.
-Get its native estimate with `trainings_estimate`.
-Pass that same configuration and estimate to `trainings_create` with a stable native request identity.
-Retain that same object as the completed record's `training` field. Do not introduce `training.extra` or a fixed architecture.
-This field reports the agent's submitted inputs. The native resolved training configuration remains authoritative.
-Use native estimates, request identities, status, retry, and cancellation behavior.
+Pass `model_type`, `train_recipe`, `epochs`, and other supported training fields as separate native parameters.
+Record the submitted values directly in `training`, using native field names such as `modelType` and `trainRecipe`.
+The native resolved training configuration remains authoritative.
+When useful, call `trainings_estimate` with the same inputs as `trainings_create` and share its advisory estimate.
+Native billing and credit checks apply when training starts.
+Use native status and cancellation behavior.
 For NAS, select a concrete child using hardware, accuracy, and latency constraints.
 Read [NAS results](../roboflow-training-and-evaluation/nas-results.md) for frontier metrics and their limits.
 Model metrics select a model. They are not the Workflow Eval result.
@@ -116,6 +116,5 @@ It is not a prerequisite for completing this pilot.
 ## Resume or stop
 
 Native training and Eval jobs continue after the agent disconnects. Resume through native references and authoritative state.
-Reuse native request identities for identical retries after lost responses.
 Stop training with `trainings_cancel` and Evals with `workflow_evals_runs_cancel`.
-Read native status before reporting that work stopped. Do not add another retry, cancellation, or recovery system.
+Read native status before reporting that work stopped.
