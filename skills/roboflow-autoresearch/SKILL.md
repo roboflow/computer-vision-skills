@@ -1,6 +1,6 @@
 ---
 name: roboflow-autoresearch
-description: Improve a Roboflow vision goal with native Active Learning, Workflow design, training, and Workflow Evals. Use when the user wants measured experiments and a production recommendation that they approve. Save the goal and completed results without a separate orchestration service.
+description: Improve a vision goal from a video clip through measured Workflow design and native training experiments. Use when the user wants the agent to prepare reviewed examples, compare approaches, and save a recommendation and learning. Prefer native NAS when the task supports it.
 ---
 
 > **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
@@ -9,36 +9,40 @@ description: Improve a Roboflow vision goal with native Active Learning, Workflo
 
 Use [Workflow from Eval](../workflow-from-eval/SKILL.md) for Workflow design, reviewed examples, and scoring.
 Use [Training and Evaluation](../roboflow-training-and-evaluation/SKILL.md) for model choices, diagnosis, and training.
-Read its [Active Learning guide](../roboflow-training-and-evaluation/active-learning.md) for collection and review.
+Use [Data Management](../roboflow-data-management/SKILL.md) for frame uploads, Label Assist, Auto Label, review, and split assignment.
 Use the relative files when no installed copy is available. MCP resources are the fallback.
 These native skills own execution. Autoresearch saves the goal and finalized experiment results.
 
-The agent chooses experiments, reads native evidence, and recommends a production candidate.
-The user supplies the goal, reviews ambiguous examples, agrees on success criteria, and approves production changes.
-Keep internal references out of the conversation. Show named resources, scored examples, gains, regressions, uncertainty, collection behavior, and estimates.
+The pilot starts with a video clip. The agent prepares examples, chooses experiments, reads evidence, and recommends a candidate.
+The user supplies the goal, reviews proposed answers, and agrees on success criteria and experiment constraints.
+Keep internal references out of the conversation. Show named resources, scored examples, gains, regressions, uncertainty, and estimates.
 Do not ask users to enter native IDs or bookkeeping forms.
 
-## Save the goal and use native Active Learning
+## Prepare the clip and save the goal
 
-1. Resolve the named stream with `video_sources_list` and the Projects through native lookup tools or saved links.
-   Agree on success criteria, important failure cases, hardware, latency, collection limits, and experiment constraints.
-   Explain the estimated collection, labeling, training, inference, and deployment costs before the relevant work.
+1. Inspect the supplied video clip and resolve the named Projects through native lookup tools or saved links.
+   If no suitable Project exists, create one through native data management before saving the Objective.
+   Agree on per-frame success criteria, important failure cases, hardware, latency, and experiment constraints.
+   Explain estimated labeling, training, and inference costs before the relevant work.
    Estimates are advisory. Normal native billing and credit checks apply.
    Once the user authorizes experiments within these constraints, do not request separate approval for each training or Eval run.
 2. Find an existing saved goal with `autoresearch_objectives_list` and `autoresearch_objective_get`.
-   Otherwise, save it with `autoresearch_objective_create`, including the goal, constraints, Project references, and source reference.
+   Otherwise, use `autoresearch_objective_create` to save the goal, constraints, and Project references (`projectIds`).
    Use `autoresearch_objective_update` only to revise goal text or constraints, with its ordinary edit-concurrency revision.
    Saving a goal does not launch or gate native work. Native experiments can run concurrently.
-3. Read existing collection with `project_deployment_get` and `project_deployment_list_review_queues`.
-   Reuse the Project Model block and native Active Learning.
-   When collection needs changes, use `project_deployment_configure_active_learning` with supported limits and filters.
-   Explain the destination, sampling, quotas, and saved prediction behavior.
-   Use Dataset Upload only for explicit custom routing that native Active Learning does not cover.
-   Do not create a separate collector or stop existing collection merely to save the goal.
-4. Review predictions through native annotation tools and Label Assist in the annotator.
-   Use the [data-management skill](../roboflow-data-management/SKILL.md) for Auto Label, review, and native split assignment.
-   Predictions alone are not ground truth. Keep test data out of candidate tuning.
-   If reviewed evidence is insufficient, collect more before making an improvement claim.
+3. Prepare representative frames with the [Workflow example guide](../workflow-from-eval/ground-truth.md).
+   Cover common scenes, rare failures, negatives, and ambiguous examples. Retain frame timestamps for review.
+   Draft the answer key yourself and show readable images with proposed answers.
+   Use Label Assist or Auto Label for annotation drafts, then obtain reviewed truth through the native review flow.
+   Predictions alone are not ground truth. Record which answers and rules the user approved.
+4. Keep training data, tuning examples, and final evaluation examples separate.
+   Avoid near-duplicate frames across these groups. Reserve unseen scenes or another clip for final validation.
+   The Workflow suite still grows as its guide describes. Do not split an existing suite or train on its examples.
+   If only one clip exists, explain coverage limits and avoid claims about unseen conditions.
+   If reviewed evidence is insufficient, prepare more examples before making an improvement claim.
+
+This pilot evaluates per-frame answers. It does not configure live streams, Active Learning, or temporal event machinery.
+Use existing media and dataset tools. Do not introduce video ingestion APIs or new video entities.
 
 ## Design, run, and measure native experiments
 
@@ -65,11 +69,11 @@ For NAS, select a concrete child using hardware, accuracy, and latency constrain
 Read [NAS results](../roboflow-training-and-evaluation/nas-results.md) for frontier metrics and their limits.
 Model metrics select a model. They are not the Workflow Eval result.
 
-Resolve the Project BASE dependency with `project_deployment_get`.
+If a candidate uses a Project BASE dependency, resolve it with `project_deployment_get`.
 Use `workflows_list_versions` and `workflows_get.version_id` to inspect saved dependencies.
 Save fixed candidates with `workflows_save_draft`.
 Pin nested Workflow and concrete model dependencies. Saving an outer Workflow alone does not freeze mutable child graphs or Project defaults.
-Preserve the intended native Active Learning configuration in the evaluated candidate.
+Keep the pilot candidate focused on per-frame outputs.
 
 Use native Workflow Eval start or replay to evaluate baseline and candidate together in the same frozen Run.
 Preserve its examples, scoring, bindings, and runtime. Compatible results from separate Runs do not satisfy the record contract.
@@ -93,35 +97,25 @@ The server verifies native evidence and provenance. The agent assesses the resul
 Recording a result starts no jobs and changes no production state.
 Use `autoresearch_experiment_get` to resume from a saved result and its native references.
 
-## Explain and approve the production candidate
+## Recommend and save learning
 
-Explain the named stream and candidate, scored-example links, measured gains, regressions, uncertainty, and intended collection behavior.
-Show the processor size, frame rate, runtime input values, image output, recovery behavior, and native cost estimate.
+Explain the candidate, scored-example links, measured gains, regressions, latency, uncertainty, and cost estimates.
+State which Workflow and training hypotheses helped, failed, or remain unresolved.
+Distinguish search results from results on unseen evaluation examples.
 A candidate label is descriptive. The native evaluation artifact supplies the evidence.
 
-Read `workflow_evals_executions_configuration` for the completed candidate's frozen graph and input configuration.
-Use that exact evaluated graph and configuration for production. Do not reread a mutable current Workflow as a substitute.
-A prior fixed Workflow can be another candidate, measured and approved through the same native operations.
+Save completed experiments and their rationale before finishing the pilot.
+Use the saved goal and result references to resume future research without repeating completed experiments.
+A recommendation and saved learning complete the pilot, even if no candidate meets the goal.
+Explain the remaining evidence or constraints when the result is inconclusive.
 
-Before replacing existing processing, use `video_jobs_list` to find active work on the source.
-Explain the planned interruption and obtain explicit approval to stop existing production before cancellation.
-Explain that declining the later create prompt leaves the stream stopped. Do not promise an automatic restart.
-After that approval, cancel with `video_jobs_cancel` and read `video_jobs_get` until native state confirms processing stopped.
-If stop state is uncertain, do not start overlapping production work.
-
-Use `video_jobs_estimate` for the exact frozen graph and selected processor size.
-Call `video_jobs_create` with the exact source, graph, parameters, fixed processor size, frame rate, output, and recovery behavior.
-Its human elicitation approves that exact request and estimate. A refusal or unavailable prompt starts no job.
-A configuration change requires fresh approval. The tool does not stop other jobs or maintain a separate deployment record.
-Native jobs own permissions, billing, status, cancellation, resizing protection, and recovery.
-Read native health after creation. Let Active Learning return fresh observations to the same saved goal and review queue.
-
-Native production creation and durable training currently require an API key.
-If credentials or production elicitation are unavailable, explain the limitation and do not claim that work started.
+Production deployment is a separate, optional task that requires an explicit user request.
+That future task must use native deployment tools and their exact configuration approval requirements.
+It is not a prerequisite for completing this pilot.
 
 ## Resume or stop
 
-Native jobs continue after the agent disconnects. Resume through native job references and authoritative state.
+Native training and Eval jobs continue after the agent disconnects. Resume through native references and authoritative state.
 Reuse native request identities for identical retries after lost responses.
-Stop training with `trainings_cancel`, Evals with `workflow_evals_runs_cancel`, and video processing with `video_jobs_cancel`.
+Stop training with `trainings_cancel` and Evals with `workflow_evals_runs_cancel`.
 Read native status before reporting that work stopped. Do not add another retry, cancellation, or recovery system.
