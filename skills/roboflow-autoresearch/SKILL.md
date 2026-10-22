@@ -113,7 +113,8 @@ After native work completes and its evidence is verified, call `autoresearch_exp
 - The saved goal, a stable identity for this record, and the tested hypothesis.
 - Exact `baseline_workflow` and `candidate_workflow` references, each with `workflowId` and `versionId` from the `savedWorkflowVersion` Run subjects.
 - Native `evidence` with `evalId`, `runId`, `baselineExecutionId`, and `candidateExecutionId`.
-- An `outcome` of `recommended`, `rejected`, or `inconclusive`, with an evidence-based `rationale`.
+- An `outcome` of `recommended`, `rejected`, or `inconclusive`, assessed only against the named baseline. `recommended` does not set the objective's current pick; use `autoresearch_objective_recommend` for that.
+- A `rationale` shown on the recommendation card. State measured evidence, limitations, uncertainty, and the next step. Summarize other variants and link their native results when one comparison represents a group.
 - For training, only the values actually submitted in `training`, plus `training_reference` with Project, version, training, and selected model references.
 - Optional advisory `estimate` values and notes.
 
