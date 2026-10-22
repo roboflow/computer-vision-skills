@@ -1,6 +1,6 @@
 # Microsoft Copilot Cowork package
 
-This package combines Roboflow skills with the hosted MCP server. Building requires Python 3.9 or newer and access to a public GitHub release asset. It does not require access to the private MCP repository, Node.js, or uv.
+This package combines Roboflow skills with the hosted MCP server. Building requires Python 3.11 or newer and access to a public GitHub release asset. It does not require access to the private MCP repository, Node.js, or uv.
 
 ## Build
 
