@@ -108,7 +108,7 @@ After launch, update that same entry with `autoresearch_experiment_update` using
 If work stops or fails, update the same entry with `state="stopped"` or `state="failed"` and a short note. Do not create a second entry for the status change.
 To resume, update that entry back to `state="in_progress"` with its latest revision and current native references before continuing.
 
-After native work completes and its evidence is verified, call `autoresearch_experiment_record` with the same `request_id` and experiment name to finalize that entry. The server marks it completed only after it verifies the evidence. Include:
+After native work completes and its evidence is verified, call `autoresearch_experiment_finalize` with the same `request_id` and experiment name to finalize that entry. The server marks it completed only after it verifies the evidence. Include:
 
 - The saved goal, a stable identity for this record, and the tested hypothesis.
 - Exact `baseline_workflow` and `candidate_workflow` references, each with `workflowId` and `versionId` from the `savedWorkflowVersion` Run subjects.
