@@ -71,7 +71,8 @@ Model metrics select a model. They are not the Workflow Eval result.
 
 If a candidate uses a Project BASE dependency, resolve it with `project_deployment_get`.
 Use `workflows_list_versions` and `workflows_get.version_id` to inspect saved dependencies.
-Save fixed candidates with `workflows_save_draft`.
+Save fixed candidates with `workflows_save_draft`. This creates a saved version without publishing it.
+If the response is unclear, inspect Workflow versions and the saved draft before saving again.
 Pin nested Workflow and concrete model dependencies. Saving an outer Workflow alone does not freeze mutable child graphs or Project defaults.
 Keep the pilot candidate focused on per-frame outputs.
 
