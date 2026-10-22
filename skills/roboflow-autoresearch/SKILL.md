@@ -28,6 +28,7 @@ Do not ask users to enter native IDs or bookkeeping forms.
    Once the user authorizes experiments within these constraints, do not request separate approval for each training or Eval run.
 2. Find an existing saved goal with `autoresearch_objectives_list` and `autoresearch_objective_get`.
    Otherwise, use `autoresearch_objective_create` to save the goal, constraints, and Project references (`projectIds`).
+   Let MCP resolve the authenticated workspace. Pass each Project by slug or `workspace/project` reference.
    Use `autoresearch_objective_update` only to revise goal text or constraints, with its ordinary edit-concurrency revision.
    Saving a goal does not launch or gate native work. Native experiments can run concurrently.
 3. Prepare representative frames with the [Workflow example guide](../workflow-from-eval/ground-truth.md).
