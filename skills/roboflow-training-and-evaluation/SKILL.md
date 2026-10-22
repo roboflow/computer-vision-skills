@@ -11,14 +11,14 @@ description: Use when training Roboflow models, diagnosing why a model underperf
 
 ```
 Upload/Annotate Images
-  → Generate Dataset Version (preprocessing + augmentation + train/val/test split)
+  → Freeze a Dataset Version (data + train/val/test split; add version transforms when needed)
     → Pick Model Architecture + Size
       → Pick Checkpoint (COCO, Universe model, or previous version)
         → Train
           → Evaluate (auto-runs for paid users)
 ```
 
-**Version = frozen snapshot.** Changes to the project after version creation do not affect it. Configure preprocessing (resize, contrast, etc.) and augmentation (flip, rotate, mosaic, etc.) during version generation.
+**Version = frozen snapshot.** Changes to the project after version creation do not affect it. Use supported training-recipe settings for preprocessing and augmentation when available. Create a new Dataset Version for data or split changes, or when the recipe cannot express a required transform.
 
 ## Available Model Architectures
 
