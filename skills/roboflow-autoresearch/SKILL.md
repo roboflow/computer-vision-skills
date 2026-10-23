@@ -92,7 +92,6 @@ Keep the pilot candidate focused on per-frame outputs.
 
 Use native Workflow Eval start or replay to evaluate the selected baseline and up to two challengers together in the same frozen Run.
 Preserve its examples, scoring, bindings, and runtime. Compatible results from separate Runs do not satisfy the record contract.
-Native Eval execution suppresses collection sinks automatically.
 Read completed results and inspect scored examples, regressions, latency, and uncertainty.
 Retain the exact Eval ID, Run ID, and execution IDs for every comparison.
 Record a comparison when its baseline and candidate executions and case checks are complete, even if another candidate in the Run failed. Do not record a comparison whose own evidence is incomplete.
@@ -135,9 +134,7 @@ Use the saved goal and result references to resume future research without repea
 A recommendation and saved learning complete the pilot, even if no candidate meets the goal.
 Explain the remaining evidence or constraints when the result is inconclusive.
 
-Production deployment is a separate, optional task that requires an explicit user request.
-That future task must use native deployment tools and their exact configuration approval requirements.
-It is not a prerequisite for completing this pilot.
+Production deployment is outside this pilot and requires a separate, explicit user request.
 
 ## Resume or stop
 
