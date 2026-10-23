@@ -64,7 +64,7 @@ These are known `model_id` examples, not a complete availability list. Call `tra
 | Model | model_id | Notes |
 |---|---|---|
 | SAM3 (zero-shot, workflows) | `sam3/sam3_final` | Always set `class_names`; no other props unless user asks |
-| Trained model in a Workflow | `workspace/model-id` | Read the model ID from `trainings_get.models[].modelId`. A legacy single-model version can also use a Dataset Version reference such as `project/2` for inference. Use a model ID to select one model when a version has several trainings or models. |
+| Trained model in a Workflow | `workspace/model-id` | Read the model ID from `trainings_get.models[].modelId`. This address selects a concrete model even when a version has several trainings or models. |
 
 ## COCO 80 Classes (RF-DETR coverage)
 
