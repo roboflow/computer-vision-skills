@@ -220,6 +220,11 @@ API-key header configuration and reconnect.
 
 Skills are markdown. Open a PR with edits or a new folder under [`skills/`](skills/). Each new skill must have a `SKILL.md` at its root with `name` and `description` frontmatter. Read [`AUTHORING.md`](AUTHORING.md) before editing: some files also have a ChatGPT version that may need the same change.
 
+Merging skill or bundled plugin changes automatically bumps the Claude/Codex
+patch version and builds a draft GitHub release with the ZIP and provenance.
+See [`release/README.md`](release/README.md) for the automatic release flow and
+the separate ChatGPT package workflow.
+
 ## License
 
 Apache-2.0
