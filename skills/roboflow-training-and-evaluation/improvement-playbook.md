@@ -149,7 +149,7 @@ If the minority class is also confused with another class, check **Step 3 — Ta
 | Objects are orientation-sensitive but flip is on | Disable horizontal/vertical flip |
 | Small objects disappear after crop | Reduce crop aggressiveness or disable |
 | Color-dependent task with heavy color jitter | Reduce or disable hue/saturation/brightness augmentation |
-| Over-augmented (mAP worse than no augmentation) | Reduce augmentation in the supported training recipe and compare. Create a new version only if the recipe cannot express the needed change. |
+| Over-augmented (mAP worse than no augmentation) | Reduce online augmentation in the supported recipe. If unwanted copies are already baked into the version, generate a corrected version from source data. |
 
 Crop and stretch also show up as loose boxes (mAP@50 fine, mAP@50-95 poor); see **Improve Localization / IoU** in `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`.
 
@@ -208,7 +208,7 @@ Both are mAP@50. Cast to number before comparing.
 2. **Identify weakest classes** -- Sort by lowest recall/precision; click the cells and look at the images
 3. **Diagnose root cause** -- Use decision tree above; for deep dives see `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`
 4. **Take action** -- Fix labels or taxonomy first; then add the specific data the diagnosis calls for; then adjust augmentation or switch architecture
-5. **Change transforms** -- Prefer supported training-recipe settings. Generate a new version for data/split changes or when the recipe cannot express the needed transform
+5. **Change transforms** -- Inspect the version's stored transforms first. Recipe transforms run during training; version transforms are baked into images, so disabling a recipe transform cannot undo them. Generate a corrected version from source data when a baked transform is wrong. Use recipe settings for changes the recipe supports.
 6. **Train new model** -- Use previous version as checkpoint if prior model was decent
 7. **Compare** -- Check if mAP/precision/recall improved vs previous version
 8. **Repeat** -- Target: mAP >70% for production use (domain-dependent)
