@@ -103,6 +103,8 @@ The MCP `images_search` tool does not parse RoboQL. Its query is semantic text t
 
 Images are assigned to train, valid, or test splits. Splits are rebalanced during version generation (Step 2 in version creation). Augmentations only apply to train split.
 
+Keep the test split held out as a shared evaluation source. Use its reviewed annotations as ground truth when mapping dataset images into a Workflow Eval, and preserve the same test examples across candidates. Do not train on those examples.
+
 ## Dataset Versions
 
 A version is a **frozen snapshot** of the dataset at a point in time. Changes to the project after version creation do not affect existing versions.

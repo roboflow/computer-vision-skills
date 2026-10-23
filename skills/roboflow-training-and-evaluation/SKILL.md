@@ -18,7 +18,7 @@ Upload/Annotate Images
           → Evaluate (auto-runs for paid users)
 ```
 
-**Version = frozen snapshot.** Changes to the project after version creation do not affect it. Use supported training-recipe settings for preprocessing and augmentation when available. Create a new Dataset Version for data or split changes, or when the recipe cannot express a required transform.
+**Version = frozen snapshot.** Changes to the project after version creation do not affect it. Inspect stored preprocessing and augmentation with `versions_get` before changing the recipe. Recipe transforms run during training; version transforms are already baked into the images. Disabling recipe flips does not remove flipped copies already in a version. Generate a corrected version from source data when a baked transform is wrong. Record both the version transforms and submitted recipe.
 
 ## Available Model Architectures
 
@@ -98,13 +98,13 @@ Follow this flowchart to pick the right model. Start at Step 1.
 
 ## Model ID Reference
 
-Read [`model-ids.md`](./model-ids.md) before calling a training tool. It contains the exact supported `model_id` values and the COCO class reference. Do not guess model IDs.
+Read [`model-ids.md`](./model-ids.md) for model ID examples and the COCO class reference. Native availability is authoritative. Call `trainings_describe_recipe(project_id, version_number, model_type)` for the selected model; if the model ID is invalid, its error lists the IDs supported for that Project's task. Do not infer NAS availability from a static list.
 
 ## Model Selection Quick Guide
 
 **When native training supports NAS for the task, start with NAS.** Neural Architecture Search
 searches architectures against the user's data and reports an accuracy/latency frontier. This
-includes detection, instance segmentation, semantic segmentation, and future supported tasks. Reach
+includes every task for which native model discovery accepts a NAS parent. Reach
 for a single named architecture when NAS is unavailable (see prerequisites below), when the user
 asks for a specific one, or when a quick throwaway baseline is all that's wanted.
 
@@ -123,9 +123,9 @@ trains a model — NAS only applies once custom training is the chosen path.
 | Classification | ViT or DINOv3 |
 | Multimodal / text prompts | Qwen3.5 or SmolVLM |
 
-Native model availability is authoritative when this guide's static lists are incomplete.
-Read the native model options for the Project's task and workspace before choosing a NAS parent.
-If NAS is unavailable, use the task's supported named models.
+Use the same discovery check for every task: call `trainings_describe_recipe` with a candidate NAS parent for the Project and version. A successful response confirms support; an invalid ID returns the supported IDs for that task. Check NAS prerequisites, including at least 15 validation images, before training. If NAS is unavailable, select a supported named model.
+
+Pass `model_type` when the user or experiment selects an architecture. If you omit it, native training uses its default; leave `modelType` out of the record. A `train_recipe` requires its matching `model_type`.
 
 ### Comparing architectures (sweeps)
 
@@ -148,12 +148,12 @@ Instead of picking a single RF-DETR size manually, NAS trains one parent model a
 - **Phases:**
   1. **Parent training** — trains the one parent model the search draws from. This is the bulk of the wall-clock.
   2. **Mining** — searches architectures inside the trained parent and evaluates candidates to build the Pareto frontier (latency vs mAP). Candidates are derived from the parent rather than each being trained from scratch, so they appear in a burst near the end of the run. Each becomes a regular model you can deploy.
-- **Model IDs:** `rfdetr-nas-parent` (Standard — use this by default), `rfdetr-nas-pecoret-parent` (Fast), `rfdetr-nas-base-parent` (Plus) for object detection; `rfdetr-nas-seg-parent` for instance segmentation.
+- **Model ID examples:** `rfdetr-nas-parent` (Standard), `rfdetr-nas-pecoret-parent` (Fast), and `rfdetr-nas-base-parent` (Plus) for object detection; `rfdetr-nas-seg-parent` for instance segmentation; `rfdetr-nas-sem-parent` and `rfdetr-nas-sem-base-parent` for semantic segmentation. Confirm each ID with `trainings_describe_recipe` for the Project and version.
 - **Prerequisites — check both before offering NAS:**
   1. **≥15 validation images.** `versions_get` returns `splits.valid`; below 15 the train call fails with `insufficient_validation_images_for_nas`, and waiting will not help — the user must generate a version with a larger validation split.
   2. **Plan entitlement.** NAS is included on Core and Growth plans; any other plan needs it granted on the workspace. Basic/starter/sandbox/research/trial need to upgrade; enterprise/legacy need to contact sales. Entitlement is not readable from the MCP, so this cannot be checked up front — a non-entitled workspace finds out when `trainings_create` rejects the run with code `nas_not_available_for_plan`. Treat that as a plan limit, not a transient error: do not retry it. Fall back to the named model for the task — `rfdetr-medium` (detection) or `rfdetr-seg-medium` (segmentation) — and say NAS is unavailable on the current plan and may need an upgrade or workspace enablement, using the `plan` on the error to tell which. Do **not** fall back to a hyperparameter sweep.
-- **Start a run:** `trainings_create(project_id, version_number, model_type="rfdetr-nas-parent")`. NAS launches through the normal training tool; there is no separate engine parameter. (The UI equivalent is the Train page with `?engine=nas`.) Results land at `/{workspace}/{project}/nas-runs/{versionId}`.
-- **Nothing to hand-tune:** a NAS parent's whole hyperparameter surface is `epochs` (default 200, range 100–300). There are no learning-rate or loss-weight knobs, because the architecture search *is* the sweep.
+- **Start a run:** For object detection, `trainings_create(project_id, version_number, model_type="rfdetr-nas-parent")` is an example. Use the supported parent for the selected task. NAS launches through the normal training tool; there is no separate engine parameter. (The UI equivalent is the Train page with `?engine=nas`.) Results land at `/{workspace}/{project}/nas-runs/{versionId}`.
+- **Configuration:** Read `trainings_describe_recipe` for the selected parent. Use only its supported fields and defaults; do not assume every task exposes the same tuning options.
 - **Reading a run and selecting a hardware target:** Read [NAS results](./nas-results.md) before interpreting child metrics or choosing a model. It covers paging, latency formats, and the limits of recommendation flags.
 - **Deploy:** Each NAS-produced model deploys like any other — pick one and use it as a normal Roboflow model. Call it the hardware-recommended child only when an authoritative `recommendedByHardware` entry actually says so; otherwise it is the child the user chose from the frontier. Inference type is `rfdetr-nas` / `rfdetr-nas-seg`, but it's served through the standard inference paths.
 - **References:** [RF-DETR paper (arxiv)](https://arxiv.org/html/2511.09554v2), [ICLR 2026](https://openreview.net/forum?id=qHm5GePxTh), [What is NAS? (blog)](https://blog.roboflow.com/neural-architecture-search/).

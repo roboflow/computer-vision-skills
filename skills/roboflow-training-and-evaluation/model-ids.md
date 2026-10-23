@@ -1,6 +1,6 @@
 # Roboflow Training Model IDs
 
-Use these exact `model_id` values. Do not guess: wrong IDs cause training failures.
+These are known `model_id` examples, not a complete availability list. Confirm support for the Project's task with `trainings_describe_recipe`; an invalid ID returns the supported IDs. Do not guess.
 
 ## Object Detection
 
@@ -45,6 +45,7 @@ Use these exact `model_id` values. Do not guess: wrong IDs cause training failur
 
 | Family | model_id values |
 |---|---|
+| RF-DETR NAS | `rfdetr-nas-sem-parent`, `rfdetr-nas-sem-base-parent` |
 | DeepLabV3+ | `deeplabv3plus` |
 
 ## Multimodal / VLM
@@ -63,7 +64,7 @@ Use these exact `model_id` values. Do not guess: wrong IDs cause training failur
 | Model | model_id | Notes |
 |---|---|---|
 | SAM3 (zero-shot, workflows) | `sam3/sam3_final` | Always set `class_names`; no other props unless user asks |
-| Custom / workspace | `workspace/model` or `dataset/version` | e.g., `construction-safety/2` |
+| Trained model in a Workflow | `workspace/model-id` | Read the model ID from `trainings_get.models[].modelId`. A Dataset Version reference such as `project/2` identifies training data, not a trained model for inference. |
 
 ## COCO 80 Classes (RF-DETR coverage)
 
