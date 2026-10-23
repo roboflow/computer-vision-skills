@@ -1,6 +1,6 @@
 ---
 name: workflow-from-eval
-description: Build or improve a Roboflow Workflow using eval-driven search. Use for a one-session Workflow-only search without saved research records. For resumable research across Workflow and training approaches, saved experiment records, or an overall recommendation, use roboflow-autoresearch. Use direct tools for straightforward builds and edits, Workflow Evals tools for measuring one existing Workflow once, and training skills for one training task.
+description: Build or improve a Roboflow Workflow using eval-driven search. A business goal plus images or video is enough; no existing Workflow or Eval is required. Use roboflow-autoresearch for training versus zero-shot research, a saved experiment log, or research across sessions. Use direct tools for straightforward builds and edits, Workflow Evals tools for measuring one Workflow once, and training skills for one training task.
 ---
 
 # Workflow from Eval
@@ -13,8 +13,7 @@ is enough: help define success, build an approved Eval, and search for a suitabl
 The user does not need to know this skill exists or ask for an Eval.
 
 Use [Roboflow Autoresearch](../roboflow-autoresearch/SKILL.md) when the user asks to
-compare Workflow and training approaches, save experiment records, resume research later,
-or set an overall recommendation. In that flow, Autoresearch owns records and conclusions;
+compare training with zero-shot approaches, save experiment records, or resume research later. In that flow, Autoresearch owns records and conclusions;
 use this skill's intake, ground-truth, scoring, provider recovery, and media-review guidance.
 Do not apply this skill's portfolio, checkpoints, finalists, cleanup, or full report unless
 Autoresearch adopts that step.

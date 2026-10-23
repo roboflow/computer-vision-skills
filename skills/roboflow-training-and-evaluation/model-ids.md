@@ -1,6 +1,6 @@
 # Roboflow Training Model IDs
 
-These are known `model_id` examples, not a complete availability list. Confirm support for the Project's task with `trainings_describe_recipe`; an invalid ID returns the supported IDs. Do not guess.
+These are known `model_id` examples, not a complete availability list. Call `trainings_describe_recipe` with the candidate model ID to get the recipe and confirm support for the Project's task. An invalid ID returns the supported IDs. This call does not confirm plan entitlement for NAS.
 
 ## Object Detection
 
@@ -64,7 +64,7 @@ These are known `model_id` examples, not a complete availability list. Confirm s
 | Model | model_id | Notes |
 |---|---|---|
 | SAM3 (zero-shot, workflows) | `sam3/sam3_final` | Always set `class_names`; no other props unless user asks |
-| Trained model in a Workflow | `workspace/model-id` | Read the model ID from `trainings_get.models[].modelId`. A Dataset Version reference such as `project/2` identifies training data, not a trained model for inference. |
+| Trained model in a Workflow | `workspace/model-id` | Read the model ID from `trainings_get.models[].modelId`. A legacy single-model version can also use a Dataset Version reference such as `project/2` for inference. Use a model ID to select one model when a version has several trainings or models. |
 
 ## COCO 80 Classes (RF-DETR coverage)
 

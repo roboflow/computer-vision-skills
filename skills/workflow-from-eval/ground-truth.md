@@ -21,7 +21,7 @@ Target 30 to 60 examples that cover every answer value and the hard transitions.
 | --- | --- |
 | Video file | `ffprobe` for duration and fps. Extract with `ffmpeg -vf fps=<r>,scale=960:-1` into `frames/`. Pick `r` so you land between 30 and 60 frames; for a 26 s clip that is 2 fps, for a 131 s clip 0.4 fps. Name frames with a zero-padded index so ordering is stable, and keep `frames/index.json` (name to seconds). |
 | Folder of images | Use them as-is. Downscale anything above 1920 px on the long side before upload. |
-| Roboflow project | `workflow_evals_cases_import` with a dataset source (`project:read`, `image:read`). Imported Cases start incomplete. |
+| Roboflow project | `workflow_evals_cases_import` with a dataset source (`project:read`, `image:read`). Image-only imports start incomplete; approved test annotations can supply ground truth (below). |
 | Workspace images or Universe | `images_workspace_search` / `universe_dataset_images_search`, then `cases_import` with a source, or download and upload. |
 | URLs | Download into `frames/` first. Case inputs must be uploaded artifacts, never URLs. |
 
@@ -33,6 +33,12 @@ as if it were complete, so a Dataset holding a single draft Case refuses any mig
 ("groundTruth.x is required by the Dataset contract"). If you must migrate anyway: complete
 every Case (placeholders on the fields that will become optional), migrate, then replace
 those Cases without the placeholders.
+
+### Reusing approved Project annotations
+
+Use the Project test split as the Eval source when its labels match the task. Pass `ground_truth_path="$.<field>"` to `workflow_evals_cases_import` to map approved classification or detection annotations into that contract field. Every import item must be a Dataset source with `split="test"`; multiple Dataset items are supported.
+
+Verify that the contract accepts the annotations. The mapping does not rename classes or labels. Other required fields still need answers before a Case is complete. Without `ground_truth_path`, imports remain image-only. Keep Eval examples out of training and validation, including during version split rebalancing, so scores measure unseen examples.
 
 ### Uploading local files into the suite
 

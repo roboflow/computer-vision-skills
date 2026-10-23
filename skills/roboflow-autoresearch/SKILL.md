@@ -1,54 +1,49 @@
 ---
 name: roboflow-autoresearch
-description: Run resumable Roboflow research across Workflow and training approaches, with saved experiment records and a measured recommendation. Use when the user asks to compare approaches, continue research across sessions, or keep an experiment log. Use workflow-from-eval for a one-session Workflow-only search without research records, and roboflow-training-and-evaluation for one training task.
+description: Compare Workflow and training approaches with a saved experiment log and measured recommendation. Use for autoresearch, training versus zero-shot comparisons, or research that resumes across sessions. For a plain vision goal plus images or video without research tracking, use workflow-from-eval. For one training task, use roboflow-training-and-evaluation.
 ---
 
 > **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
 
 # Roboflow Autoresearch
 
-Autoresearch owns the research scope, experiment records, and recommendation. Use the linked skills for task-specific Workflow, labeling, dataset, and training steps. Their search portfolios, checkpoints, finalists, cleanup, and reporting apply only where this skill adopts them. Keep each baseline-candidate comparison in one Eval Run.
+Own the research scope, experiment log, and recommendation. Show named resources, reviewed examples, results, and uncertainty. Handle IDs and bookkeeping without asking the user to enter them.
 
-Use [Workflow from Eval](../workflow-from-eval/SKILL.md) (`roboflow://skills/workflow-from-eval/SKILL`) for reviewed examples and Eval scoring. Use [Training and Evaluation](../roboflow-training-and-evaluation/SKILL.md) (`roboflow://skills/roboflow-training-and-evaluation/SKILL`) for training choices and diagnosis. Use [Data Management](../roboflow-data-management/SKILL.md) (`roboflow://skills/roboflow-data-management/SKILL`) for Projects, uploads, annotations, and versions.
+## Use existing skills
 
-Keep internal IDs and bookkeeping out of the conversation. Show named resources, reviewed answers, measured results, uncertainty, and cost estimates. Do not ask the user to enter native IDs.
+Read each skill when its task becomes relevant:
 
-## Prepare the goal and evidence
+| Task | Guidance |
+|---|---|
+| Define success and score Workflows | [Workflow from Eval](../workflow-from-eval/SKILL.md), `roboflow://skills/workflow-from-eval/SKILL` |
+| Label, split, and version data | [Data Management](../roboflow-data-management/SKILL.md), `roboflow://skills/roboflow-data-management/SKILL` |
+| Select and train models | [Training and Evaluation](../roboflow-training-and-evaluation/SKILL.md), `roboflow://skills/roboflow-training-and-evaluation/SKILL` |
+| Save goals, transition experiments, or resume | [Experiment Protocol](experiment-protocol.md), `roboflow://skills/roboflow-autoresearch/experiment-protocol` |
 
-1. Inspect the supplied media and resolve its Project.
-2. Before creating resources or starting paid work, verify access to autoresearch, data management, Workflow version, and Workflow Eval tools. Read the Eval contract with `workflow_evals_agent_manifest` and `workflow_evals_agent_resource_get`. For training, verify its tools too. If a required capability is missing, explain the limit before dependent work. Create a suitable Project before saving the goal when none exists; you can update its Project associations later.
-3. Find an existing goal with `autoresearch_objectives_list` and `autoresearch_objective_get`. If no goal exists, create one with `autoresearch_objective_create(request_id=..., goal=..., project_ids=[...])`. Use Project slugs or `workspace/project` references. MCP resolves the workspace. To associate another Project later, call `autoresearch_objective_update` with the current goal revision and the complete replacement `project_ids` list. A Project can be associated with multiple goals. Associate the training Project before `experiment.begin`. Updating Project associations advances the goal revision and clears the current recommendation while preserving history; experiments retain their original revision.
-4. Agree on per-frame success criteria, important failure cases, hardware, latency, and the experiment limits. Set limits for training jobs, Eval Runs, and concurrency. Include the final comparison within those limits. Share `trainings_estimate` results as advisory conversation when useful. Never store estimate payloads in autoresearch records. Native billing and credit checks apply when training starts.
-5. Prepare representative examples with [Ground Truth](../workflow-from-eval/ground-truth.md) (`roboflow://skills/workflow-from-eval/ground-truth`). Prefer supported foundation-model auto-labeling: discover models with `autolabel_models_list`, preview a sample with `autolabel_preview`, label the batch with `autolabel_start`, then review and correct annotations with the native review flow. Predictions are drafts, not ground truth.
-6. Use the Project test split as a common evaluation source when it fits the task. Import approved classification or detection annotations with `workflow_evals_cases_import(ground_truth_path="$.<field>")`; every item must be a Dataset source with `split="test"`, and the import can include multiple test-split Dataset items. The mapping selects where native annotations go. It does not rename classes or labels. Confirm that the Eval contract accepts the imported values. Cases with other required fields remain incomplete until you fill them. Never train on Eval examples.
-7. Save and measure a zero-shot baseline Workflow first. Freeze the examples, scorecard, bindings, and runtime within each Run. Keep the original baseline for the final comparison. Use training frames outside the suite; if they are insufficient, skip training or limit the claim. Frames from one clip are not independent validation. Say so when only one clip is available.
+Adopt Workflow from Eval's Goal Card approval, reviewed ground truth, scoring, provider recovery, and media review. This skill replaces its search portfolio, later checkpoints, finalists, cleanup, and report. Objective and Experiment records replace `created.json` as the research log.
 
-This skill evaluates per-frame answers. It does not set up live streams or temporal event logic. Per-execution latency is not stream throughput; test sustained throughput separately.
+## Prepare
 
-## Run and compare experiments
+1. Inspect the supplied clip. Verify access to research, data, saved Workflow, and Eval tools before dependent resource creation or paid work. Read the Eval contract through `workflow_evals_agent_manifest` and `workflow_evals_agent_resource_get`. Verify training tools when training is part of the plan.
+2. Agree on per-frame success criteria, hard constraints, hardware, and latency. Set limits for labeling, training jobs, Eval Runs, and concurrency, plus a stop condition. Reserve a Run for the final comparison. Save these agreements in the Objective's `constraints` before experiments begin, using the protocol. Settle its goal and Project associations at the same time. Share cost estimates in conversation only.
+3. Prepare reviewed examples through [Ground Truth](../workflow-from-eval/ground-truth.md) (`roboflow://skills/workflow-from-eval/ground-truth`). Prefer foundation-model Auto Label: `autolabel_models_list` → `autolabel_preview` → `autolabel_start` → review and correct. Predictions remain drafts until reviewed. Reuse approved Project test annotations as Eval ground truth when they fit the contract.
+4. Keep Eval examples out of training and validation so the score measures unseen examples. Preserve their split during version generation; do not rebalance them into training. Verify membership before training. One clip still gives correlated search evidence, not independent validation. Temporal separation and live streams are outside this pilot.
+5. Save and measure a zero-shot Workflow first. Retain it for the final comparison. The baseline alone needs no Experiment record or self-comparison.
 
-Start one experiment record for each tested approach. Set immutable `experiment_type` at begin to `workflow`, `training`, or `combined`. The type describes the full experiment and cannot change later. Keep one baseline and at most two challengers in each Run. Use the strongest measured candidate as the baseline for a new approach and its direct parent for a tuned variant. Include a final comparison with the original zero-shot baseline within the authorized Eval Run count. The baseline alone is not an experiment; never compare it with itself.
+## Experiment
 
-For labeling, use supported foundation models with the discover, preview, batch, and review sequence above. For training, inspect task-native model availability and prefer NAS where supported and its prerequisites pass. Use the training skill's NAS requirements and result guidance. Do not treat static model tables as authoritative.
+Begin each record before launching work, using the protocol's immutable experiment type. Each Run has one baseline and at most two challengers. For a new approach, use the strongest measured candidate as baseline; for a tuned variant, use its parent. Group challengers that need different baselines into separate Runs, within the agreed limit.
 
-Before training, inspect the frozen version's stored preprocessing and augmentation. Recipe transforms run during training; version transforms are already baked into the images. Disabling recipe flips does not remove flipped copies from a version. Generate a corrected version from source data when a baked transform is wrong, and record the version and submitted recipe.
+For training, follow the training skill's task discovery and prefer NAS wherever supported. Prefer online recipe transforms when available; inspect the version for transforms already baked into its images. Bind trained models as `workspace/model-id`: autoresearch verifies a concrete model, not a Project version alias. The protocol explains the training evidence fields.
 
-When a model is used in a Workflow, bind a concrete trained model as `workspace/model-id`. Do not use `project/version` for a trained-model inference block. Read the selected model ID from `trainings_get.models[].modelId`. A dataset version number identifies training data; it is not the model ID. Pass `model_type` when the user or hypothesis selects an architecture. If omitted, let native training apply its default and leave `modelType` out of the record.
+Save candidates with meaningful Workflow and version names. Follow [Workflow gotchas](../workflow-from-eval/gotchas.md) (`roboflow://skills/workflow-from-eval/gotchas`) for saved versions, dependency pinning, and block-specific behavior.
 
-For a new candidate Workflow, create it with its real configuration using `workflows_create`. Do not create placeholder configurations. Save the candidate version with `workflows_save_draft`, inspect it with `workflows_list_versions`, then use that saved version in the Eval Run. Existing Workflows can be reused by saving a new version. Use useful Workflow and `version_name` values. Do not rename a Workflow to present a winner: `workflows_update` can publish a version and change its URL slug.
+Compare each pair on the same frozen Eval examples, Spec, bindings, and runtime. If latency affects the choice, add the supported `latency@1` check to the Spec before the Run. Apply the approved hard limit when applicable, and set `execution_reuse="never"` for fresh measurements. Per-execution latency does not establish stream throughput.
 
-Resolve a Project BASE dependency with `project_deployment_get`. Inspect saved dependencies with `workflows_list_versions` and `workflows_get.version_id`. Pin nested Workflows and concrete model dependencies because an outer save does not freeze child graphs or Project defaults.
+Read scored examples and regressions. For stochastic outputs, compare fresh executions of an unchanged baseline across Runs with unchanged evaluation settings to estimate variation. Reused results do not measure noise. If the allowance cannot resolve a small gain, report uncertainty instead of claiming an improvement. Count repeats and the final original-baseline comparison within the agreed limits. State when thresholds were tuned on this same suite.
 
-Run the selected baseline and up to two challengers together on the same frozen Eval suite. When the comparison needs fresh latency measurements, set `execution_reuse="never"`. Preserve the exact Eval, Run, and execution references. Read scored examples, regressions, latency, and uncertainty. Finalize only after the Run is `completed` or `partially_completed`, both selected executions are complete, and their selected Case checks are complete. A failed unrelated challenger does not block a complete comparison. `inconclusive` means complete comparable evidence cannot support a decision; never use it for incomplete evidence. State when confidence thresholds were tuned on the same Eval suite.
+Finalize complete evidence through the protocol. Stop at the agreed limit or stop condition; request an extension before more work. For long jobs, save their references and status, then report the pending work. Resume through the protocol without duplicating launches.
 
-For a classification block, inspect `confidence_mode`. When the scorecard needs every class score, use `confidence_mode="custom"` and `custom_confidence=0`; handle an empty result explicitly in the Workflow.
+## Report
 
-Use [the experiment protocol](experiment-protocol.md) for exact lifecycle calls, payload fields, recovery, and recommendation behavior. MCP clients can read it at `roboflow://skills/roboflow-autoresearch/experiment-protocol`.
-
-## Report and resume
-
-Describe measured gains, regressions, latency, uncertainty, and the limits of the evidence. A candidate outcome applies only to its named baseline. Keep the current objective recommendation when new evidence does not support replacing it. Recommend a new experiment only when completed evidence supports it.
-
-On resume, list goals, read the goal and its experiments in any state, then inspect each native job before launching anything. Reconcile active or completed work first. If a launch response was lost, search native jobs for a matching submission. A record `request_id` does not make training or Eval launches idempotent. If a launch remains ambiguous, report that before risking a duplicate paid job. If a stopped or failed record has complete native results, update its state to `in_progress` with the latest revision and references, then finalize it without restarting native jobs. Updating the record does not start or resume native jobs. Read authoritative native status before reporting a stop. Cancel training with `trainings_cancel` and Eval Runs with `workflow_evals_runs_cancel` when requested.
-
-Save completed findings before ending. Recommend a candidate only when it meets the goal's hard constraints and the evidence supports it; otherwise leave the overall recommendation unset and explain what remains unresolved. Production deployment requires a separate, explicit user request.
+Explain measured gains, regressions, hard-constraint results, and evidence limits. Each Experiment outcome applies to its named baseline. Save completed findings even when no candidate meets the goal. Use the protocol to retain or replace the overall recommendation. Production deployment requires a separate, explicit user request.
