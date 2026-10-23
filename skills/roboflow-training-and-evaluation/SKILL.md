@@ -81,7 +81,7 @@ Upload/Annotate Images
 
 Follow this flowchart to pick the right model. Start at Step 1.
 
-1. **Task type?** OD / Instance Seg / Keypoint → Step 2. Classification / Semantic Seg / VLM → use specialized block directly.
+1. **Task type?** OD / Instance Seg / Keypoint → Step 2. Semantic Seg → Step 14. Classification / VLM → use specialized block directly.
 2. **Target classes in COCO 80?** Yes → Step 3. No → Step 6.
 3. **Real-time?** No (images/recorded video) → Step 4. Yes (live video) → Step 5.
 4. **Non-real-time, COCO** — OD / Inst Seg → prefer **RF-DETR NAS**; if unavailable, RF-DETR (detection) or RF-DETR Seg (instance segmentation) at Medium, Small for constrained HW, XL for accuracy-first. Keypoint → YOLO26 pose. **Done.**
@@ -94,11 +94,11 @@ Follow this flowchart to pick the right model. Start at Step 1.
 11. **Non-real-time trial** — User confirms works → **Done.** Poor results → Step 13.
 12. **Real-time trial** — User confirms works → **Done.** Poor results → Step 13.
 13. **Universe Model Search** — search community models on Roboflow Universe. Good match → **Done.** No match → Step 14.
-14. **Custom Training** — OD / Inst Seg → prefer **RF-DETR NAS**. If NAS is unavailable, fine-tune RF-DETR (detection) or RF-DETR Seg (instance segmentation), sized by HW constraints. **Done.**
+14. **Custom Training** — OD / Inst Seg / Semantic Seg → prefer **RF-DETR NAS** when discovery supports it. If NAS is unavailable, use a supported named model for the task. **Done.**
 
 ## Model ID Reference
 
-Read [`model-ids.md`](./model-ids.md) for model ID examples and the COCO class reference. Native availability is authoritative. Call `trainings_describe_recipe(project_id, version_number, model_type)` for the selected model; if the model ID is invalid, its error lists the IDs supported for that Project's task. Do not infer NAS availability from a static list.
+Read [`model-ids.md`](./model-ids.md) for model ID examples and the COCO class reference.
 
 ## Model Selection Quick Guide
 
@@ -116,47 +116,27 @@ trains a model — NAS only applies once custom training is the chosen path.
 |---|---|
 | **Object detection — no strong prior** | **RF-DETR NAS** (`rfdetr-nas-parent`) |
 | **Instance segmentation — no strong prior** | **RF-DETR NAS Seg** (`rfdetr-nas-seg-parent`) |
+| **Semantic segmentation — no strong prior** | **RF-DETR NAS** (`rfdetr-nas-sem-parent`) |
 | Best accuracy, object detection, NAS unavailable | RF-DETR (Large or XL) |
 | Fast inference, object detection, NAS unavailable | RF-DETR Nano or YOLOv11n |
 | Best accuracy, instance segmentation, NAS unavailable | RF-DETR Seg |
+| Semantic segmentation, NAS unavailable | DeepLabV3+ |
 | Quick proof-of-concept (<1000 images) | Roboflow Instant |
 | Classification | ViT or DINOv3 |
 | Multimodal / text prompts | Qwen3.5 or SmolVLM |
 
-Use the same discovery check for every task: call `trainings_describe_recipe` with a candidate NAS parent for the Project and version. A successful response confirms support; an invalid ID returns the supported IDs for that task. Check NAS prerequisites, including at least 15 validation images, before training. If NAS is unavailable, select a supported named model.
+Call `trainings_describe_recipe(project_id, version_number, model_type)` with a candidate NAS parent. A successful response confirms task support; an invalid ID returns IDs supported for that task. This does not confirm plan entitlement. The tool cannot read NAS entitlement; `trainings_create` reports a non-entitled plan with `nas_not_available_for_plan`. Check that the version has at least 15 validation images before training. If the plan lacks NAS, do not retry; use a supported named model.
 
 Pass `model_type` when the user or experiment selects an architecture. If you omit it, native training uses its default; leave `modelType` out of the record. A `train_recipe` requires its matching `model_type`.
 
-### Comparing architectures (sweeps)
+### Comparing architectures
 
-If you are comparing architectures rather than picking one, **include a NAS parent as one of the
-candidates** whenever the prerequisites are met — e.g. `rfdetr-medium` vs `yolo26m` vs
-`rfdetr-nas-parent`. Launch one `trainings_create` per candidate and keep each `trainingId`.
+Include a NAS parent when prerequisites and task support permit. Launch one `trainings_create` per candidate and keep each `trainingId`. Read [NAS results](./nas-results.md) before comparing a NAS run; report named-model results as they finish.
 
-Before comparing results, read [NAS results](./nas-results.md). It explains why a `recommended` child is not necessarily the highest-accuracy child and how to choose a fair comparison.
+## RF-DETR NAS
 
-The NAS arm also takes longer than a single fine-tune, so report the named-model arms as they
-finish rather than blocking on NAS.
+NAS trains a parent, then mines child models across an accuracy and latency frontier. It supports object detection, instance segmentation, and semantic segmentation. Read [NAS results](./nas-results.md) before starting NAS, paging child models, or selecting a deployment model.
 
-## RF-DETR NAS (Neural Architecture Search)
-
-Instead of picking a single RF-DETR size manually, NAS trains one parent model and mines many architectures out of it, reporting the speed/accuracy frontier so you can pick the one that fits your hardware budget.
-
-- **What:** A NAS run trains a single parent model, then searches the RF-DETR architecture space *within* that trained parent to identify frontier candidates, reporting each one's mAP and measured latency on target hardware (e.g., Jetson, T4 GPU). The output is a set of models on a Pareto frontier, plus a winner auto-selected per (metric, hardware) bucket using Roboflow's current ranking heuristic to balance validation accuracy against measured latency. Those per-bucket winners are not exposed individually: `models_list` flattens them into one `recommended` boolean per child (see **Picking for a specific hardware target**).
-- **Tasks:** Object detection, instance segmentation, semantic segmentation, and any other task with native NAS support. Use native model discovery for current IDs and availability.
-- **When to use:** When you want the best speed/accuracy tradeoff for a specific deployment target and don't want to A/B-test sizes manually. Especially valuable for edge hardware where latency budgets are tight.
-- **Phases:**
-  1. **Parent training** — trains the one parent model the search draws from. This is the bulk of the wall-clock.
-  2. **Mining** — searches architectures inside the trained parent and evaluates candidates to build the Pareto frontier (latency vs mAP). Candidates are derived from the parent rather than each being trained from scratch, so they appear in a burst near the end of the run. Each becomes a regular model you can deploy.
-- **Model ID examples:** `rfdetr-nas-parent` (Standard), `rfdetr-nas-pecoret-parent` (Fast), and `rfdetr-nas-base-parent` (Plus) for object detection; `rfdetr-nas-seg-parent` for instance segmentation; `rfdetr-nas-sem-parent` and `rfdetr-nas-sem-base-parent` for semantic segmentation. Confirm each ID with `trainings_describe_recipe` for the Project and version.
-- **Prerequisites — check both before offering NAS:**
-  1. **≥15 validation images.** `versions_get` returns `splits.valid`; below 15 the train call fails with `insufficient_validation_images_for_nas`, and waiting will not help — the user must generate a version with a larger validation split.
-  2. **Plan entitlement.** NAS is included on Core and Growth plans; any other plan needs it granted on the workspace. Basic/starter/sandbox/research/trial need to upgrade; enterprise/legacy need to contact sales. Entitlement is not readable from the MCP, so this cannot be checked up front — a non-entitled workspace finds out when `trainings_create` rejects the run with code `nas_not_available_for_plan`. Treat that as a plan limit, not a transient error: do not retry it. Fall back to the named model for the task — `rfdetr-medium` (detection) or `rfdetr-seg-medium` (segmentation) — and say NAS is unavailable on the current plan and may need an upgrade or workspace enablement, using the `plan` on the error to tell which. Do **not** fall back to a hyperparameter sweep.
-- **Start a run:** For object detection, `trainings_create(project_id, version_number, model_type="rfdetr-nas-parent")` is an example. Use the supported parent for the selected task. NAS launches through the normal training tool; there is no separate engine parameter. (The UI equivalent is the Train page with `?engine=nas`.) Results land at `/{workspace}/{project}/nas-runs/{versionId}`.
-- **Configuration:** Read `trainings_describe_recipe` for the selected parent. Use only its supported fields and defaults; do not assume every task exposes the same tuning options.
-- **Reading a run and selecting a hardware target:** Read [NAS results](./nas-results.md) before interpreting child metrics or choosing a model. It covers paging, latency formats, and the limits of recommendation flags.
-- **Deploy:** Each NAS-produced model deploys like any other — pick one and use it as a normal Roboflow model. Call it the hardware-recommended child only when an authoritative `recommendedByHardware` entry actually says so; otherwise it is the child the user chose from the frontier. Inference type is `rfdetr-nas` / `rfdetr-nas-seg`, but it's served through the standard inference paths.
-- **References:** [RF-DETR paper (arxiv)](https://arxiv.org/html/2511.09554v2), [ICLR 2026](https://openreview.net/forum?id=qHm5GePxTh), [What is NAS? (blog)](https://blog.roboflow.com/neural-architecture-search/).
 
 ## Roboflow Instant / Rapid
 
