@@ -24,15 +24,19 @@ Adopt Workflow from Eval's Goal Card approval, reviewed ground truth, scoring, p
 
 ## Prepare
 
-1. Inspect the supplied clip. Verify access to research, data, saved Workflow, and Eval tools before dependent resource creation or paid work. Read the Eval contract through `workflow_evals_agent_manifest` and `workflow_evals_agent_resource_get`. Verify training tools when training is part of the plan.
-2. Agree on per-frame success criteria, hard constraints, hardware, and latency. Set limits for labeling, training jobs, Eval Runs, and concurrency, plus a stop condition. Reserve a Run for the final comparison. Save these agreements in the Objective's `constraints` before experiments begin, using the protocol. Settle its goal and Project associations at the same time. Share cost estimates in conversation only.
+1. Inspect the supplied clip. Verify access to research, data, saved Workflow, and Eval tools before resource creation or paid work. Read the Eval contract through `workflow_evals_agent_manifest` and `workflow_evals_agent_resource_get`. Verify training tools when training is part of the plan.
+2. Agree on a goal of about 20 words. State the target, input, and success measure. Agree on hard limits, hardware, and latency. Set limits for labeling, training jobs, Eval Runs, and concurrent work. Reserve a Run for the final comparison. Set a stop condition. Save each constraint as one condition in the Objective's `constraints` array. Do not use constraints for findings or progress counts. Save the goal, constraints, and Project associations before experiments begin. Share cost estimates in conversation only.
 3. Prepare reviewed examples through [Ground Truth](../workflow-from-eval/ground-truth.md) (`roboflow://skills/workflow-from-eval/ground-truth`). Prefer foundation-model Auto Label: `autolabel_models_list` → `autolabel_preview` → `autolabel_start` → review and correct. Predictions remain drafts until reviewed. Reuse approved Project test annotations as Eval ground truth when they fit the contract.
 4. Keep Eval examples out of training and validation so the score measures unseen examples. Preserve their split during version generation; do not rebalance them into training. Verify membership before training. One clip still gives correlated search evidence, not independent validation. Temporal separation and live streams are outside this pilot.
-5. Save and measure a zero-shot Workflow first. Retain it for the final comparison. The baseline alone needs no Experiment record or self-comparison.
+5. Save the initial zero-shot Workflow. Begin a baseline record before its Eval Run. Finalize that record with its measured results after the Run completes. A baseline has no hypothesis or outcome and needs no self-comparison. Keep it for candidate comparisons.
 
 ## Experiment
 
-Begin each record before launching work, using the protocol's immutable experiment type. Each Run has one baseline and at most two challengers. For a new approach, use the strongest measured candidate as baseline; for a tuned variant, use its parent. Group challengers that need different baselines into separate Runs, within the agreed limit.
+Begin each record before launching work. Use `kind="comparison"` for a candidate and state one small, coherent hypothesis. Group related parameter variants under one hypothesis and one Eval Run. Begin one comparison record per challenger with that shared hypothesis.
+
+Set `changes` from the work performed. Use `training` after new training when graph logic stays fixed. Use `workflow` for logic or parameter changes, including model reuse. Use both labels when new training and logic changes both occur. Base labels on work performed, not model ancestry. A later comparison of an existing candidate does not imply new training.
+
+Group one baseline and up to two challengers in the same Eval Run. Record one comparison per challenger, using the baseline and that challenger's executions from that Run. For a new approach, use the strongest measured candidate as baseline; for a tuned variant, use its parent. Group challengers that need different baselines into separate Runs, within the agreed limit.
 
 For training, follow the training skill's task discovery and prefer NAS wherever supported. Prefer online recipe transforms when available; inspect the version for transforms already baked into its images. Bind trained models as `workspace/model-id`: autoresearch verifies a concrete model, not a Project version alias. The protocol explains the training evidence fields.
 
@@ -42,7 +46,7 @@ Compare each pair on the same frozen Eval examples, Spec, bindings, and runtime.
 
 Read scored examples and regressions. For stochastic outputs, compare fresh executions of an unchanged baseline across Runs with unchanged evaluation settings to estimate variation. Reused results do not measure noise. If the allowance cannot resolve a small gain, report uncertainty instead of claiming an improvement. Count repeats and the final original-baseline comparison within the agreed limits. State when thresholds were tuned on this same suite.
 
-Finalize complete evidence through the protocol. Stop at the agreed limit or stop condition; request an extension before more work. For long jobs, save their references and status, then report the pending work. Resume through the protocol without duplicating launches.
+Finalize complete evidence through the protocol. Save a `training_reference` when a candidate reuses a trained model. Add `training` only when the experiment starts new training, and include only values sent to the training call. Stop at the agreed limit or stop condition; request an extension before more work. For long jobs, save their references and status, then report the pending work. Resume through the protocol without duplicating launches.
 
 ## Report
 
