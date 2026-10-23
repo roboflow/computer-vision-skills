@@ -67,7 +67,15 @@ Runs). Remove an entry once it stops being true.
   `https://app.roboflow.com/<workspace>/workflows/evals/<evalUrl>`, Run `.../runs/<runId>`,
   Workflow editor `https://app.roboflow.com/<workspace>/workflows/editor/<workflowUrl>`.
 
+## Saving candidates
+
+Create a new Workflow with its real configuration through `workflows_create`; do not save a placeholder. Use `workflows_save_draft` for a named candidate version, then verify it through `workflows_list_versions`. Reuse an existing Workflow by saving another version. Evaluate the exact saved version. `workflows_update` can publish a version and change the URL slug, so it is not a rename-only operation.
+
+An outer version does not freeze nested Workflows or Project defaults. Resolve a Project BASE dependency with `project_deployment_get`. Inspect dependencies through `workflows_list_versions` and `workflows_get.version_id`, then pin the child Workflow versions and concrete models.
+
 ## Blocks and models
+
+- **Classification confidence is version-specific.** `roboflow_classification_model@v3` exposes `confidence_mode` and `custom_confidence`; v2 does not. If the scorecard needs every class score, use v3 with `confidence_mode="custom"` and `custom_confidence=0`. Handle an empty result explicitly. Inspect the installed block schema before setting these fields.
 
 - **The Roboflow-managed VLM proxy** (`heavy-api.roboflow.com/apiproxy/{openai/v2, gemini,
   anthropic, openrouter}`) was down for 15 minutes in the first test and for three days in

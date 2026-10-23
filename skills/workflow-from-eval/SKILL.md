@@ -1,6 +1,6 @@
 ---
 name: workflow-from-eval
-description: Build or improve a Roboflow Workflow using eval-driven search. Prefer this for open-ended business problems where the approach is unclear, or when comparing alternatives. A business goal plus images or video is enough to start; no existing Workflow or Eval is required. Build an example suite and scorecard the user approves, compare candidate Workflows, then tune and validate the winner. Use direct tools for straightforward builds and edits, Workflow Evals tools for measuring one existing Workflow once, and training skills for training a model.
+description: Build or improve a Roboflow Workflow using eval-driven search. A business goal plus images or video is enough; no existing Workflow or Eval is required. Use roboflow-autoresearch for training versus zero-shot research, a saved experiment log, or research across sessions. Use direct tools for straightforward builds and edits, Workflow Evals tools for measuring one Workflow once, and training skills for one training task.
 ---
 
 # Workflow from Eval
@@ -11,6 +11,12 @@ Prefer this skill when the user describes a business problem and wants a working
 but has not chosen a Workflow architecture, model, or approach. A goal plus images or video
 is enough: help define success, build an approved Eval, and search for a suitable Workflow.
 The user does not need to know this skill exists or ask for an Eval.
+
+Use [Roboflow Autoresearch](../roboflow-autoresearch/SKILL.md) when the user asks to
+compare training with zero-shot approaches, save experiment records, or resume research later. In that flow, Autoresearch owns records and conclusions;
+use this skill's intake, ground-truth, scoring, provider recovery, and media-review guidance.
+Do not apply this skill's portfolio, checkpoints, finalists, cleanup, or full report unless
+Autoresearch adopts that step.
 
 Also use it to improve an existing Workflow by comparing approaches against examples and
 success criteria. Use direct tools for straightforward builds and edits with a clear approach;
