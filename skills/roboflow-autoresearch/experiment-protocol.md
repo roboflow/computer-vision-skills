@@ -8,7 +8,7 @@ Read this page before the first experiment record and when resuming research.
 |---|---|---|
 | Find saved work | `autoresearch_objectives_list` → `autoresearch_objective_get` | — |
 | Save a goal | `autoresearch_objective_create` | `request_id`, `goal`, `project_ids` |
-| Revise a goal | `autoresearch_objective_update` | `objective_id`, `expected_revision`, `goal` |
+| Revise a goal | `autoresearch_objective_update` | `objective_id`, `expected_revision`, `goal`; optional replacement `project_ids` |
 | Begin before launching work | `autoresearch_experiment_begin` | `objective_id`, `request_id`, `name`, `hypothesis`, `experiment_type`, `baseline_workflow` |
 | Record progress or resume | `autoresearch_experiment_update` | `objective_id`, `experiment_id`, `expected_revision`, `state`, optional `native_references` |
 | Record completed evidence | `autoresearch_experiment_finalize` | `objective_id`, same `request_id`, `hypothesis`, `baseline_workflow`, `candidate_workflow`, `evidence`, `outcome`, `rationale` |
@@ -18,7 +18,7 @@ Use `experiment_type="workflow"`, `"training"`, or `"combined"`. Set it at begin
 
 `autoresearch_experiment_get` reads an experiment in any lifecycle state. Use `autoresearch_objective_get` to list recent experiments and find their IDs. On resume, read the experiment record and native status before taking action.
 
-The goal's `project_ids` use Project slugs or `workspace/project` references. Create the goal with every Project needed for training; its Project associations cannot be extended later. `request_id` is a stable identity for saving that goal or experiment. It does not make native jobs idempotent.
+The goal's `project_ids` use Project slugs or `workspace/project` references. An update replaces the complete Project association list when `project_ids` is supplied. Use the current goal revision. The update preserves experiment history and clears the current recommendation. A Project can be associated with multiple goals. Associate its training Project before `experiment.begin`. Project changes advance the goal revision; existing experiments retain their original revision and cannot become the recommendation for the new revision. The update call still requires `goal`; pass its current text when changing only Project associations. `request_id` is a stable identity for saving that goal or experiment. It does not make native jobs idempotent.
 
 ## Finalize evidence
 
