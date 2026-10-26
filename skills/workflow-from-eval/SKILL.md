@@ -12,8 +12,7 @@ but has not chosen a Workflow architecture, model, or approach. A goal plus imag
 is enough: help define success, build an approved Eval, and search for a suitable Workflow.
 The user does not need to know this skill exists or ask for an Eval.
 
-Use [Roboflow Autoresearch](../roboflow-autoresearch/SKILL.md) when the user asks to
-compare training with zero-shot approaches, save experiment records, or resume research later. In that flow, Autoresearch owns records and conclusions;
+Use [Roboflow Autoresearch](../roboflow-autoresearch/SKILL.md) when the user asks to save experiment records, resume tracked research, or compare data, training, and Workflow changes with a saved log and measured recommendation. This includes goals with an existing Project or accessible storage as the source. For a plain vision goal without research tracking, stay in this skill. In the Autoresearch flow, it owns records and conclusions;
 use this skill's intake, ground-truth, scoring, provider recovery, and media-review guidance.
 Do not apply this skill's portfolio, checkpoints, finalists, cleanup, or full report unless
 Autoresearch adopts that step.

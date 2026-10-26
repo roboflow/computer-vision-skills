@@ -16,15 +16,15 @@ Read this page before saving a goal, changing an experiment state, or resuming r
 | Record comparison evidence | `autoresearch_experiment_finalize` | `objective_id`, same `request_id`, `kind="comparison"`, `hypothesis`, `baseline_workflow`, `candidate_workflow`, `evidence`, `outcome`, `rationale` |
 | Select an overall recommendation | `autoresearch_objective_recommend` | `objective_id`, completed `experiment_id`, goal `expected_revision` |
 
-Write a goal in about 20 words. State the target, input, and success measure. For example: `Find damaged boxes and detect missing labels in the supplied loading-bay clip, with fewer than two misses per 100 frames.`
+Write a goal in about 20 words. State the target, input or source, and success measure.
 
-Save each constraint as one condition in `constraints`. For example: `["Use the supplied clip.", "Keep p95 latency below 200 ms."]` Do not put findings or progress counts in constraints. Use `rationale` for measured findings and limits. Use `next_steps` for future actions. Omit `constraints` to retain the saved list on update. Send `[]` to clear it. Each item must have 1 to 500 characters. Send no more than 50 items.
+Save each constraint as one condition in `constraints`. For example: `["Use the approved test examples.", "Keep p95 latency below 200 ms."]` Do not put findings or progress counts in constraints. Use `rationale` for measured findings and limits. Use `next_steps` for future actions. Omit `constraints` to retain the saved list on update. Send `[]` to clear it. Each item must have 1 to 500 characters. Send no more than 50 items.
 
-`kind` is immutable. A baseline uses `workflow` and has no hypothesis. A comparison requires `hypothesis` and `baseline_workflow`. Set `changes` at begin based on work performed: `workflow`, `training`, or both. Use `training` for a new training job with a fixed graph. Use `workflow` for Workflow logic or parameter changes, including reuse of an existing model. Use both values when new training and logic changes both occur. Reusing a model does not count as new training. `changes` is descriptive and cannot be changed at finalize.
+`kind` is immutable. A baseline uses `workflow` and has no hypothesis. A comparison requires `hypothesis` and `baseline_workflow`. `changes` records performed work with `data`, `training`, and/or `workflow`. Include `training` only when the experiment runs a training job; model ancestry alone does not count. The field is descriptive and cannot change at finalize.
 
 Reuse the same `request_id` to finalize a record. Training references can stand alone to preserve reused-model lineage. If `training` is supplied, also supply `training_reference`. Put only values sent to `trainings_create` in `training`. Do not reconstruct defaults.
 
-`experiment.begin` creates `in_progress`. `experiment.update` keeps that state or changes it to `stopped` or `failed`. Only `experiment.finalize` produces `completed`, and only from `in_progress`. A completed record cannot resume. `autoresearch_experiment_get` reads any state; `autoresearch_objective_get` lists recent records.
+`experiment.begin` creates `planned`. This state adds no approval gate. Use it while waiting for prerequisites. Record the wait reason in `note`; the protocol has no dependency API. Change to `in_progress` when data editing, Workflow creation, training, or evaluation starts. Clear an obsolete wait note with `note=""`. `experiment.update` can keep the current state or move `planned` to `in_progress` or `stopped`, move `in_progress` to `stopped` or `failed`, or resume `stopped` and `failed` as `planned` or `in_progress`. Do not move `in_progress` back to `planned`. A completed record is immutable. Only `experiment.finalize` produces `completed`, and only from `in_progress`. `autoresearch_experiment_get` reads any state; `autoresearch_objective_get` lists recent records.
 
 ## Objective revisions
 
