@@ -18,7 +18,7 @@ Read this page before saving a goal, changing an experiment state, or resuming r
 
 Write a goal in about 20 words. State the target, input or source, and success measure.
 
-Save each constraint as one condition in `constraints`. For example: `["Use the approved test examples.", "Keep p95 latency below 200 ms."]` Do not put findings or progress counts in constraints. Use `rationale` for measured findings and limits. Use `next_steps` for future actions. Omit `constraints` to retain the saved list on update. Send `[]` to clear it. Each item must have 1 to 500 characters. Send no more than 50 items.
+Save each requirement for the resulting Workflow as one condition in `constraints`. For example: `["Run on Roboflow Serverless.", "Keep p95 latency below 200 ms."]` Research rounds, job counts, concurrency, search strategy, and research spend belong in the working plan and handoff notes. Do not put methodology, findings, or progress counts in Objective constraints. Use `rationale` for measured findings and limits. Use `next_steps` for future actions. Omit `constraints` to retain the saved list on update. Send `[]` to clear it. Each item must have 1 to 500 characters. Send no more than 50 items.
 
 `kind` is immutable. A baseline uses `workflow` and has no hypothesis. A comparison requires `hypothesis` and `baseline_workflow`. `changes` records performed work with `data`, `training`, and/or `workflow`. Include `training` only when the experiment runs a training job; model ancestry alone does not count. The field is descriptive and cannot change at finalize.
 
@@ -30,7 +30,7 @@ Reuse the same `request_id` to finalize a record. Training references can stand 
 
 Create a suitable Project first if none exists. Use Project slugs or `workspace/project` references in `project_ids`; MCP resolves the workspace. Projects can be shared across Objectives. When supplied on update, `project_ids` replaces the complete list. Omitted Projects and constraints remain unchanged. The update requires `goal` even when its text stays the same.
 
-Save the agreed success criteria and work limits in `constraints` before the first experiment. A change to goal text, constraints, or Project associations advances the Objective revision and clears its recommendation. Unchanged updates preserve both. `autoresearch_objective_get` returns recent `objectiveChanges` with before/after values and any cleared recommendation. Earlier experiments retain their revision, evidence, and outcomes, but cannot become the new revision's recommendation. After an edit, begin a new comparison under the current revision. Associate a training Project before beginning its experiment.
+Save the agreed Workflow requirements in `constraints` before the first experiment. Changing the research plan does not require an Objective update or clear its recommendation. A change to goal text, constraints, or Project associations advances the Objective revision and clears its recommendation. Unchanged updates preserve both. `autoresearch_objective_get` returns recent `objectiveChanges` with before/after values and any cleared recommendation. Earlier experiments retain their revision, evidence, and outcomes, but cannot become the new revision's recommendation. After an edit, begin a new comparison under the current revision. Associate a training Project before beginning its experiment.
 
 `request_id` identifies a goal or experiment submission. It does not make training or Eval launches idempotent.
 
@@ -81,7 +81,7 @@ Use the selected baseline and candidate executions from one Run, with different 
 
 ## Recovery and recommendation
 
-On resume, list goals, read the goal and its constraints, inspect experiments, then read each referenced training or Eval job. Account for completed and active work against the saved limits, including the reserved final comparison. Reconcile active and completed jobs before creating new ones. If a training or Eval launch response was lost, search native jobs for a matching submission. Do not repeat an ambiguous launch until its state is clear.
+On resume, list goals, read the goal and its constraints, inspect experiments, then read each referenced training or Eval job. Recover the agreed research limits from the working plan or handoff notes, not Objective constraints. Account for completed and active work against those limits, including the reserved final comparison. Reconcile active and completed jobs before creating new ones. If a training or Eval launch response was lost, search native jobs for a matching submission. Do not repeat an ambiguous launch until its state is clear.
 
 After launch, save known `native_references` with `autoresearch_experiment_update` and the latest `expected_revision`. Keep `in_progress` while work continues. Before reporting a stop, read the authoritative job status. When cancellation is requested, use `trainings_cancel` or `workflow_evals_runs_cancel`, then record `stopped` or `failed` as appropriate.
 
