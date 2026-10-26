@@ -30,7 +30,7 @@ Reuse the same `request_id` to finalize a record. Training references can stand 
 
 Create a suitable Project first if none exists. Use Project slugs or `workspace/project` references in `project_ids`; MCP resolves the workspace. Projects can be shared across Objectives. When supplied on update, `project_ids` replaces the complete list. Omitted Projects and constraints remain unchanged. The update requires `goal` even when its text stays the same.
 
-Save the agreed success criteria and work limits in `constraints` before the first experiment. **Every Objective edit** advances its revision and clears the recommendation, including goal text, constraints, or Projects. Earlier experiments retain their revision and history, but cannot become the new revision's recommendation. After an edit, begin a new comparison under the current revision. Associate a training Project before beginning its experiment.
+Save the agreed success criteria and work limits in `constraints` before the first experiment. A change to goal text, constraints, or Project associations advances the Objective revision and clears its recommendation. Unchanged updates preserve both. `autoresearch_objective_get` returns recent `objectiveChanges` with before/after values and any cleared recommendation. Earlier experiments retain their revision, evidence, and outcomes, but cannot become the new revision's recommendation. After an edit, begin a new comparison under the current revision. Associate a training Project before beginning its experiment.
 
 `request_id` identifies a goal or experiment submission. It does not make training or Eval launches idempotent.
 
