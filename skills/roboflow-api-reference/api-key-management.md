@@ -56,6 +56,7 @@ Response:
       "created_on": "2024-01-15T10:30:00Z",
       "created_by": "user@example.com",
       "rotationDueAt": "2025-01-15T10:30:00Z",
+      "owners": ["user-uid-1"],
       "customMetadata": {}
     }
   ],
@@ -75,7 +76,19 @@ curl "https://api.roboflow.com/my-workspace/api-keys/abc123?api_key=KEY"
 
 Response: `{ "apiKey": { ...same fields as above... } }`
 
-`rotationDueAt` is derived, not stored: one year after `created_on`, or `null` when the key has no creation date. Rolling a key restarts it, because the replacement is a new key. Use it to find keys due for rotation; the MCP tools return the same value as `rotation_due_at`.
+`rotationDueAt` is the rotation due date a person set on the key, `null` until then. Setting it opts the key into the platform's rotation reminder email, sent once to the key's `owners` 15 days before the date (to every member who can roll the key when `owners` is empty). `owners` are member uids who can roll the key; `GET /:workspace/api-keys/owner-candidates` lists who qualifies. Both are set on create, PATCH and roll, and need the **Advanced API Keys** plan feature. Rolling a key moves the date forward by the old key's own interval (capped at a year) and keeps the owners, unless the roll sets them. The MCP tools return the same values as `rotation_due_at` and `owners`.
+
+### List Owner Candidates
+
+```
+GET /:workspace/api-keys/owner-candidates?keyId=abc123
+GET /:workspace/api-keys/owner-candidates?folderIds=folder1,folder2
+GET /:workspace/api-keys/owner-candidates
+```
+
+The members who can roll a key and so may be its `owners`: an existing key named by `keyId`, or one about to be created in `folderIds` (omit both for a workspace-wide key). Each entry carries `uid`, `name` and `email`. Takes `api-key:create` or `api-key:update` and Advanced API Keys; the caller must be able to grant the folders, as on create.
+
+Response: `{ "members": [{ "uid": "user-uid-1", "name": "Ada", "email": "ada@example.com" }] }`
 
 ### Get Publishable Key
 
@@ -104,8 +117,10 @@ Body fields (all optional):
 | `folderIds` | string[] | Restrict key to specific folders (requires Advanced API Keys) |
 | `customMetadata` | object | Arbitrary key-value metadata |
 | `protected` | bool | Mark as protected (cannot be disabled/revoked without dashboard action) |
+| `rotationDueAt` | string | ISO date or date-time (UTC) the key is due to be rotated; must be in the future. Opts the key into the rotation reminder email |
+| `owners` | string[] | Member uids reminded 15 days before the date; each must be able to roll the key (see owner candidates). Omitted, an OAuth caller who can roll the key becomes the owner; an API-key caller stores none |
 
-`scopes`, `folderIds`, and `customMetadata` require the **Advanced API Keys** plan feature. A new key can never exceed the caller's own abilities.
+`scopes`, `folderIds`, `customMetadata`, `rotationDueAt` and `owners` require the **Advanced API Keys** plan feature. A new key can never exceed the caller's own abilities.
 
 **Who can create keys.** The acting credential may create keys only if it is **unscoped** (full access) or was granted the `api-key:create` scope; an OAuth token also needs the `create_api_key` permission. On workspaces with **Advanced API Keys**, new keys created from the dashboard are **scoped** (not full access) and `api-key:create` is **off by default** — include it explicitly only if the key must manage keys.
 
@@ -152,6 +167,8 @@ Body fields (all optional — send only the fields you want to change):
 | `customMetadata` | object | Replace the key's metadata. Requires Advanced API Keys |
 | `protected` | bool | Set to `true` only — unprotect is dashboard-only |
 | `disabled` | bool | Temporarily disable or re-enable. Requires Advanced API Keys |
+| `rotationDueAt` | `string \| null` | Set the rotation due date (future ISO date or date-time), or `null` to clear it and stop the reminder. Requires Advanced API Keys |
+| `owners` | string[] | Replace the members reminded about the key; newly added uids must be able to roll it. Requires Advanced API Keys |
 
 **The three states of `scopes`** (PATCH replaces, so omitting the field leaves scopes unchanged):
 
@@ -202,6 +219,8 @@ Response: `{ "keyId": "def456", "key": "<new secret, shown once>", "name": "..."
 
 Rolling revokes the key and mints a replacement with the same name, scopes, folders, protection and disabled state in one step; only the secret changes. Any dedicated deployment anchored on the old key is moved onto the replacement automatically, so this is the rotation path for a leaked key. Requires both `api-key:revoke` and `api-key:create`. Protected keys cannot be rolled.
 
+The replacement stays on the old key's rotation schedule: `rotationDueAt` moves forward by the old key's own interval and `owners` carry over. An optional JSON body `{ "rotationDueAt": "...", "owners": [...] }` sets them for the replacement instead, read as on PATCH.
+
 ## OAuth Scopes for Key Management
 
 When using a scoped key or OAuth token to manage other keys, the caller's token needs one or more of these scopes:
@@ -222,12 +241,13 @@ If you're using the Roboflow MCP server, prefer these tools over raw REST calls:
 | `api_keys_list` | List all key metadata for a workspace |
 | `api_keys_get` | Get a single key by `keyId` |
 | `api_keys_get_publishable` | Get the workspace publishable key |
-| `api_keys_create` | Create a key (returns the one-time secret) |
-| `api_keys_update` | Rename, re-scope, or update metadata |
+| `api_keys_owner_candidates` | List the members who may be a key's `owners` (an existing key, or one about to be created) |
+| `api_keys_create` | Create a key (returns the one-time secret); takes `rotation_due_at` and `owners` |
+| `api_keys_update` | Rename, re-scope, update metadata, or set the rotation due date and owners |
 | `api_keys_protect` | Mark a key as protected (no unprotect tool by design) |
 | `api_keys_disable` | Temporarily disable a key (reversible) |
 | `api_keys_revoke` | Permanently revoke a key |
-| `api_keys_roll` | Rotate a key: revoke it and mint a same-identity replacement (returns the one-time secret) |
+| `api_keys_roll` | Rotate a key: revoke it and mint a same-identity replacement (returns the one-time secret); may set the replacement's `rotation_due_at` and `owners` |
 
 There is intentionally no tool to unprotect a key. Removing the protected flag requires a deliberate dashboard action, to prevent accidental exposure.
 
@@ -303,7 +323,7 @@ ROBOFLOW_API_KEY=rf_...
 
 This zero-downtime rotation avoids service interruptions.
 
-To find which keys are due, read `rotationDueAt` on the list response (`rotation_due_at` from `api_keys_list`): keys are expected to be rotated within a year of creation, and the dashboard flags them as due 30 days ahead and as overdue past the date.
+To find which keys are due, read `rotationDueAt` on the list response (`rotation_due_at` from `api_keys_list`): it is the date a person set, `null` until then. The dashboard flags dated keys 30 days ahead and as overdue past the date, and warns about active keys with no date. Set a date (a year after creation is the usual choice) and `owners` so the platform emails the right people 15 days before.
 
 If the key has leaked, speed matters more than zero downtime: roll it (`POST .../api-keys/:keyId/roll` or `api_keys_roll`). The old secret stops working immediately, the replacement carries the same identity, and any dedicated deployment on the key follows it.
 
