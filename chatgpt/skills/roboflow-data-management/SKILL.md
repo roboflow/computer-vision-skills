@@ -34,7 +34,8 @@ Project type is set at creation and **cannot be changed later**.
 |--------|----------|---------|
 | Web UI drag-and-drop | < 1,000 images | JPG, PNG, WEBP, AVIF, BMP, MOV, MP4, PDF + 40+ annotation formats |
 | CLI (`roboflow import`) | > 1,000 images (images only) | Same image formats, no video |
-| MCP zip upload (`image_upload`) | Agents uploading local files, up to 2 GB / 10,000 files per zip | Images plus optional annotation files (see below) |
+| MCP host-assisted upload (`image_upload_files`) | Preferred in ChatGPT and Codex when the host supports file transfer, up to 100 files / 1 GB per call | Images plus annotation files, or one dataset ZIP |
+| MCP signed-URL upload (`image_upload`) | Fallback when host-assisted transfer cannot be used and the client can ZIP and PUT files, up to 2 GB / 10,000 files per ZIP | Images plus optional annotation files |
 | Cloud storage bucket mirror | Extensive or continuously-growing data already in S3 / GCS | See `roboflow://skills/roboflow-cloud-storage/SKILL` |
 | Dataset Upload Workflow Block | Collecting from production Workflows | Programmatic |
 | Universe fork | Starting from a public dataset | Any Universe dataset |
@@ -56,9 +57,15 @@ Replace the placeholders only with the user's chosen workspace, project,
 and dataset path. Do not run the example unchanged or scan for other local
 files to upload.
 
-### MCP Zip Upload
+### MCP Image Upload
 
-`image_upload` returns a signed URL. The client zips the local files, PUTs the zip to that URL, and polls `image_upload_status` until it is `completed` or `failed`.
+Prefer `image_upload_files` when it is available and the host can supply the user's selected files through `openai/fileParams`. ChatGPT supplies attachment references; Codex may expose a `files` parameter accepting absolute local paths and handle the transfer itself. Follow the host's exposed tool schema. Do not invent download URLs or file IDs, or pass file bytes through the model.
+
+The Roboflow server downloads the files, assembles a ZIP, and uploads it to storage. The client does not need to ZIP files or PUT to GCS. A local path alone is not a reason to use the fallback. Accepts images plus annotation files, or one dataset ZIP on its own, up to 100 files / 1 GB per call. For larger sets, use one ZIP within the host and tool limits. This tool imports project images, not arbitrary documents or videos.
+
+Use `image_upload` only when host-assisted transfer is unavailable or cannot handle the selected files, and the client can ZIP and HTTP PUT to the returned signed URL. An authentication, validation, or server error alone does not establish that the bridge is unavailable. If the sandbox cannot reach storage, do not repeatedly retry the PUT; use host-assisted transfer or the project's web uploader.
+
+After either flow returns a `taskId` (and after the client PUT for the fallback), poll `image_upload_status` until it is `completed` or `failed`. Both flows use the same image and annotation import behavior:
 
 - **Annotations are imported.** The zip can hold annotation files next to the images. They are parsed like in the web uploader: COCO JSON (`_annotations.coco.json`), YOLO TXT (with `data.yaml` or `classes.txt`), Pascal VOC XML, CreateML JSON, CSV, and more. Annotations are matched to images by file name. In classification projects, an image's parent folder name is its class.
 - **Folders set splits.** A `train/`, `valid/` or `test/` folder (also `training/`, `validation/`, `val/`, `testing/`) anywhere in an image's path sets its split. Other images use the `split` argument.
@@ -232,7 +239,7 @@ Don't guess a project's type or license. Confirm both with the user before calli
 | `projects_list` / `projects_get` | List or get project details |
 | `images_search` | Semantic search inside one project, with tag, class, Dataset, batch and job filters (no RoboQL) |
 | `images_workspace_search` | RoboQL search across the workspace, e.g. `project:my-project split:valid` |
-| `image_upload` / `image_upload_status` | Prepare a zip upload of images and optional annotations, and poll its status |
+| `image_upload_files` / `image_upload` / `image_upload_status` | Prefer host-assisted image uploads; use client ZIP + signed PUT when needed; poll the import task |
 | `versions_generate` | Generate a dataset version with preprocessing/augmentation |
 | `versions_get` | Inspect a version |
 | `versions_export` | Export a version in a given format |
