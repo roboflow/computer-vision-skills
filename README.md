@@ -160,6 +160,7 @@ The `npx skills` CLI works with any agent that reads `SKILL.md` files from `.cla
 - **roboflow-custom-weights-upload**: uploading locally trained model weights (YOLO, RF-DETR, YOLO-NAS, PaliGemma, Florence-2) with the Python SDK
 - **roboflow-data-management**: uploading images, labeling, dataset organization
 - **roboflow-inference**: running inference, workflows, workflow templates
+- **roboflow-model-journey**: choosing a model for a project's live endpoint and previewing it, or a saved Workflow, on the user's image or video
 - **workflow-from-eval**: build or improve a Workflow using eval-driven search; for open-ended business problems with images or video, or comparing alternatives
 - **roboflow-plans-and-pricing**: Roboflow plans and credit usage
 - **roboflow-product-navigation**: where features live in the Roboflow product

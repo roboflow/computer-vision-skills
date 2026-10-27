@@ -55,6 +55,8 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 | `trainings_get` | Check a known run with `project_id`, `version_number`, and `training_id`; for NAS model details use the paginated path in the training skill |
 | **`workflows_run`** | Run the published Workflow by `workflow_id` (URL slug); workspace comes from the connection. Optional `parameters`. |
 | `workflow_specs_validate` | Validate an inline workflow spec without running it — use before any inline run. |
+| `project_deployment_preview` | Show a project's endpoint model on one workspace image or video in an interactive player; see `roboflow-model-journey` |
+| `workflows_preview` | Show a saved Workflow's results on one workspace image or video in an interactive player; see `roboflow-model-journey` |
 | `workflow_specs_run` | Test an unpublished draft or run an authorized one-off from an inline specification |
 
 ## Local tooling: when MCP isn't enough

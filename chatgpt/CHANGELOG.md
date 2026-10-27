@@ -1,5 +1,14 @@
 # ChatGPT plugin changelog
 
+## 1.1.0
+
+- Status: draft, not built or submitted. Waits for the preview tools (roboflow/roboflow-mcp#261) to be deployed to production `/openai/mcp`.
+- Built from: pending (the merge commit of this version's PR).
+- Package SHA-256: pending.
+- Hidden tools: roboflow-mcp `4e046185` (unchanged; #261 hides nothing on `/openai/mcp`).
+- Skills baseline for the next version: pending (the merge commit above). Diffed against `56c4a88`.
+- Skills: adds `roboflow-model-journey`, which chooses the model for a project's live endpoint with the same rules as the Roboflow Agent and opens the model and Workflow previews (`project_deployment_preview`, `workflows_preview`) on the user's own image or video. `roboflow-inference` lists both preview tools. Carries over the `roboflow-api-reference` API key notes on rotation dates, owners and owner candidates.
+
 ## 1.0.3
 
 - Status: published on 2026-10-16, after review (submitted on 2026-10-15). Replaces an earlier hand-built 1.0.3 upload, which was deleted before it was reviewed.

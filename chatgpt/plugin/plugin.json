@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "roboflow-computer-vision",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Roboflow computer vision tools and workflow skills for datasets, annotation, training, inference, and deployment.",
   "author": {
     "name": "Roboflow, Inc.",
@@ -32,7 +32,7 @@
         "brandColorDark": "#8315F9"
       },
       "publication": {
-        "release_notes": "New listing description and starter prompts, brand colors, and a higher resolution icon."
+        "release_notes": "Roboflow now picks a model for your project's live endpoint and shows it working on your own image or video in an interactive player, and can preview a saved Workflow the same way."
       },
       "review": {
         "demo_recording_url": "https://www.loom.com/share/3479126a15bb49a38ba1365bc90043a8",
