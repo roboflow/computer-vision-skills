@@ -28,6 +28,8 @@ These exist because the ChatGPT plugin connects to `https://mcp.roboflow.com/ope
 
 ## Writing for every client
 
+- Use `skill://roboflow/<name>/SKILL.md` for MCP skill entrypoints and `skill://roboflow/<name>/<page>.md` for supporting pages. These are the file URIs advertised in the server manifest for native skills, resource reads, and the `read_skill` fallback.
+
 - Never put an API key in a URL or a command argument. Read it from the `ROBOFLOW_API_KEY` environment variable.
 - Ask the user before uploading data in bulk, starting paid jobs, deleting data, or changing shared settings.
 - Don't name tools that don't exist. Check the tool name against the MCP server before writing it.

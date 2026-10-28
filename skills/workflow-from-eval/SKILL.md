@@ -25,7 +25,7 @@ compare approaches to find a Workflow that works well for your goal." Follow the
 below before spending inference past them; recognizing the intent does not authorize an
 unbounded search.
 
-> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `skill://roboflow/<name>/SKILL.md` MCP resources serve the same skills for clients that don't have them loaded.
 
 You are the optimizer. The user is the judge. They describe the job, look at examples, say what
 is right and what is wrong, and say what they care about. You do everything else: build the

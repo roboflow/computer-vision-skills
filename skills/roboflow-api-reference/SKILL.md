@@ -3,7 +3,7 @@ name: roboflow-api-reference
 description: Protocol-level facts for Roboflow REST and Inference APIs — URL patterns, auth, parameters, error codes, and SDK quick-start. For deployment strategy and Workflow execution patterns, see roboflow-inference.
 ---
 
-> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `skill://roboflow/<name>/SKILL.md` MCP resources serve the same skills for clients that don't have them loaded.
 
 > **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its tools (`projects_*`, `versions_*`, `models_*`, `workflows_*`, `images_*`, …) over raw REST calls — they handle auth, pagination, and typed responses for you. The REST patterns below stay relevant if you're not using MCP.
 
@@ -78,7 +78,7 @@ result = model.predict("image.jpg", confidence=40).json()
 | Start training | `api.roboflow.com` |
 | High-throughput / SLA inference | Dedicated deployment URL |
 | Air-gapped / on-prem inference | Self-hosted `localhost:9001` |
-| Real-time video / webcam / RTSP | WebRTC via `inference_sdk.webrtc` against serverless or local — see `roboflow://skills/roboflow-inference/workflows` ("Video Stream" section). Not a plain HTTP call. |
+| Real-time video / webcam / RTSP | WebRTC via `inference_sdk.webrtc` against serverless or local — see `skill://roboflow/roboflow-inference/workflows.md` ("Video Stream" section). Not a plain HTTP call. |
 
 ## Rate Limits
 
@@ -87,6 +87,6 @@ result = model.predict("image.jpg", confidence=40).json()
 
 ## Related Pages
 
-- `roboflow://skills/roboflow-api-reference/inference` — inference URL patterns, request/response formats
-- `roboflow://skills/roboflow-api-reference/rest-api` — platform REST API endpoints (CRUD, upload, training)
-- `roboflow://skills/roboflow-api-reference/api-key-management` — creating and managing API keys via REST, MCP tools, and Python CLI. **When creating a key, scope it to least privilege** if the workspace has Advanced API Keys; if not, tell the user scoped keys are an Enterprise feature.
+- `skill://roboflow/roboflow-api-reference/inference.md` — inference URL patterns, request/response formats
+- `skill://roboflow/roboflow-api-reference/rest-api.md` — platform REST API endpoints (CRUD, upload, training)
+- `skill://roboflow/roboflow-api-reference/api-key-management.md` — creating and managing API keys via REST, MCP tools, and Python CLI. **When creating a key, scope it to least privilege** if the workspace has Advanced API Keys; if not, tell the user scoped keys are an Enterprise feature.

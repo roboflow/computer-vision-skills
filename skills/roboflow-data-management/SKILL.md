@@ -1,9 +1,9 @@
 ---
 name: roboflow-data-management
-description: Use when uploading images, labeling, organizing datasets, creating Roboflow projects (detection/segmentation/keypoint/classification), tags, splits, versions, or RoboQL search.
+description: Use when uploading images or videos, labeling, organizing datasets, creating Roboflow projects (detection/segmentation/keypoint/classification), tags, splits, versions, or RoboQL search.
 ---
 
-> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `skill://roboflow/<name>/SKILL.md` MCP resources serve the same skills for clients that don't have them loaded.
 
 # Data Management on Roboflow
 
@@ -28,8 +28,9 @@ Project type is set at creation and **cannot be changed later**.
 |--------|----------|---------|
 | Web UI drag-and-drop | < 1,000 images | JPG, PNG, WEBP, AVIF, BMP, MOV, MP4, PDF + 40+ annotation formats |
 | CLI (`roboflow import`) | > 1,000 images (images only) | Same image formats, no video |
-| MCP zip upload (`image_upload`) | Agents uploading local files, up to 2 GB / 10,000 files per zip | Images plus optional annotation files (see below) |
-| Cloud storage bucket mirror | Extensive or continuously-growing data already in S3 / GCS | See `roboflow://skills/roboflow-cloud-storage/SKILL` |
+| MCP host-assisted upload (`image_upload_files`) | Preferred when the host supplies the selected files in the tool's `files` input (ChatGPT attachments, Codex local paths), up to 100 files / 1 GB per call | Images plus annotations, MP4/MOV for video-only projects, or one dataset ZIP |
+| MCP signed-URL upload (`image_upload`) | Fallback when you would have to invent `download_url` or `file_id`, or the upload exceeds 1 GB, and the client can ZIP and PUT files, up to 2 GB / 10,000 files per ZIP | Images plus annotations, or MP4/MOV for video-only projects |
+| Cloud storage bucket mirror | Extensive or continuously-growing data already in S3 / GCS | See `skill://roboflow/roboflow-cloud-storage/SKILL.md` |
 | Dataset Upload Workflow Block | Collecting from production Workflows | Programmatic |
 | Universe fork | Starting from a public dataset | Any Universe dataset |
 
@@ -37,7 +38,11 @@ Project type is set at creation and **cannot be changed later**.
 
 ### Video Upload
 
-Videos are split into frames at a configurable rate (1 frame/60s to 60 fps). Supported formats depend on browser (MP4 H.264 most compatible).
+For native MP4/MOV uploads into a video-only project such as Action Recognition, prefer `image_upload_files` when the host supplies the videos in its `files` input. It packages the selected videos into a ZIP server-side; the platform stages each one as a native video. It does not extract frames. Image projects skip zipped videos, and video-only projects skip images; inspect the upload warnings.
+
+When you would have to invent `download_url` or `file_id`, or host transfer cannot handle the selected video, and the client can PUT to storage, use `video_upload` for one raw MP4/MOV up to 3 GB, or `image_upload` for a video ZIP up to 2 GB. With `video_upload`, send every `requiredHeaders` entry and the video's Content-Type, then poll `video_upload_status` until `uploaded` or `failed`. Use the final `videoId` from the uploaded response; deduplication can change it.
+
+For frames in an image project, use the web uploader's frame extraction or extract frames locally and upload the images. For Asset Library storage or media analysis without a project, `media_upload` remains a separate signed PUT + `media_upload_finalize` flow; it does not accept `fileParams`.
 
 ### CLI Upload
 
@@ -46,12 +51,20 @@ pip install roboflow
 roboflow import -w <workspace> -p <project-id> /path/to/dataset
 ```
 
-### MCP Zip Upload
+### MCP Image and Video Upload
 
-`image_upload` returns a signed URL. The client zips the local files, PUTs the zip to that URL, and polls `image_upload_status` until it is `completed` or `failed`.
+Use `image_upload_files` when the host supplies the user's selected files in the tool's `files` input. ChatGPT supplies attachment references, and Codex may accept absolute local paths and transfer them itself. If you would have to invent `download_url` or `file_id`, the host has no transfer bridge, so use the signed-URL flow below instead. Do not invent file references or pass file bytes through the model.
+
+The Roboflow server downloads the files, assembles a ZIP, and uploads it to storage. The client does not need to ZIP files or PUT to GCS. Accepts images plus annotation files, MP4/MOV for video-only projects, or one dataset ZIP on its own, up to 100 files / 1 GB total per call. For larger file counts, use one ZIP within the host and tool limits. This is a project media import, not general document storage.
+
+Use `image_upload` when the host does not supply the files in the `files` input or cannot handle them, and the client can ZIP and HTTP PUT to the returned signed URL. An authentication, validation, or server error alone does not establish that the bridge is unavailable. If the sandbox cannot reach storage, do not repeatedly retry the PUT; use host-assisted transfer or the project's web uploader.
+
+After either flow returns a `taskId` (and after the client PUT for the fallback), poll `image_upload_status` until it is `completed` or `failed`. Inspect `result.uploadErrors`, `annotationErrors` and `warnings`, even when the task completed. For every `result.videoIds` entry, also poll `video_upload_status` until `uploaded` or `failed`; `videosStaged` and ZIP completion do not prove video ingestion succeeded. Poll any returned video IDs even if another ZIP chunk failed. Use each final uploaded `videoId`, not the pre-deduplication ID. `result.videoIds` stops at 100 IDs, and `result.videosStaged` only counts videos from chunks that succeeded. If `result.videosStaged` exceeds the returned IDs or `result.failedChunks` is above 0, the task did not return every video ID: poll the IDs it did return and report the rest as unverified, with the counts. `images_search(project_id, media_types=["video"])` searches the whole project, not this import, so it can return older videos and miss pending or failed ones. Use a search result only as supporting evidence when it matches an uploaded file by name, never as proof that the import is complete.
+
+Both flows use the same image and annotation import behavior:
 
 - **Annotations are imported.** The zip can hold annotation files next to the images. They are parsed like in the web uploader: COCO JSON (`_annotations.coco.json`), YOLO TXT (with `data.yaml` or `classes.txt`), Pascal VOC XML, CreateML JSON, CSV, and more. Annotations are matched to images by file name. In classification projects, an image's parent folder name is its class.
-- **Folders set splits.** A `train/`, `valid/` or `test/` folder (also `training/`, `validation/`, `val/`, `testing/`) anywhere in an image's path sets its split. Other images use the `split` argument.
+- **Folders set splits.** A `train/`, `valid/` or `test/` folder (also `training/`, `validation/`, `val/`, `testing/`) anywhere in an image or video's path sets its split. Other files use the `split` argument.
 - **Annotated images go straight into the Dataset.** There is no annotation job to accept, unless the workspace has annotation review turned on (then they wait in a review job). Images without annotations land in a batch (`batch_name`, default "Uploaded via API"); label them with `annotations_save` and `add_to_dataset=true`.
 - **Duplicates still get their annotations.** An image already in the project is not stored again, but its annotation from the zip is saved. If it already has an annotation, that one is kept and the image is listed in `annotationErrors` as "Image was already annotated"; pass `annotation_overwrite=true` to replace it. Classification labels are always replaced.
 - **A failed chunk is safe to retry.** The zip is processed in chunks. If the status is `failed` with an `uploadErrors` entry like `chunk-0`, that chunk's images may be stored without their annotations. Upload the same zip again: stored images come back as duplicates and their missing annotations are saved. "Image was already annotated" for images that made it the first time is expected.
@@ -222,12 +235,12 @@ Don't guess a project's type or license. Confirm both with the user before calli
 | `projects_list` / `projects_get` | List or get project details |
 | `images_search` | Semantic search inside one project, with tag, class, Dataset, batch and job filters (no RoboQL) |
 | `images_workspace_search` | RoboQL search across the workspace, e.g. `project:my-project split:valid` |
-| `image_upload` / `image_upload_status` | Prepare a zip upload of images and optional annotations, and poll its status |
+| `image_upload_files` / `image_upload` / `image_upload_status` | Prefer host-assisted image uploads; use client ZIP + signed PUT when needed; poll the import task |
 | `versions_generate` | Generate a dataset version with preprocessing/augmentation |
 | `versions_get` | Inspect a version |
 | `versions_export` | Export a version in a given format |
 
 ## Related Pages
 
-- `roboflow://skills/roboflow-data-management/labeling` — annotation tools, AI labeling, Label Assist, Smart Polygon, Auto Label, annotation jobs
-- `roboflow://skills/roboflow-cloud-storage/SKILL` — mirror an S3/GCS bucket into the workspace (credentials, datasources, glob rules, scheduled sync)
+- `skill://roboflow/roboflow-data-management/labeling.md` — annotation tools, AI labeling, Label Assist, Smart Polygon, Auto Label, annotation jobs
+- `skill://roboflow/roboflow-cloud-storage/SKILL.md` — mirror an S3/GCS bucket into the workspace (credentials, datasources, glob rules, scheduled sync)

@@ -3,7 +3,7 @@ name: roboflow-inference
 description: Deployment option comparison (serverless, dedicated, self-hosted, batch) and Workflow execution patterns. For raw API URL patterns, auth, and request/response formats, see roboflow-api-reference.
 ---
 
-> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `skill://roboflow/<name>/SKILL.md` MCP resources serve the same skills for clients that don't have them loaded.
 
 > **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its inference tools over raw HTTP; auth is handled for OAuth and API-key connections. Use **`workflows_run`** for a saved, published Workflow by URL slug (`workflow_id`); the workspace comes from the connection. For single-model calls use `models_infer`. Use `workflow_specs_validate` before saving or running a new specification, and `workflow_specs_run` to test an unpublished draft or run an authorized one-off.
 
@@ -18,7 +18,7 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
 >
 > `workflows_run` executes the latest published version, not an agent's draft. Use `agent_workflow_publish` only when publishing is authorized. Draft testing does not require publishing. See [workflows](./workflows.md) "Authoring & Deployment" for the full flow.
 
-> **For live video (webcam, RTSP, file):** the MCP `workflows_run` tool only handles single static images. For live video, present the user with **three options** (don't pick one silently): **(A)** WebRTC → serverless GPU, **(B)** WebRTC → local `inference server`, or **(C)** in-process `InferencePipeline`. They have different setup costs, dep sizes, and latency characteristics — surface a brief 1-line summary of each and let the user choose. See `roboflow://skills/roboflow-inference/workflows` ("Video Stream" section) for full code and the comparison table.
+> **For live video (webcam, RTSP, file):** the MCP `workflows_run` tool only handles single static images. For live video, present the user with **three options** (don't pick one silently): **(A)** WebRTC → serverless GPU, **(B)** WebRTC → local `inference server`, or **(C)** in-process `InferencePipeline`. They have different setup costs, dep sizes, and latency characteristics — surface a brief 1-line summary of each and let the user choose. See `skill://roboflow/roboflow-inference/workflows.md` ("Video Stream" section) for full code and the comparison table.
 
 ## Deployment Options
 
@@ -41,7 +41,7 @@ description: Deployment option comparison (serverless, dedicated, self-hosted, b
   - **(C) `InferencePipeline` in-process** — `pip install inference` in a venv (prefer `uv`); runs the workflow loop directly in the user's Python process, no separate server. Heavy deps (torch, opencv, onnxruntime) install locally.
 
   All three have a slower first run (model download / warmup) before subsequent runs hit cached state — tell the user this so they don't think the script is hung.
-  - See `roboflow://skills/roboflow-inference/workflows` ("Video Stream" section) for full code and a comparison table.
+  - See `skill://roboflow/roboflow-inference/workflows.md` ("Video Stream" section) for full code and a comparison table.
 
 ## MCP Tools for Inference
 
@@ -67,7 +67,7 @@ See [`local-tooling`](local-tooling.md) for what to install for which use case, 
 
 ## Response Shapes by Task
 
-For canonical response shapes (object detection, classification, segmentation, keypoint) with all fields including `class_id`, `detection_id`, `class_confidence`, see `roboflow://skills/roboflow-api-reference/inference`.
+For canonical response shapes (object detection, classification, segmentation, keypoint) with all fields including `class_id`, `detection_id`, `class_confidence`, see `skill://roboflow/roboflow-api-reference/inference.md`.
 
 ## Large Response Handling
 

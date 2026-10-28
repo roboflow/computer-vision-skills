@@ -3,7 +3,7 @@ name: roboflow-training-and-evaluation
 description: Use when training Roboflow models, diagnosing why a model underperforms, improving accuracy, or setting up a production feedback loop — covers architecture selection, model IDs, checkpoints, Model Evaluation (confusion matrix, per-class metrics, MCP eval tools), the diagnosis-first improvement playbook, and Active Learning through the Project Model Workflow block.
 ---
 
-> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `skill://roboflow/<name>/SKILL.md` MCP resources serve the same skills for clients that don't have them loaded.
 
 # Training & Evaluation on Roboflow
 
@@ -227,7 +227,7 @@ Auto-runs after training. Access: Models > click model version > View Evaluation
 
 Deep link: `https://app.roboflow.com/{workspace}/{project}/evaluation/{versionId}`.
 
-**When a user asks why a model is bad or how to improve it, start with `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`.** It maps every evaluation panel to a root cause (taxonomy, mislabeled data, inconsistent label standards, coverage gaps, too little data, bad data) and says which data to add next. The improvement playbook holds the compact decision tree and the training-side fixes (architecture, size, augmentation, overfitting).
+**When a user asks why a model is bad or how to improve it, start with `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md`.** It maps every evaluation panel to a root cause (taxonomy, mislabeled data, inconsistent label standards, coverage gaps, too little data, bad data) and says which data to add next. The improvement playbook holds the compact decision tree and the training-side fixes (architecture, size, augmentation, overfitting).
 
 The MCP server exposes every evaluation panel. All require the `model-eval:read` scope and return `409 model_eval_not_done` while an evaluation is still running.
 
@@ -272,6 +272,6 @@ The MCP server exposes every evaluation panel. All require the `model-eval:read`
 ## Related Pages
 
 - [`model-ids.md`](./model-ids.md) — exact training model IDs and COCO class coverage
-- `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis` — start here for "why is my model bad / how do I improve it": run Model Evaluation, read each panel, map symptoms to root causes, decide which data to add
-- `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` — diagnostic decision tree, confusion matrix and per-class metric guide, recommendation types, architecture switching, augmentation, overfitting, iterative checklist
-- `roboflow://skills/roboflow-training-and-evaluation/active-learning` — production feedback loop: Project Model Workflow block, Active Learning, review, and retraining
+- `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md` — start here for "why is my model bad / how do I improve it": run Model Evaluation, read each panel, map symptoms to root causes, decide which data to add
+- `skill://roboflow/roboflow-training-and-evaluation/improvement-playbook.md` — diagnostic decision tree, confusion matrix and per-class metric guide, recommendation types, architecture switching, augmentation, overfitting, iterative checklist
+- `skill://roboflow/roboflow-training-and-evaluation/active-learning.md` — production feedback loop: Project Model Workflow block, Active Learning, review, and retraining
