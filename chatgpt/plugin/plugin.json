@@ -32,7 +32,7 @@
         "brandColorDark": "#8315F9"
       },
       "publication": {
-        "release_notes": "Roboflow now picks a model for your project's live endpoint and shows it working on your own image or video in an interactive player, and can preview a saved Workflow the same way."
+        "release_notes": "Roboflow now picks models with the same rules as the Roboflow Agent, can put one on your project's live endpoint, and shows that endpoint or a saved Workflow working on your own image or video in an interactive player."
       },
       "review": {
         "demo_recording_url": "https://www.loom.com/share/3479126a15bb49a38ba1365bc90043a8",

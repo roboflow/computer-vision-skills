@@ -2,12 +2,12 @@
 
 ## 1.1.0
 
-- Status: draft, not built or submitted. Waits for the preview tools (roboflow/roboflow-mcp#261) to be deployed to production `/openai/mcp`.
+- Status: draft, not built or submitted. Waits for the preview tools (roboflow/roboflow-mcp#261) and the endpoint model selection (roboflow/roboflow-mcp#270) to be deployed to production `/openai/mcp`.
 - Built from: pending (the merge commit of this version's PR).
 - Package SHA-256: pending.
 - Hidden tools: roboflow-mcp `4e046185` (unchanged; #261 hides nothing on `/openai/mcp`).
 - Skills baseline for the next version: pending (the merge commit above). Diffed against `56c4a88`.
-- Skills: adds `roboflow-model-journey`, which chooses the model for a project's live endpoint with the same rules as the Roboflow Agent and opens the model and Workflow previews (`project_deployment_preview`, `workflows_preview`) on the user's own image or video. `roboflow-inference` lists both preview tools. Carries over the `roboflow-api-reference` API key notes on rotation dates, owners and owner candidates.
+- Skills: adds `roboflow-model-journey`, which follows the Roboflow Agent's model rules: choose a model, try it without an endpoint, put it on a project's live endpoint with the workspace detection default and OpenAI detection availability (roboflow/roboflow-mcp#270), and open the endpoint and Workflow previews (`project_deployment_preview`, `workflows_preview`) on the user's own image or video. `roboflow-inference` lists both preview tools. Carries over the changes merged since `56c4a88`: the `skill://roboflow/<name>/SKILL.md` resource addresses (#70), upload guidance aligned with the MCP tools (#71), current pricing (#69), and the `roboflow-api-reference` API key notes on rotation dates, owners and owner candidates (#65).
 
 ## 1.0.3
 
