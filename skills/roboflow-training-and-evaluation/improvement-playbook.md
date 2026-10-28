@@ -5,7 +5,7 @@ description: Diagnostic playbook for improving trained model accuracy — decisi
 
 # Model Improvement Playbook
 
-This page is the compact version: a decision tree, the tables for reading an evaluation, and the training-side fixes. Its companion `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis` is the long form, organised as Steps 0–5; each section below names the step to open when the short answer is not enough.
+This page is the compact version: a decision tree, the tables for reading an evaluation, and the training-side fixes. Its companion `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md` is the long form, organised as Steps 0–5; each section below names the step to open when the short answer is not enough.
 
 | Need | Page |
 |---|---|
@@ -72,7 +72,7 @@ Model not good enough?
    └─ Review augmentations → Over-augmentation can hurt; simplify
 ```
 
-For the full walkthrough behind each branch — the MCP evaluation recipe, the recommendation types and their triggers, root-cause deep dives (taxonomy, mislabeled data, inconsistent label standards, coverage gaps, too little data, bad data), and which data to add for each finding — see `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`.
+For the full walkthrough behind each branch — the MCP evaluation recipe, the recommendation types and their triggers, root-cause deep dives (taxonomy, mislabeled data, inconsistent label standards, coverage gaps, too little data, bad data), and which data to add for each finding — see `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md`.
 
 ## Reading the Confusion Matrix
 
@@ -88,7 +88,7 @@ For the full walkthrough behind each branch — the MCP evaluation recipe, the r
 
 The matrix is shown at the evaluation's optimal confidence threshold; drag the slider to see whether a problem disappears at a slightly different threshold. If the false-positive column empties out with little loss on the diagonal, it is a threshold problem, not a data problem.
 
-Long form: **Step 2 — Confusion Matrix** and **Confidence Sweep** in `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`; the click-through decision (model wrong / label wrong / label missing) is spelled out there.
+Long form: **Step 2 — Confusion Matrix** and **Confidence Sweep** in `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md`; the click-through decision (model wrong / label wrong / label missing) is spelled out there.
 
 ## Reading Per-Class Metrics
 
@@ -103,7 +103,7 @@ Long form: **Step 2 — Confusion Matrix** and **Confidence Sweep** in `roboflow
 
 Evaluation also reports mAP by object size (small / medium / large). A low small-object bucket with healthy medium and large points at resolution, tiling, or capture distance rather than labels.
 
-Long form: **Step 2 — Performance by Class** and **Improve Localization / IoU** in `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`, which lists the causes of loose boxes (label extents, resolution, resize mode, crop) with a fix for each.
+Long form: **Step 2 — Performance by Class** and **Improve Localization / IoU** in `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md`, which lists the causes of loose boxes (label extents, resolution, resize mode, crop) with a fix for each.
 
 ## Reading the Model Improvement Recommendations
 
@@ -117,7 +117,7 @@ The evaluation's recommendations panel is generated from the confusion matrix. C
 | `overconfident_fp` | A class with many confident false positives; very often unlabeled real objects | Toggle Ground Truth vs Predictions on the background FP cell |
 | `dataset_health` | Test or valid split too small to trust the metrics | Regenerate with a larger held-out split |
 
-MCP: `model_evals_list` → `model_evals_get_recommendations`, `model_evals_get_performance_by_class`, `model_evals_get_confusion_matrix`, `model_evals_get_map_results`, `model_evals_get_confidence_sweep`; dataset stats via `projects_health`. The ordered recipe, the exact trigger thresholds for each type, and how to narrate the result are in **Step 1 — Run the Evaluation** and **Step 2 — Recommendations** in `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`.
+MCP: `model_evals_list` → `model_evals_get_recommendations`, `model_evals_get_performance_by_class`, `model_evals_get_confusion_matrix`, `model_evals_get_map_results`, `model_evals_get_confidence_sweep`; dataset stats via `projects_health`. The ordered recipe, the exact trigger thresholds for each type, and how to narrate the result are in **Step 1 — Run the Evaluation** and **Step 2 — Recommendations** in `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md`.
 
 ## Common Issues & Roboflow-Specific Fixes
 
@@ -125,12 +125,12 @@ MCP: `model_evals_list` → `model_evals_get_recommendations`, `model_evals_get_
 
 | Action | How in Roboflow |
 |---|---|
-| **Production pipeline (active learning)** | Use a Project Model block with Active Learning so production inference images become reviewable data for annotation, retraining, and model improvement. Best for capturing real-world distribution. See `roboflow://skills/roboflow-training-and-evaluation/active-learning` |
+| **Production pipeline (active learning)** | Use a Project Model block with Active Learning so production inference images become reviewable data for annotation, retraining, and model improvement. Best for capturing real-world distribution. See `skill://roboflow/roboflow-training-and-evaluation/active-learning.md` |
 | Fork from Universe | Universe > find similar dataset > fork to your project. Adds labeled images directly |
 | AI Labeling | Upload unlabeled images > use AI-assisted labeling to annotate faster |
 | Augmentation | Version settings > enable flip, rotation, crop, mosaic, etc. to synthetically expand training set |
 
-Augmentation multiplies existing images; it does not add coverage or fix imbalance. Before collecting, decide *which* images with **Step 4 — Which Data to Add** in `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`; rules of thumb for how many are under **Step 3 — Not enough data**.
+Augmentation multiplies existing images; it does not add coverage or fix imbalance. Before collecting, decide *which* images with **Step 4 — Which Data to Add** in `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md`; rules of thumb for how many are under **Step 3 — Not enough data**.
 
 ### Class Imbalance
 
@@ -140,7 +140,7 @@ Augmentation multiplies existing images; it does not add coverage or fix imbalan
 | Rare class has near-zero recall | Target 500+ annotations per class minimum |
 | Check distribution | Look at per-class counts in dataset overview |
 
-If the minority class is also confused with another class, check **Step 3 — Taxonomy problems** in `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis` before adding data: two overlapping classes stay confused however many examples you add.
+If the minority class is also confused with another class, check **Step 3 — Taxonomy problems** in `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md` before adding data: two overlapping classes stay confused however many examples you add.
 
 ### Wrong Augmentation
 
@@ -151,7 +151,7 @@ If the minority class is also confused with another class, check **Step 3 — Ta
 | Color-dependent task with heavy color jitter | Reduce or disable hue/saturation/brightness augmentation |
 | Over-augmented (mAP worse than no augmentation) | Generate new version with fewer augmentations and compare |
 
-Crop and stretch also show up as loose boxes (mAP@50 fine, mAP@50-95 poor); see **Improve Localization / IoU** in `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`.
+Crop and stretch also show up as loose boxes (mAP@50 fine, mAP@50-95 poor); see **Improve Localization / IoU** in `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md`.
 
 ### Overfitting
 
@@ -164,11 +164,11 @@ Signs: Training loss drops but validation loss increases or plateaus.
 | Use smaller model | e.g., switch from Large to Medium |
 | Early stopping | Use "Stop Training Early" when graphs show divergence |
 
-Rule out leakage first: near-duplicate frames across train and test look like the opposite of overfitting (test too good) and a test set that differs from train looks like overfitting when it is a coverage gap. Both checks are in **Step 0** and **Step 3 — Bad data** in `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`.
+Rule out leakage first: near-duplicate frames across train and test look like the opposite of overfitting (test too good) and a test set that differs from train looks like overfitting when it is a coverage gap. Both checks are in **Step 0** and **Step 3 — Bad data** in `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md`.
 
 ## Architecture Switching Guide
 
-Switch architecture or size only after the label, taxonomy, and coverage checks in **Step 3** of `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis` come back clean; a bigger model trained on inconsistent labels learns the inconsistency faster.
+Switch architecture or size only after the label, taxonomy, and coverage checks in **Step 3** of `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md` come back clean; a bigger model trained on inconsistent labels learns the inconsistency faster.
 
 | Current → Try | When |
 |---|---|
@@ -206,7 +206,7 @@ Both are mAP@50. Cast to number before comparing.
 
 1. **Check evaluation** -- Open Model Evaluation (or run the MCP tools above), review recommendations, confusion matrix, and per-class metrics
 2. **Identify weakest classes** -- Sort by lowest recall/precision; click the cells and look at the images
-3. **Diagnose root cause** -- Use decision tree above; for deep dives see `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis`
+3. **Diagnose root cause** -- Use decision tree above; for deep dives see `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md`
 4. **Take action** -- Fix labels or taxonomy first; then add the specific data the diagnosis calls for; then adjust augmentation or switch architecture
 5. **Generate new version** -- New preprocessing/augmentation settings if needed
 6. **Train new model** -- Use previous version as checkpoint if prior model was decent
@@ -215,5 +215,5 @@ Both are mAP@50. Cast to number before comparing.
 
 ## Related Pages
 
-- `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis` — full diagnosis walkthrough: evaluation panels, MCP recipe, root-cause deep dives, which data to add
-- `roboflow://skills/roboflow-training-and-evaluation/active-learning` — set up a production feedback loop with a Project Model block and Active Learning
+- `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md` — full diagnosis walkthrough: evaluation panels, MCP recipe, root-cause deep dives, which data to add
+- `skill://roboflow/roboflow-training-and-evaluation/active-learning.md` — set up a production feedback loop with a Project Model block and Active Learning
