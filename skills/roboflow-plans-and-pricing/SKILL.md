@@ -23,7 +23,7 @@ If fetching is unavailable or fails, say: "Current pricing could not be verified
 
 ## Preserve the template
 
-Read [assets/pricing-template.md](assets/pricing-template.md). Preserve its headings, table columns, and surrounding wording. Replace only its named placeholders. Populate table rows from current sources, allowing plans and actions to be added, renamed, or removed without editing the template. Never persist fetched values back into this skill or its assets.
+Read [assets/pricing-template.md](assets/pricing-template.md). If this skill was read from MCP and the file is not local, retrieve it using its exact supporting-file URI from the skill manifest via `resources/read` or `read_skill`. Preserve its headings, table columns, and surrounding wording. Replace only its named placeholders. Populate table rows from current sources, allowing plans and actions to be added, renamed, or removed without editing the template. Never persist fetched values back into this skill or its assets.
 
 - `plan_rows`: Markdown rows with Plan, Credits, Users, and Key Differences. Include the verified price, currency, cadence, and relevant conditions in the Plan cell.
 - `extra_credits`: verified pack, overage, and eligibility details, or the missing-information wording above.
@@ -31,13 +31,13 @@ Read [assets/pricing-template.md](assets/pricing-template.md). Preserve its head
 - `checked_at`: actual retrieval timestamp including timezone, not the page's publication date.
 - `sources`: Markdown links to the official pages actually fetched and used. Attach additional source links to relevant rows when needed.
 
-When local execution is available, write these fields as a JSON object to a temporary file and run the bundled renderer from this skill's directory:
+When Python execution is available and both the renderer and template are accessible in the local skill directory, write these fields as a JSON object to a temporary file and run the bundled renderer from that directory:
 
 ```bash
 python3 scripts/render_pricing.py /absolute/path/to/current-pricing.json
 ```
 
-Return the rendered text without paraphrasing it. The renderer substitutes placeholders deterministically; it does not fetch or verify facts. If local execution is unavailable, fill the same template directly, preserving every character outside placeholders. Place user-specific calculations or explanations after the rendered template.
+Return the rendered text without paraphrasing it. The renderer substitutes placeholders deterministically; it does not fetch or verify facts. If Python or either local file is unavailable, fill the retrieved template directly, preserving every character outside placeholders. Shell access alone does not mean an MCP-served skill is installed locally. Place user-specific calculations or explanations after the rendered template.
 
 ## Cost Estimation Guidance
 
