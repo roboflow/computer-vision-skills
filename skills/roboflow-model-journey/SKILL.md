@@ -1,11 +1,11 @@
 ---
 name: roboflow-model-journey
-description: Use when a user wants a model that detects, segments, or classifies something without training first, or wants to see a model or saved Workflow work on their own image or video. Covers choosing the model, trying it, putting it on a project's live endpoint (Project Deployment), and opening project_deployment_preview or workflows_preview.
+description: Use when a user wants a model that detects, segments, or classifies something without training first. Covers choosing the model, trying it, and putting it on a project's live endpoint (Project Deployment).
 ---
 
 > **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `skill://roboflow/<name>/SKILL.md` MCP resources serve the same skills for clients that don't have them loaded.
 
-# Model journey: choose, try, deploy, preview
+# Model journey: choose, try, deploy
 
 Understand the outcome, choose a model, try it on the user's media, put it on the project's live endpoint when the task needs one, then improve or train. These rules are the Roboflow Agent's; follow them as written.
 
@@ -56,9 +56,7 @@ Choose the simplest prediction type that delivers the user's requested output, t
 Ordinary model testing needs no endpoint configuration. Never set an endpoint model just to try one.
 
 - `models_infer`: a trained model id or pretrained alias on one image; returns JSON predictions.
-- A saved Workflow with the candidate model configured directly on its model step, shown with `workflows_preview` on the user's image or video (section 5).
 - `autolabel_preview`: a foundation model from `autolabel_models_list` on one image of a project.
-- `project_deployment_preview`: only for the model the project's endpoint already serves.
 
 ## 4. Put it on the endpoint
 
@@ -72,29 +70,8 @@ Configure this optional endpoint only when the requested task needs a stable ser
 - **Any other new project:** `project_deployment_launch` with `model`, and `enable_active_learning` if wanted.
 - **Existing project:** `project_deployment_set_model`. It saves the configuration, so don't describe it as temporary. Never replace a configured serving model or saved prompt unless the user explicitly requests that persistent change. Training completion, Auto Label setup, and trying a preview don't authorize replacement. Never use it for temporary classes or confidence changes. Active Learning settings are preserved.
 
-## 5. Preview on the user's media
-
-Both previews open an interactive player in the chat.
-
-| | `project_deployment_preview` | `workflows_preview` |
-|---|---|---|
-| Shows | The model the project's endpoint serves: detections with confidence and class filters | A saved Workflow's output images, values and JSON |
-| Needs | `project_id` with a model set | `workflow_id` of a saved Workflow with exactly one image input |
-| Media | `source_id` (image) or `video_id` (video) from the workspace | Same |
-| Options | `classes` (SAM 3 projects only; temporary, the endpoint keeps its saved prompt), `confidence` | `parameters` for the Workflow's other inputs, `disable_sinks` |
-| Video | `trim_start_ms`, `trim_duration_ms`: a clip of 60 s at most | Same |
-
-- **Media:** only images and videos already in the workspace. Find them with `images_workspace_search` (`media_types: ["video"]` for videos). The preview doesn't upload; if the user's file isn't in Roboflow yet, upload it first with their go-ahead (see `roboflow-data-management`).
-- **Temporary changes:** for SAM 3, try other classes through `project_deployment_preview`'s `classes`, never through `project_deployment_set_model`.
-- **Cost:** every call runs inference and spends credits. A video runs as a job on the clip. Get the user's go-ahead before a video preview with Sol, Astra or Gemini (section 1).
-- **Sinks:** a Workflow's sink blocks (webhooks, uploads, notifications) run unless `disable_sinks: true`. Ask when the Workflow has them.
-- **Refusals:** the platform refuses a Workflow it can't preview (more than one image input, an unknown parameter, no image output for video) before running it. Relay the returned sentence.
-- **What you get back:** counts per class, the output names, or the job id. The user sees the results in the player; don't describe detections you weren't given.
-
-The player handles the rest. The user filters by confidence and class without a new run, runs the preview again, stops a video job with **Stop**, and on SAM 3 projects types other classes and runs again. The player calls `preview_rerun`, `preview_job_get`, `preview_job_cancel` and `preview_media_refresh` itself: never call them, and don't call the opening tool again to check a video's progress.
-
-## 6. Improve or train
+## 5. Improve or train
 
 If the results miss, look at them with the user first. For SAM 3, try a few simple descriptions of the target's appearance. When quality, latency or video cost needs a custom model, sample and label representative frames and train: default to RF-DETR for object detection, including non-COCO targets, and RF-DETR Segmentation for instance segmentation, unless the user explicitly chooses another supported architecture (see `roboflow-training-and-evaluation`).
 
-Put a trained model on the endpoint only when the user explicitly asks for it; finishing a training doesn't authorize it. Then use `project_deployment_set_model` with `{type: "model_id", modelId}` and preview it on the same media.
+Put a trained model on the endpoint only when the user explicitly asks for it; finishing a training doesn't authorize it. Then use `project_deployment_set_model` with `{type: "model_id", modelId}`.
