@@ -3,7 +3,7 @@ name: roboflow-model-journey
 description: Use when a user wants a model that detects, segments, or classifies something without training first, or wants to see a model or saved Workflow work on their own image or video. Covers choosing the model for a project's live endpoint (Project Deployment), setting it, and opening project_deployment_preview or workflows_preview.
 ---
 
-> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `skill://roboflow/<name>/SKILL.md` MCP resources serve the same skills for clients that don't have them loaded.
 
 # Model journey: choose, deploy, preview
 
