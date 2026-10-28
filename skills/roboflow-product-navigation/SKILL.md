@@ -3,7 +3,7 @@ name: roboflow-product-navigation
 description: Use when explaining where Roboflow features live in the app.roboflow.com web app, mapping intents like upload, annotate, train, deploy to specific page URLs.
 ---
 
-> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `skill://roboflow/<name>/SKILL.md` MCP resources serve the same skills for clients that don't have them loaded.
 
 # Roboflow Web App Navigation
 
@@ -124,4 +124,4 @@ When creating a project, choose one (cannot be changed later):
 
 ## Related Pages
 
-- `roboflow://skills/roboflow-product-navigation/features-by-page` — intent-to-URL lookup table ("I want to do X → go here")
+- `skill://roboflow/roboflow-product-navigation/features-by-page.md` — intent-to-URL lookup table ("I want to do X → go here")

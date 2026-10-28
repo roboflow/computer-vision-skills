@@ -3,7 +3,7 @@ name: roboflow-data-management
 description: Use when uploading images or videos, labeling, organizing datasets, creating Roboflow projects (detection/segmentation/keypoint/classification), tags, splits, versions, or RoboQL search.
 ---
 
-> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `skill://roboflow/<name>/SKILL.md` MCP resources serve the same skills for clients that don't have them loaded.
 
 # Data Management on Roboflow
 
@@ -30,7 +30,7 @@ Project type is set at creation and **cannot be changed later**.
 | CLI (`roboflow import`) | > 1,000 images (images only) | Same image formats, no video |
 | MCP host-assisted upload (`image_upload_files`) | Preferred when the host supplies the selected files in the tool's `files` input (ChatGPT attachments, Codex local paths), up to 100 files / 1 GB per call | Images plus annotations, MP4/MOV for video-only projects, or one dataset ZIP |
 | MCP signed-URL upload (`image_upload`) | Fallback when you would have to invent `download_url` or `file_id`, or the upload exceeds 1 GB, and the client can ZIP and PUT files, up to 2 GB / 10,000 files per ZIP | Images plus annotations, or MP4/MOV for video-only projects |
-| Cloud storage bucket mirror | Extensive or continuously-growing data already in S3 / GCS | See `roboflow://skills/roboflow-cloud-storage/SKILL` |
+| Cloud storage bucket mirror | Extensive or continuously-growing data already in S3 / GCS | See `skill://roboflow/roboflow-cloud-storage/SKILL.md` |
 | Dataset Upload Workflow Block | Collecting from production Workflows | Programmatic |
 | Universe fork | Starting from a public dataset | Any Universe dataset |
 
@@ -242,5 +242,5 @@ Don't guess a project's type or license. Confirm both with the user before calli
 
 ## Related Pages
 
-- `roboflow://skills/roboflow-data-management/labeling` — annotation tools, AI labeling, Label Assist, Smart Polygon, Auto Label, annotation jobs
-- `roboflow://skills/roboflow-cloud-storage/SKILL` — mirror an S3/GCS bucket into the workspace (credentials, datasources, glob rules, scheduled sync)
+- `skill://roboflow/roboflow-data-management/labeling.md` — annotation tools, AI labeling, Label Assist, Smart Polygon, Auto Label, annotation jobs
+- `skill://roboflow/roboflow-cloud-storage/SKILL.md` — mirror an S3/GCS bucket into the workspace (credentials, datasources, glob rules, scheduled sync)

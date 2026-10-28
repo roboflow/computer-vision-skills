@@ -220,6 +220,12 @@ def validate_skills(package: Path, plugin_name: str, tools: dict, errors: list[s
     for path in sorted(skills.rglob("*.md")):
         relative = path.relative_to(package).as_posix()
         text = path.read_text(encoding="utf-8")
+        if "roboflow://skills/" in text:
+            errors.append(f"{relative} uses an old skill address; use skill://roboflow/ file URIs")
+        for target in re.findall(r"skill://roboflow/[A-Za-z0-9_./-]+", text):
+            linked = (skills / target.removeprefix("skill://roboflow/")).resolve()
+            if not linked.is_relative_to(skills.resolve()) or not linked.is_file():
+                errors.append(f"{relative} links to {target}, which is not in the package")
         for target in LINK.findall(text) + REFERENCE_LINK.findall(text):
             if re.match(r"^[a-z][a-z0-9+.-]*:", target) or target.startswith("#"):
                 continue

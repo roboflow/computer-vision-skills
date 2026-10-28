@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+import re
 import shutil
 import tempfile
 import unittest
@@ -44,6 +45,30 @@ class BuildTests(unittest.TestCase):
     def test_excluded_skills_are_left_out(self):
         files = self.skill_files(build(self.root))
         self.assertFalse(any(name.startswith("skills/workflow-from-eval/") for name in files))
+
+    def test_all_source_skill_links_are_canonical_and_resolve(self):
+        for tree in (self.root / "skills", self.root / "chatgpt/skills"):
+            for path in tree.rglob("*.md"):
+                text = path.read_text(encoding="utf-8")
+                self.assertNotIn("roboflow://skills/", text, str(path))
+                for uri in re.findall(r"skill://roboflow/[A-Za-z0-9_./-]+", text):
+                    target = self.root / "skills" / uri.removeprefix("skill://roboflow/")
+                    self.assertTrue(target.is_file(), f"{path}: {uri}")
+
+    def test_old_skill_uri_fails(self):
+        path = self.root / "skills/roboflow-universe/SKILL.md"
+        path.write_text(path.read_text() + "\nRead `roboflow://skills/roboflow-inference/SKILL`.\n")
+        with self.assertRaisesRegex(ValueError, "old skill address"):
+            build(self.root)
+
+    def test_canonical_uri_to_missing_or_excluded_file_fails(self):
+        path = self.root / "skills/roboflow-universe/SKILL.md"
+        original = path.read_text()
+        for target in ("does-not-exist/SKILL.md", "workflow-from-eval/SKILL.md"):
+            with self.subTest(target=target):
+                path.write_text(original + f"\nRead `skill://roboflow/{target}`.\n")
+                with self.assertRaisesRegex(ValueError, "not in the package"):
+                    build(self.root)
 
     def test_windows_line_endings_still_parse(self):
         for path in (self.root / "skills").rglob("*.md"):
