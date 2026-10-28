@@ -3,7 +3,7 @@ name: roboflow-cloud-storage
 description: Use when connecting cloud storage (AWS S3 / S3-compatible or Google Cloud Storage) to Roboflow to mirror images into a workspace — creating storage credentials, defining datasources (bucket-mirror configs), selecting objects with glob rules, validating access, and running/scheduling mirror jobs.
 ---
 
-> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `skill://roboflow/<name>/SKILL.md` MCP resources serve the same skills for clients that don't have them loaded.
 
 # Cloud Storage (Datasources & Credentials)
 
@@ -135,5 +135,5 @@ fail.
 
 ## Related Pages
 
-- `roboflow://skills/roboflow-data-management/SKILL` — what to do with the images once mirrored (tags, splits, versions, search)
-- `roboflow://skills/roboflow-product-navigation/SKILL` — the app's `settings/datasources` page
+- `skill://roboflow/roboflow-data-management/SKILL.md` — what to do with the images once mirrored (tags, splits, versions, search)
+- `skill://roboflow/roboflow-product-navigation/SKILL.md` — the app's `settings/datasources` page

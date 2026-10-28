@@ -1,6 +1,6 @@
 # Roboflow: Feature Lookup by Intent
 
-> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-product-navigation`) over fetching `roboflow://skills/roboflow-product-navigation/features-by-page` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
+> **Source-of-truth note:** This page ships with the Roboflow plugin. If your client has the plugin loaded, prefer the local skill (`roboflow:roboflow-product-navigation`) over fetching `skill://roboflow/roboflow-product-navigation/features-by-page.md` via `ReadMcpResourceTool` — the MCP resources are a fallback for non-plugin clients and may lag the source repo.
 
 "I want to do X" -> go here / use this tool.
 
@@ -12,7 +12,7 @@ Base URL: `https://app.roboflow.com`
 |--------|---------|-------------|
 | Upload images/videos from your computer (local files) | `/{ws}/{proj}/upload` | Python SDK: `project.upload(path)`. MCP: prefer `image_upload_files` with host-provided files (images, or MP4/MOV for video-only projects). Fallback: `image_upload` + client ZIP/PUT, or `video_upload` + raw video PUT. Poll `image_upload_status` for ZIPs, then `video_upload_status` for every returned video ID; inspect warnings for skipped media. |
 | Import from S3/GCS/Azure | `/{ws}/{proj}/upload` -> Cloud Import tab | Python SDK with cloud URLs |
-| Import images from cloud storage (S3 / GCS bucket mirror) | `/{ws}/settings/datasources` | MCP: `connect_cloud_storage`; see `roboflow://skills/roboflow-cloud-storage/SKILL` |
+| Import images from cloud storage (S3 / GCS bucket mirror) | `/{ws}/settings/datasources` | MCP: `connect_cloud_storage`; see `skill://roboflow/roboflow-cloud-storage/SKILL.md` |
 | Import from Universe | `/{ws}/{proj}/upload` -> Universe tab | MCP: `universe_search` then fork |
 | Upload pre-annotated data | `/{ws}/{proj}/upload` (drag folder with annotations) | Python SDK: `project.upload(path)` auto-detects annotations, MCP: prefer `image_upload_files` with images and annotations (or one ZIP); use `image_upload` + client ZIP/PUT only when host-assisted transfer cannot be used |
 
@@ -63,7 +63,7 @@ Base URL: `https://app.roboflow.com`
 | Train specific version | `/{ws}/{proj}/{version}/train` | MCP: `trainings_create` |
 | Check training status | `/{ws}/{proj}/{version}` (shows progress bar) | MCP: `trainings_get` with project, version, and `training_id`; use `trainings_list` to find the run |
 | View training results (mAP, etc.) | `/{ws}/{proj}/{version}/train/results` | MCP: `models_get` |
-| View model evaluation (recommendations, per-class, confusion matrix, vector explorer) | `/{ws}/{proj}/evaluation/{versionId}` | MCP: `model_evals_list` then `model_evals_get_*`; see `roboflow://skills/roboflow-training-and-evaluation/model-diagnosis` |
+| View model evaluation (recommendations, per-class, confusion matrix, vector explorer) | `/{ws}/{proj}/evaluation/{versionId}` | MCP: `model_evals_list` then `model_evals_get_*`; see `skill://roboflow/roboflow-training-and-evaluation/model-diagnosis.md` |
 | Cancel training | `/{ws}/{proj}/{version}` -> Cancel button | -- |
 | Use Roboflow Instant (auto-train) | Triggers on batch approval | -- |
 
@@ -117,4 +117,4 @@ Base URL: `https://app.roboflow.com`
 | Configure SSO | `/{ws}/settings/plan` (Enterprise) | -- |
 | View audit logs | `/{ws}/settings/audit-logs` (Enterprise) | -- |
 
-For plans, credits, and cost estimation, see `roboflow://skills/roboflow-plans-and-pricing/SKILL`.
+For plans, credits, and cost estimation, see `skill://roboflow/roboflow-plans-and-pricing/SKILL.md`.

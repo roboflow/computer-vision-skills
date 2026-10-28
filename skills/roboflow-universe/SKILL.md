@@ -3,7 +3,7 @@ name: roboflow-universe
 description: Use when searching for or using public datasets/models on Roboflow Universe (universe.roboflow.com), the open repository of 1M+ computer vision datasets and 50K+ pre-trained models.
 ---
 
-> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `roboflow://skills/<name>/...` MCP resources serve the same skills for clients that don't have them loaded.
+> **For agents:** This skill is authored in [`roboflow/computer-vision-skills`](https://github.com/roboflow/computer-vision-skills). If your client already has it loaded as a skill (for example from a Roboflow plugin), use that copy. The `skill://roboflow/<name>/SKILL.md` MCP resources serve the same skills for clients that don't have them loaded.
 
 # Roboflow Universe
 
@@ -151,5 +151,5 @@ Returns: name, url, type, classes, classCount, images, description, tags, licens
 
 ## Related Skills
 
-- `roboflow://skills/roboflow-data-management/SKILL` — managing datasets after import
-- `roboflow://skills/roboflow-training-and-evaluation/SKILL` — training on forked data
+- `skill://roboflow/roboflow-data-management/SKILL.md` — managing datasets after import
+- `skill://roboflow/roboflow-training-and-evaluation/SKILL.md` — training on forked data

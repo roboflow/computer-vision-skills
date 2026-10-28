@@ -12,7 +12,7 @@ Two rules:
 1. **Diagnose before you change anything.** Run Model Evaluation, find the single biggest failure, and confirm its cause by looking at the images behind it.
 2. **More data is usually the right answer, but the diagnosis decides *which* data.** Adding images labeled to a bad standard, or to a taxonomy that overlaps, makes the model worse and the problem harder to see.
 
-This page is the entry point when a user asks "why is my model bad" or "how do I improve it". The companion `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` is the compact version: a decision tree for a fast answer, the short tables for reading an evaluation, and the training-side fixes (Insufficient Data, Class Imbalance, Wrong Augmentation, Overfitting, Architecture Switching, Instant vs Full Training). This page is the long form behind each branch of that tree; sections below name the playbook section that holds the fix.
+This page is the entry point when a user asks "why is my model bad" or "how do I improve it". The companion `skill://roboflow/roboflow-training-and-evaluation/improvement-playbook.md` is the compact version: a decision tree for a fast answer, the short tables for reading an evaluation, and the training-side fixes (Insufficient Data, Class Imbalance, Wrong Augmentation, Overfitting, Architecture Switching, Instant vs Full Training). This page is the long form behind each branch of that tree; sections below name the playbook section that holds the fix.
 
 ## Quick Reference: Symptom → Cause → First Action
 
@@ -74,7 +74,7 @@ Model Evaluation runs automatically for paid workspaces after every training (an
 
 Panel tools return `409 model_eval_not_done` while the evaluation is still running; wait and retry rather than concluding the data is missing. Evaluation is a paid-plan feature: if `model_evals_list` returns nothing for a trained model on a free workspace, say so and fall back to the training-page metrics plus Dataset Health.
 
-**How to report it.** Lead with the one biggest problem and the numbers behind it (for example: "`helmet` recall is 0.41; 63 of 107 test instances are missed, and 40 of those are in the low-light cluster"). Name the likely cause, say how you confirmed it (which cell you looked at), and propose one change for the next version. Do not list every panel. When the change is training-side, take it from the matching section of `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook`.
+**How to report it.** Lead with the one biggest problem and the numbers behind it (for example: "`helmet` recall is 0.41; 63 of 107 test instances are missed, and 40 of those are in the low-light cluster"). Name the likely cause, say how you confirmed it (which cell you looked at), and propose one change for the next version. Do not list every panel. When the change is training-side, take it from the matching section of `skill://roboflow/roboflow-training-and-evaluation/improvement-playbook.md`.
 
 ## Step 2 — Read Each Panel
 
@@ -204,7 +204,7 @@ The dataset never shows the model what it fails on.
 |---|---|
 | **Signs** | A vector cluster with low F1; production failures under conditions absent from the dataset (night, rain, a new camera, a new product variant); the annotation heatmap is concentrated; false negatives share a visible condition |
 | **Confirm** | Name the condition from the failing images. Search the dataset for it (free-text semantic search works: `night`, `occluded`, `reflection`). If there are only a handful of matches, it is a coverage gap |
-| **Fix** | Build a targeted collection list: conditions, viewpoints, distances, backgrounds, object variants. Include **negatives** (images with no target, marked null) and **hard negatives** (things that look like the target but are not). Set up Active Learning with a class or condition filter so production supplies these automatically; see `roboflow://skills/roboflow-training-and-evaluation/active-learning` |
+| **Fix** | Build a targeted collection list: conditions, viewpoints, distances, backgrounds, object variants. Include **negatives** (images with no target, marked null) and **hard negatives** (things that look like the target but are not). Set up Active Learning with a class or condition filter so production supplies these automatically; see `skill://roboflow/roboflow-training-and-evaluation/active-learning.md` |
 
 ### Not enough data
 
@@ -224,7 +224,7 @@ The dataset never shows the model what it fails on.
 
 ### Model-side causes
 
-If labels are consistent, coverage is adequate, and the class list is learnable, the remaining levers are the model's. Each has a section in `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook`:
+If labels are consistent, coverage is adequate, and the class list is learnable, the remaining levers are the model's. Each has a section in `skill://roboflow/roboflow-training-and-evaluation/improvement-playbook.md`:
 
 | Lever | Playbook section |
 |---|---|
@@ -265,7 +265,7 @@ Use the diagnosis to decide what goes into the next batch. "More of the same" on
 
 ## Related Pages
 
-- `roboflow://skills/roboflow-training-and-evaluation/improvement-playbook` — the compact companion: decision tree, confusion matrix and per-class tables, and the training-side fixes referenced throughout this page (Insufficient Data, Class Imbalance, Wrong Augmentation, Overfitting, Architecture Switching Guide, Instant vs Full Training)
-- `roboflow://skills/roboflow-training-and-evaluation/active-learning` — collect the missing conditions from production with a Project Model block and Active Learning
-- `roboflow://skills/roboflow-data-management/labeling` — annotation tools, Label Assist, Smart Polygon, labeling instructions, jobs and review
-- `roboflow://skills/roboflow-data-management/SKILL` — RoboQL search, tags, Modify Classes, Filter Null, Tile and Resize preprocessing, Dataset Analytics
+- `skill://roboflow/roboflow-training-and-evaluation/improvement-playbook.md` — the compact companion: decision tree, confusion matrix and per-class tables, and the training-side fixes referenced throughout this page (Insufficient Data, Class Imbalance, Wrong Augmentation, Overfitting, Architecture Switching Guide, Instant vs Full Training)
+- `skill://roboflow/roboflow-training-and-evaluation/active-learning.md` — collect the missing conditions from production with a Project Model block and Active Learning
+- `skill://roboflow/roboflow-data-management/labeling.md` — annotation tools, Label Assist, Smart Polygon, labeling instructions, jobs and review
+- `skill://roboflow/roboflow-data-management/SKILL.md` — RoboQL search, tags, Modify Classes, Filter Null, Tile and Resize preprocessing, Dataset Analytics
