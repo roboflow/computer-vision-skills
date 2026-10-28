@@ -8,11 +8,11 @@ Base URL: `https://app.roboflow.com`
 
 | Intent | Web URL | Alternatives |
 |--------|---------|-------------|
-| Upload images/videos from your computer (local files) | `/{ws}/{proj}/upload` | Python SDK: `project.upload(path)`, MCP: `image_upload` + `image_upload_status` |
+| Upload images/videos from your computer (local files) | `/{ws}/{proj}/upload` | Python SDK: `project.upload(path)`. MCP: prefer `image_upload_files` with host-provided files (images, or MP4/MOV for video-only projects). Fallback: `image_upload` + client ZIP/PUT, or `video_upload` + raw video PUT. Poll `image_upload_status` for ZIPs, then `video_upload_status` for every returned video ID; inspect warnings for skipped media. |
 | Import from S3/GCS/Azure | `/{ws}/{proj}/upload` -> Cloud Import tab | Python SDK with cloud URLs |
 | Import images from cloud storage (S3 / GCS bucket mirror) | `/{ws}/settings/datasources` | MCP: `connect_cloud_storage`; see `roboflow://skills/roboflow-cloud-storage/SKILL` |
 | Import from Universe | `/{ws}/{proj}/upload` -> Universe tab | MCP: `universe_search` then fork |
-| Upload pre-annotated data | `/{ws}/{proj}/upload` (drag folder with annotations) | Python SDK: `project.upload(path)` auto-detects annotations, MCP: `image_upload` with annotation files in the zip |
+| Upload pre-annotated data | `/{ws}/{proj}/upload` (drag folder with annotations) | Python SDK: `project.upload(path)` auto-detects annotations, MCP: prefer `image_upload_files` with images and annotations (or one ZIP); use `image_upload` + client ZIP/PUT only when host-assisted transfer cannot be used |
 
 ## Annotate
 
