@@ -2,10 +2,12 @@
 
 ## 1.1.2
 
-- Status: prepared for metadata review; not published.
+- Status: uploaded to the existing plugin as draft `appsub_6ae3ca5e0fc48191b614b05d8991976f` on 2026-10-29. Metadata scan: no findings. Not submitted or published; developer attestations remain unchecked.
 - Listing: concrete computer vision description, discovery keywords, capability labels, and starter prompts for logo detection, video previews, and counting. Explains that exposure analytics requires application logic and validation.
 - Packaging: default build preserves the MCP-only layout published in 1.1.1. Legacy bundled-skills validation remains available with `--bundle-skills`.
-- Build source and package SHA-256: recorded in the build provenance.
+- Uploaded source: `6b76e9c3a6b4a161f45483b6d8a51b4e40ecd7b2`.
+- Uploaded ZIP SHA-256: `b34b73948aa3bb920f1cadb467ccc371c6cef5df98433d5ae066936e49d707b5`.
+- MCP binding: existing `asdk_app_6ac2713d52dc8191913b283379e39840`, still configured.
 - Discovery: see `DISCOVERY.md` for separate directory, recommendation, connection, and runtime checks.
 
 ## 1.1.1
