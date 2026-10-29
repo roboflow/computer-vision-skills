@@ -8,7 +8,12 @@ import tempfile
 import unittest
 import zipfile
 
-from build import build
+from build import build as build_package
+
+
+def build(root, commit=None):
+    """Keep coverage for the explicitly requested legacy bundled-skills mode."""
+    return build_package(root, commit, bundle_skills=True)
 
 
 class BuildTests(unittest.TestCase):
@@ -30,6 +35,24 @@ class BuildTests(unittest.TestCase):
     def skill_files(self, archive):
         with zipfile.ZipFile(archive) as bundle:
             return {name: bundle.read(name) for name in bundle.namelist()}
+
+    def test_default_release_uses_mcp_served_skills(self):
+        archive = build_package(self.root, "source-commit")
+        files = self.skill_files(archive)
+        self.assertEqual(set(files), {"plugin.json", "mcp.json", "assets/roboflow-icon.png"})
+        for name in files:
+            self.assertEqual(files[name], (self.root / "chatgpt/plugin" / name).read_bytes())
+        provenance = json.loads(archive.with_suffix(".provenance.json").read_text())
+        self.assertFalse(provenance["bundled_skills"])
+        self.assertEqual(provenance["skills_commit"], "source-commit")
+
+    def test_mcp_only_release_still_validates_listing(self):
+        path = self.root / "chatgpt/plugin/plugin.json"
+        manifest = json.loads(path.read_text())
+        manifest["extensions"]["com.openai"]["interface"]["shortDescription"] = "x" * 31
+        path.write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, "shortDescription"):
+            build_package(self.root)
 
     def test_overrides_win_and_supporting_files_are_copied(self):
         files = self.skill_files(build(self.root))

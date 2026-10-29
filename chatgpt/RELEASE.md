@@ -2,15 +2,15 @@
 
 ## When you need a new version
 
-The plugin ZIP bundles the skills and the listing. The tools come from the live MCP server.
+Since published 1.1.1, the plugin ZIP contains the listing, icon and MCP connection. Skills and tools come from the live MCP server. The default build preserves that layout; `--bundle-skills` is only for testing the legacy package.
 
 | Change | New plugin version? |
 |---|---|
 | New tool, new MCP App, or a changed tool description in roboflow-mcp | No. Deploy roboflow-mcp; ChatGPT sees it after OpenAI's automated checks. |
 | A tool hidden on `/openai/mcp` (`surfaces.py`) | Only if a skill in the package names it. Once `chatgpt/tools.json` is updated from `surfaces.py` (step 1), the build fails until the text is fixed. |
-| A skill edited, added or removed in `skills/` | Yes. ChatGPT only gets skill text from the ZIP. |
+| A skill edited, added or removed in `skills/` | No package version for the MCP-only layout. Update the skill source used by the deployed MCP server. |
 | Listing changes: description, starter prompts, icon, test cases | Yes. |
-| Teaching the skills to use a new tool or App | Yes, since that's skill text. The tool itself already works without it. |
+| Teaching MCP-served skills to use a new tool or App | No package version. Verify the deployed MCP serves the new text and the named tools are published. |
 
 Each version needs an OpenAI review, so batch changes into occasional versions. The ChatGPT version in `chatgpt/plugin/plugin.json` is independent of the Claude Code, Codex and Cowork versions; don't bump or align them together.
 
@@ -27,6 +27,8 @@ Each version needs an OpenAI review, so batch changes into occasional versions. 
 The checks in `chatgpt/build.py` are plain Python with fixed rules; they run in CI and locally. The agent handles what needs judgment: rewriting text, reviewing content, writing release notes.
 
 ## Steps for the agent
+
+For a listing-only release, compare the previous published ZIP first. Preserve its MCP URL, icon, reviewed test cases, and lack of bundled skills. Steps 1 to 4 below apply when intentionally building with `--bundle-skills`; do not restore bundled skills as a side effect of a listing edit. For the default MCP-only build, retain the tool visibility checks for the review cases and verify live tool availability in the dashboard.
 
 ### 1. Refresh the hidden tool list
 
@@ -65,11 +67,15 @@ Fix problems in `skills/` when they're wrong for every client, otherwise in `cha
 
 ### 5. Version and notes
 
+Check the published version in the dashboard before choosing a version number. The repository changelog may lag a portal upload. Record the downloaded release checksum and distinguish observed publication from unknown source provenance.
+
 - Bump `version` in `chatgpt/plugin/plugin.json`. Never reuse a version number for a different package.
 - Update `extensions.com.openai.publication.release_notes` in `plugin.json` with what changed for users.
 - Add an entry to `chatgpt/CHANGELOG.md` with the status, the user-facing changes, the skills baseline (the commit you diffed against in step 2), and the roboflow-mcp commit in `tools.json`.
 
 ### 6. Check the review material
+
+Also run the [discovery checks](DISCOVERY.md). A directory listing, an in-chat install recommendation, and successful connected tool use are separate results. Package validation alone does not prove recommendation eligibility.
 
 - Run each positive test case in `plugin.json` with a dedicated reviewer account and confirm the result matches `expected_behavior`.
 - Confirm each negative test case leaves the plugin unused.

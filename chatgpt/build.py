@@ -1,4 +1,4 @@
-"""Build the ChatGPT plugin ZIP: default skills, the ChatGPT overrides, minus excluded skills."""
+"""Build the ChatGPT plugin ZIP; skills are served by MCP unless explicitly bundled."""
 
 from __future__ import annotations
 
@@ -21,15 +21,17 @@ def read_exclusions(source: Path) -> list[str]:
     return [line.strip() for line in lines if line.strip() and not line.lstrip().startswith("#")]
 
 
-def assemble(root: Path, package: Path) -> None:
-    """Lay out plugin.json, mcp.json, assets/ and skills/ in `package`."""
+def assemble(root: Path, package: Path, *, bundle_skills: bool = False) -> None:
+    """Preserve the MCP-only release layout; optionally build the legacy skills bundle."""
     source = root / "chatgpt"
+    shutil.copytree(source / "plugin", package, ignore=IGNORED)
+    if not bundle_skills:
+        return
     defaults = root / "skills"
     excluded = read_exclusions(source)
     for name in excluded:
         if not (defaults / name / "SKILL.md").is_file():
             raise ValueError(f"exclude.txt names {name}, which is not a skill in skills/")
-    shutil.copytree(source / "plugin", package, ignore=IGNORED)
     skills = package / "skills"
     skills.mkdir()
     for folder in sorted(defaults.iterdir()):
@@ -47,7 +49,7 @@ def assemble(root: Path, package: Path) -> None:
         shutil.copy2(override, skills / relative)
 
 
-def build(root: Path, commit: str | None = None) -> Path:
+def build(root: Path, commit: str | None = None, *, bundle_skills: bool = False) -> Path:
     source = root / "chatgpt"
     output = source / "build"
     tools = json.loads((source / "tools.json").read_text(encoding="utf-8"))
@@ -56,7 +58,7 @@ def build(root: Path, commit: str | None = None) -> Path:
     with tempfile.TemporaryDirectory(dir=output) as temp:
         staging = Path(temp)
         package = staging / "package"
-        assemble(root, package)
+        assemble(root, package, bundle_skills=bundle_skills)
         validate(package, tools)
         name = f"roboflow-chatgpt-{version}"
         archive = staging / f"{name}.zip"
@@ -67,6 +69,7 @@ def build(root: Path, commit: str | None = None) -> Path:
         provenance = staging / f"{name}.provenance.json"
         provenance.write_text(json.dumps({
             "package_version": version,
+            "bundled_skills": bundle_skills,
             "skills_commit": commit,
             "hidden_tools_mcp_commit": tools["mcp_commit"],
             "package_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
@@ -82,5 +85,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--commit", default=os.environ.get("GITHUB_SHA"),
                         help="skills commit to record in the provenance file (defaults to GITHUB_SHA)")
+    parser.add_argument("--bundle-skills", action="store_true",
+                        help="build the legacy bundled-skills package instead of the published MCP-only layout")
     args = parser.parse_args()
-    build(Path(__file__).resolve().parents[1], args.commit)
+    build(Path(__file__).resolve().parents[1], args.commit, bundle_skills=args.bundle_skills)
