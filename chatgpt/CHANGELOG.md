@@ -1,5 +1,24 @@
 # ChatGPT plugin changelog
 
+## 1.1.2
+
+- Status: uploaded to the existing plugin as draft `appsub_6ae3ca5e0fc48191b614b05d8991976f` on 2026-10-29. Metadata scan: no findings. Not submitted or published; developer attestations remain unchecked.
+- Listing: concrete computer vision description, discovery keywords, capability labels, and starter prompts for logo detection, video previews, and counting. Explains that exposure analytics requires application logic and validation.
+- Packaging: default build preserves the MCP-only layout published in 1.1.1. Legacy bundled-skills validation remains available with `--bundle-skills`.
+- Uploaded source: `6b76e9c3a6b4a161f45483b6d8a51b4e40ecd7b2`.
+- Uploaded ZIP SHA-256: `b34b73948aa3bb920f1cadb467ccc371c6cef5df98433d5ae066936e49d707b5`.
+- MCP binding: existing `asdk_app_6ac2713d52dc8191913b283379e39840`, still configured.
+- Discovery: see `DISCOVERY.md` for separate directory, recommendation, connection, and runtime checks.
+
+## 1.1.1
+
+- Status: observed published in the OpenAI dashboard and public listing on 2026-10-29.
+- Downloaded release: `pluginrel_480a569535f481919cf51ce1caac2f6a`.
+- Downloaded ZIP SHA-256: `87c3a52451a2f86c60f99ea93660ae72c539ccda74fd2b83ba72c0d74e405291`.
+- Inventory: `plugin.json`, `mcp.json`, `assets/roboflow-icon.png`. No bundled skills.
+- Release notes: removed bundled skills; workflow skills are served by the existing MCP server.
+- Original source commit and publication date: not recorded in this repository and not established by this audit. This entry records the downloaded artifact, not a reconstructed source commit.
+
 ## 1.1.0
 
 - Status: draft, not built or submitted. Waits for the endpoint model selection (roboflow/roboflow-mcp#270) to be deployed to production `/openai/mcp`.

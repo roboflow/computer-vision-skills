@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "roboflow-computer-vision",
-  "version": "1.1.0",
-  "description": "Roboflow computer vision tools and workflow skills for datasets, annotation, training, inference, and deployment.",
+  "version": "1.1.2",
+  "description": "Build and deploy computer vision applications with Roboflow: detect objects and logos, count and track objects in video, label datasets, train models, preview predictions, and run inference workflows.",
   "author": {
     "name": "Roboflow, Inc.",
     "url": "https://roboflow.com"
@@ -12,11 +12,18 @@
     "com.openai": {
       "interface": {
         "displayName": "Roboflow",
-        "shortDescription": "AI for the physical world",
-        "longDescription": "Roboflow turns images and videos into intelligence. Go from idea to production right from the conversation: find a ready-made model or train one on your images, build vision applications, and deploy them as an API or on your own devices. Roboflow is an end-to-end platform for vision AI.\n\nRoboflow works inside the workspaces your connected account can access, with the same permissions. Training, auto labeling, and deployments use your workspace credits. A Roboflow account is required.",
+        "shortDescription": "Build computer vision apps",
+        "longDescription": "Build and deploy computer vision applications from ChatGPT with Roboflow. Use it to detect objects and logos in images or video, count and track objects, label datasets, train models, and run visual inference workflows.\n\nFind public datasets and pretrained models on Roboflow Universe, try models on your images and videos, inspect predictions in interactive previews, and deploy a model or Workflow as an API or on your own devices. For a sponsor-logo analysis project, start by finding or training a logo detector and testing it on representative footage. Exposure-duration calculations and reporting require a configured workflow or application and validation on your footage; the plugin is not a finished sponsorship valuation service.\n\nRoboflow works inside the workspaces your connected account can access, with the same permissions. Training, auto labeling, and deployments use your workspace credits. A Roboflow account is required.",
         "developerName": "Roboflow, Inc.",
         "category": "Developer Tools",
-        "capabilities": [],
+        "capabilities": [
+          "Object and logo detection",
+          "Video analysis, tracking, and counting",
+          "Dataset search and annotation",
+          "Model training and evaluation",
+          "Interactive prediction previews",
+          "Workflow and model deployment"
+        ],
         "websiteURL": "https://roboflow.com",
         "supportURL": "https://roboflow.com/contact",
         "privacyPolicyURL": "https://roboflow.com/privacy",
@@ -24,15 +31,15 @@
         "logo": "./assets/roboflow-icon.png",
         "composerIcon": "./assets/roboflow-icon.png",
         "defaultPrompt": [
-          "Find a pretrained model to detect hard hats",
-          "Train a model to count cars in my parking lot video",
-          "Show my Roboflow projects and their image counts"
+          "Find pretrained models for detecting sponsor logos in baseball footage",
+          "Preview a model on my video before deploying it",
+          "Build a workflow to count objects in a video"
         ],
         "brandColor": "#6706CE",
         "brandColorDark": "#8315F9"
       },
       "publication": {
-        "release_notes": "Roboflow now picks models with the same rules as the Roboflow Agent and can put one on your project's live endpoint."
+        "release_notes": "Clarifies supported computer vision tasks, including logo detection, video analysis, previews, and deployment. Adds task-based starter prompts. Skills continue to be served by the existing Roboflow MCP server."
       },
       "review": {
         "demo_recording_url": "https://www.loom.com/share/3479126a15bb49a38ba1365bc90043a8",
@@ -86,5 +93,17 @@
         }
       }
     }
-  }
+  },
+  "keywords": [
+    "computer-vision",
+    "object-detection",
+    "logo-detection",
+    "video-analysis",
+    "object-tracking",
+    "object-counting",
+    "image-annotation",
+    "model-training",
+    "inference",
+    "deployment"
+  ]
 }
