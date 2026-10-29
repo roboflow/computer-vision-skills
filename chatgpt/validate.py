@@ -252,10 +252,7 @@ def validate(package: Path, tools: dict) -> None:
     """Raise ValidationError for anything that would break the package."""
     errors: list[str] = []
     plugin_name = validate_manifest(package, tools, errors)
-    # MCP-only packages are valid. If a skills directory is supplied, still
-    # reject an empty or broken bundle rather than silently dropping it.
-    if (package / "skills").exists():
-        validate_skills(package, plugin_name, tools, errors)
+    validate_skills(package, plugin_name, tools, errors)
     validate_archive_paths(package, errors)
     if errors:
         raise ValidationError(errors)

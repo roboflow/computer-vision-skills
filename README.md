@@ -2,7 +2,7 @@
 
 Agent-ready Roboflow plugin that contains skills and MCP configuration for computer vision workflows: data management, training, evaluation, inference, model selection, Workflows, Universe, plans, and Roboflow platform APIs.
 
-This repository is a plugin-shaped source of truth for AI agents (Claude Code, Codex, Cursor, OpenCode, and others). The canonical skill content lives in [`skills/`](skills/). The Claude Code and Codex manifests point at those files directly. Cowork copies the skills it lists. The ChatGPT package contains the listing and MCP connection; its skills are served by the live MCP server. Legacy ChatGPT skill overrides remain in [`chatgpt/`](chatgpt/) for explicit bundled builds.
+This repository is a plugin-shaped source of truth for AI agents (Claude Code, Codex, Cursor, OpenCode, and others). The canonical skill content lives in [`skills/`](skills/). The Claude Code and Codex manifests point at those files directly. The Cowork and ChatGPT packages are built from them: Cowork copies the skills it lists, and ChatGPT replaces a few files with ChatGPT versions from [`chatgpt/`](chatgpt/).
 
 ## Install as a plugin
 
@@ -31,7 +31,7 @@ See [`cowork/README.md`](cowork/README.md) for build and installation instructio
 
 ### ChatGPT
 
-The [`chatgpt/`](chatgpt/) directory builds the Roboflow listing, icon and MCP connection for ChatGPT. Since 1.1.1, skills come from the MCP server instead of the ZIP. Users install it from the ChatGPT plugin directory.
+The [`chatgpt/`](chatgpt/) directory builds the Roboflow plugin for ChatGPT: the skills in `skills/`, with a few files replaced by ChatGPT versions and some skills left out, plus the plugin listing. Users install it from the ChatGPT plugin directory.
 
 ```bash
 python3 chatgpt/build.py
