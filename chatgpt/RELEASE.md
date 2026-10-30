@@ -1,5 +1,21 @@
 # Releasing a ChatGPT plugin version
 
+## MCP endpoint migration
+
+The packaged connection now uses `https://mcp.roboflow.com/mcp`. Before publishing
+this configuration, deploy and verify
+[roboflow-mcp #299](https://github.com/roboflow/roboflow-mcp/pull/299), which selects
+widget domains from the calling host rather than the endpoint path. Older server
+builds return Claude's widget domain on `/mcp` and are not compatible with this change.
+Verify ChatGPT widgets, media, and OAuth on the new URL, then update the published
+plugin connection. Existing installations may need refresh/reconnection. This source
+change does not publish a plugin or change its bundled skills; use the normal release
+process and verify the intended skill contents before producing a submission package.
+
+The server retains same-origin redirects from the old `/openai/mcp` addresses during
+migration. Remove those redirects only after the published plugin and installed
+connections have moved. See the server PR's migration guide for acceptance checks.
+
 ## When you need a new version
 
 The plugin ZIP bundles the skills and the listing. The tools come from the live MCP server.
