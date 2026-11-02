@@ -3,7 +3,7 @@
   "mcpServers": {
     "roboflow": {
       "type": "streamable-http",
-      "url": "https://mcp.roboflow.com/openai/mcp"
+      "url": "https://mcp.roboflow.com/mcp"
     }
   }
 }

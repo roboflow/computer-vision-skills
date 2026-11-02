@@ -46,6 +46,25 @@ class BuildTests(unittest.TestCase):
         files = self.skill_files(build(self.root))
         self.assertFalse(any(name.startswith("skills/workflow-from-eval/") for name in files))
 
+    def test_package_uses_canonical_mcp_endpoint(self):
+        files = self.skill_files(build(self.root))
+        servers = json.loads(files["mcp.json"])["mcpServers"]
+        self.assertEqual(servers["roboflow"]["url"], "https://mcp.roboflow.com/mcp")
+
+    def test_legacy_or_incorrect_mcp_endpoint_is_rejected(self):
+        path = self.root / "chatgpt/plugin/mcp.json"
+        configuration = json.loads(path.read_text())
+        for url in (
+            "https://mcp.roboflow.com/openai/mcp",
+            "http://mcp.roboflow.com/mcp",
+            "https://mcp.roboflow.com/other/mcp",
+        ):
+            with self.subTest(url=url):
+                configuration["mcpServers"]["roboflow"]["url"] = url
+                path.write_text(json.dumps(configuration))
+                with self.assertRaisesRegex(ValueError, "one server at https://mcp.roboflow.com/mcp"):
+                    build(self.root)
+
     def test_all_source_skill_links_are_canonical_and_resolve(self):
         for tree in (self.root / "skills", self.root / "chatgpt/skills"):
             for path in tree.rglob("*.md"):

@@ -170,8 +170,8 @@ def validate_manifest(package: Path, tools: dict, errors: list[str]) -> str:
 
     servers = json.loads((package / "mcp.json").read_text(encoding="utf-8")).get("mcpServers", {})
     urls = [server.get("url", "") for server in servers.values()]
-    if len(urls) != 1 or not urls[0].startswith("https://") or not urls[0].endswith("/openai/mcp"):
-        errors.append("mcp.json must declare one HTTPS server ending in /openai/mcp")
+    if urls != ["https://mcp.roboflow.com/mcp"]:
+        errors.append("mcp.json must declare one server at https://mcp.roboflow.com/mcp")
     return name
 
 
