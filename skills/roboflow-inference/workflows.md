@@ -1,5 +1,7 @@
 # Workflows
 
+> **Visual testing:** use `workflows_preview` for a saved Workflow or `project_deployment_preview` for a project endpoint on an image or video. Start with [Preview images and videos](#preview-images-and-videos), including for local video files.
+
 > **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer **`workflows_run`** for a saved, published Workflow by URL slug (`workflow_id`); workspace comes from the OAuth or API-key connection. Use `workflow_specs_run` to test an unpublished draft or run an authorized one-off. See "Authoring & Deployment" below.
 
 ## What Are Workflows
@@ -161,6 +163,21 @@ The response includes a `workspace` field whose `url` (slug) is what you pass as
 
 `workflow_specs_run` (MCP) and `client.run_workflow(specification=...)` (SDK) execute an inline specification without saving or publishing that definition. Use this to test the draft returned by `agent_chat`, for an authorized one-off, or for programmatic generation where saving is impractical. **Validate first** with `workflow_specs_validate`. Execution can still incur inference costs and run any side-effecting blocks in the specification; testing must stay within the user's authorization. For a reusable published Workflow, call `workflows_run` by URL slug.
 
+### Preview images and videos
+
+For requests such as "try this Workflow on my local video" or "show what this project's endpoint finds," prefer the interactive preview web app over SDK code or a WebRTC session:
+
+| Target | Tool | Target argument |
+|---|---|---|
+| Saved Workflow | `workflows_preview` | `workflow_id` |
+| Project endpoint | `project_deployment_preview` | `project_id` |
+
+- Supply exactly one Asset Library image `source_id` or video `video_id`. Find existing media with `images_workspace_search` (`media_types: ["video"]` for videos). A preview call does not upload a local file.
+- For local media, follow [data management](../roboflow-data-management/SKILL.md) to upload the selected file to the intended project. For a raw MP4/MOV upload, `video_upload` returns a signed URL; the client must PUT the bytes with the returned headers, then poll `video_upload_status` until `uploaded` or `failed`. Use the final uploaded `videoId`, which can change after deduplication, as the preview's `video_id`. If the client cannot transfer the file, use the web uploader.
+- Video previews run a clip of at most 60 seconds (`trim_start_ms`, `trim_duration_ms`). The app handles video job polling, cancellation, and playback. A Workflow preview requires exactly one image input; relay a platform refusal instead of claiming it ran. A clip preview does not complete a request for a full video or a batch; use `roboflow-batch-processing` for offline bulk processing when that is the requested outcome.
+- Read the tool's preview guidance before execution: `skill://roboflow-apps/workflow-preview/SKILL.md` or `skill://roboflow-apps/model-preview/SKILL.md`. Preview runs spend credits. Workflow sinks run by default; use `disable_sinks` when the user wants a preview without external actions. Do not change a project's saved endpoint model merely to preview it; the project preview can create its base endpoint if it has never had one.
+- Check the tools exposed by the current connection. If the relevant preview tool is unavailable, or the client cannot display the app, use the appropriate Roboflow UI link from `roboflow-product-navigation`. Do not treat a missing preview tool or the image-only `workflows_run` API as a reason to start WebRTC. Use the SDK when the user asks for integration code, and WebRTC when the task needs live streaming.
+
 ### Deploy
 
 | Method | How |
@@ -168,7 +185,8 @@ The response includes a `workspace` field whose `url` (slug) is what you pass as
 | **Serverless API** | `workflows_run` MCP tool or `client.run_workflow()` SDK |
 | **Dedicated** | Point at `<name>.roboflow.cloud` endpoint |
 | **Self-hosted** | `inference server start`, use `api_url="http://localhost:9001"` |
-| **Video/Stream (webcam, RTSP, file)** | WebRTC via `inference_sdk.webrtc` — runs on serverless GPU or your local inference server (see "Video Stream" below). Prefer this over `InferencePipeline`, which is a lower-level in-process alternative that requires installing the full `inference` package (torch/opencv/etc.) locally. |
+| **Interactive image/video preview** | `workflows_preview` or `project_deployment_preview`; see "Preview images and videos" above. |
+| **Live streaming (webcam/RTSP, or explicit file replay)** | WebRTC via `inference_sdk.webrtc` — runs on serverless GPU or your local inference server (see "Video Stream" below). `InferencePipeline` is the in-process alternative. |
 
 ### SDK Code
 
@@ -209,13 +227,13 @@ for name, value in output.items():
 
 **Image input constraint.** URL inputs must be `https://` — plain `http://` is rejected with a `RuntimeInputError`. Local paths and base64 strings work without that restriction.
 
-### Video Stream (Webcam / RTSP / File) — WebRTC
+### Video Stream (Webcam / RTSP) — WebRTC
 
-For real-time video — webcam, RTSP, or file — use the **WebRTC API** in `inference_sdk.webrtc`. It opens a peer connection to either the serverless GPU fleet or a local `inference server`, streams frames up, and returns annotated frames + workflow data over the data channel.
+For live streaming — webcam, RTSP, or a file explicitly replayed as a live stream — use the **WebRTC API** in `inference_sdk.webrtc`. It opens a peer connection to either the serverless GPU fleet or a local `inference server`, streams frames up, and returns annotated frames + workflow data over the data channel.
 
-> **Reasoning trap to avoid:** the MCP `workflows_run` tool only handles single static images. That's expected — it does not mean you should fall back to `InferencePipeline` as the default for live video. **WebRTC (Variants A or B below) is the default** because it isolates the heavy CV/model deps inside an inference server. `InferencePipeline` (Variant C) is a lower-level option for in-process Python embedding — pick it only when in-process execution is a specific requirement.
+> **Choose by intent:** `workflows_run` accepts images, but the preview apps above support video clips. Do not route an ordinary local-video preview into this streaming section. For a requested live-stream integration, **WebRTC (Variants A or B below) is the default** because it isolates the heavy CV/model dependencies inside an inference server. `InferencePipeline` (Variant C) is the alternative for in-process Python embedding.
 
-> **Always ask the user which variant** before generating the script. There are three: **(A)** serverless WebRTC, **(B)** local-server WebRTC, **(C)** in-process `InferencePipeline`. Surface a brief 1-line summary of each from the comparison table below — don't silently pick one. Variants A and B differ only in `api_url` and a few `StreamConfig` fields; Variant C is structurally different (in-process Python, no network).
+> **For streaming code, use the deployment choice already established with the user; otherwise ask which variant they want.** There are three: **(A)** serverless WebRTC, **(B)** local-server WebRTC, **(C)** in-process `InferencePipeline`. Surface a brief 1-line summary of each from the comparison table below — don't silently pick one. Variants A and B differ only in `api_url` and a few `StreamConfig` fields; Variant C is structurally different (in-process Python, no network).
 
 > **Tell the user: first run is slower than subsequent runs** for any of these — there's a model load / warmup step before the first frame is processed. Subsequent runs reuse cached state. Useful to mention so they don't think the script is hung when nothing happens for a few seconds.
 
@@ -378,7 +396,7 @@ pipeline.join()                       # blocks until video source ends or pipeli
 | Best for | Demos, bursty workloads, no local GPU | Edge, on-prem, sustained workloads | Single-host scripts, embedding in your own Python app, no HTTP/WebRTC port available |
 | First run | Slower than subsequent — session handshake + model load on the assigned worker | Slower than subsequent — Docker image pull (if cold) and model load on first call | Slower than subsequent — model download + ONNX warmup |
 
-**How to present this to the user:** surface all three with a one-line summary of each (use the "Best for" row), then let the user pick. Don't default-pick; the right answer depends on whether they have Docker, want zero local install, or want the script to be self-contained.
+**How to present this to the user:** when the streaming deployment choice is not already established, surface all three with a one-line summary of each (use the "Best for" row), then let the user pick; the right answer depends on whether they have Docker, want zero local install, or want the script to be self-contained.
 
 ## When to Use Workflows vs Direct Inference
 
