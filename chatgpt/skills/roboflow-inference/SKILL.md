@@ -1,7 +1,9 @@
 ---
 name: roboflow-inference
-description: Deployment option comparison (serverless, dedicated, self-hosted, batch) and Workflow execution patterns. For raw API URL patterns, auth, and request/response formats, see roboflow-api-reference.
+description: Interactive image/video previews, deployment option comparison (serverless, dedicated, self-hosted, batch) and Workflow execution patterns. For raw API URL patterns, auth, and request/response formats, see roboflow-api-reference.
 ---
+
+> **Preview first for visual testing.** When the user wants to try a saved Workflow or a project's endpoint on an image or video, use the interactive web apps: **`workflows_preview`** for the Workflow, **`project_deployment_preview`** for the project endpoint. A local video file is not a request for streaming code. See [workflows](./workflows.md#preview-images-and-videos) for media upload, clip limits, and clients without the preview app.
 
 > **Tip:** If you're connected to the [Roboflow MCP server](https://mcp.roboflow.com), prefer its inference tools over raw HTTP; auth is handled for OAuth and API-key connections. Use **`workflows_run`** for a saved, published Workflow by URL slug (`workflow_id`); the workspace comes from the connection. For single-model calls use `models_infer`. Use `workflow_specs_validate` before saving a new specification; through MCP a Workflow runs only once it is saved.
 
@@ -23,7 +25,7 @@ has requested that action and the source and destination have been checked.
 >
 > `workflows_run` executes the latest published version, not an unpublished draft. Draft testing does not require publishing. See [workflows](./workflows.md) "Authoring & Deployment" for the full flow.
 
-> **For live video (webcam, RTSP, file):** the MCP `workflows_run` tool only handles single static images. For live video, present the user with **three options** (don't pick one silently): **(A)** WebRTC → serverless GPU, **(B)** WebRTC → local `inference server`, or **(C)** in-process `InferencePipeline`. They have different setup costs, dep sizes, and latency characteristics — surface a brief 1-line summary of each and let the user choose. See `skill://roboflow/roboflow-inference/workflows.md` ("Video Stream" section) for full code and the comparison table.
+> **For live streaming (webcam or RTSP):** use the WebRTC or in-process options in `skill://roboflow/roboflow-inference/workflows.md` ("Video Stream" section). A saved file belongs on this path only when the user wants to replay it as a live stream; ordinary image/video testing uses the preview apps above.
 
 ## Deployment Options
 
@@ -36,11 +38,12 @@ has requested that action and the source and destination have been checked.
 
 ### When to Use Which
 
-- **Serverless** -- default choice. Zero setup, auto-scales, 20MB upload limit. Use `models_infer` or `workflows_run` MCP tools.
+- **Interactive preview** -- default for visually testing a saved Workflow or project endpoint on an image or video; use the preview apps above.
+- **Serverless** -- default for image API integration. Zero setup, auto-scales, 20MB upload limit. Use `models_infer` or `workflows_run` MCP tools.
 - **Dedicated** -- need consistent latency, large models (Florence 2), or high throughput. Development and production tiers available. Subdomain: `<name>.roboflow.cloud`.
 - **Self-hosted** -- deploy Roboflow Inference via Docker on your own hardware (Jetson, cloud VMs, RPi). Same API surface as serverless -- just change `api_url`.
 - **Batch Processing** -- runs a Workflow on uploaded images/videos asynchronously. No real-time requirement. Results delivered as JSON.
-- **Real-time video (webcam/RTSP/file)** -- three deployment options; ask the user which one before writing code:
+- **Live streaming (webcam/RTSP, or explicit file replay)** -- three deployment options; use an already established choice, otherwise ask the user which one before writing streaming code:
   - **(A) Serverless GPU + WebRTC** — zero setup, just an API key; per-minute credits, plan-tiered (`webrtc-gpu-small/medium/large`).
   - **(B) Local inference server + WebRTC** — `pip install inference-cli && inference server start` (Docker recommended); lowest latency, isolates the heavy CV/model deps inside the server.
   - **(C) `InferencePipeline` in-process** — `pip install inference` in a venv (prefer `uv`); runs the workflow loop directly in the user's Python process, no separate server. Heavy deps (torch, opencv, onnxruntime) install locally.
@@ -52,6 +55,8 @@ has requested that action and the source and destination have been checked.
 
 | Tool | Purpose |
 |------|---------|
+| `workflows_preview` | Interactive web app for a saved Workflow on an Asset Library image or video clip |
+| `project_deployment_preview` | Interactive web app for a project endpoint on an Asset Library image or video clip |
 | `models_list` | List trained models for a project |
 | `models_get` | Get details for a trained model |
 | `models_infer` | Run single-model inference on one image via serverless API |
