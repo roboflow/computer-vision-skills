@@ -23,7 +23,9 @@ registry. They are never modified, renamed, or deleted.
 
 Tuning a candidate means a new saved Workflow with `parent` set (the parent stays in the Run
 for comparison) or, when the parent is being replaced, `workflows_update` with the new
-specification. `workflows_update` needs the full config even for a rename.
+specification. `workflows_update` needs the full config even for a rename. If deploy gates refuse
+an update, follow [publishing with checks or manual approval](../roboflow-inference/workflows.md#publishing-with-checks-or-manual-approval).
+A saved draft does not replace the published version; do not bypass its gates.
 
 ## Keep prompts DRY
 

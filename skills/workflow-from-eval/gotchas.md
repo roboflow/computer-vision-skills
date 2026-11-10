@@ -55,7 +55,11 @@ Runs). Remove an entry once it stops being true.
   Run (refs dffa2e60f4f6e073d02002efe8390085, 9302bfdcd86cb1056ef0e51d8297b87a). Compute the
   per-Case diff from the exports.
 - **Specs and Eval Datasets cannot be deleted.** Only Evals, Runs, and Cases can.
-- **Deleting an Eval is two steps** and removes its Runs. This skill never proposes it.
+- **Deleting an Eval is two steps** and removes its Runs. If it backs deploy gates,
+  the preview lists `impact.deployGates`; confirmation also removes those gates
+  and cancels pending checks. That case additionally needs `workflow:update` and,
+  for a user, Manage Workflow Deploy Gates permission. Ungated deletion needs only
+  the usual `workflow-evals:write`. This skill never proposes Eval deletion.
 - **Custom Python times out inside Eval Runs** (`dynamic_blocks_definitions`). Parked.
 - **Listings and create responses carry signed URLs** (`readUrl` on Evals, case
   preparations, exports). Never paste a listing into a file or the report.
