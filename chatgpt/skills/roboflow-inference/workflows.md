@@ -140,6 +140,30 @@ To test it, run the published version with `workflows_run` when execution is aut
 
 **How:** explain what needs visual review or what the client could not complete, then send the returned `app_url` for an existing Workflow. For a new Workflow, use `roboflow-product-navigation` to find the builder link. The user can build or edit manually or with the in-app agent, test in the preview, and share the Workflow URL for subsequent execution. Testing a draft does not require publishing.
 
+### Publishing with checks or manual approval
+
+A saved draft is not a published version. If `workflows_update` or an agent publish
+is refused because deploy gates are configured, use the Workflow document ID:
+
+1. Read `workflow_deploy_gates_list`. Reuse the user's selected saved version;
+   save a new definition with `workflow_versions_save` only when needed, keeping
+   the returned `version.id`.
+2. For Eval gates, call `workflow_version_deploy_gates_run` only when the user has
+   authorized its metered execution. Reuse each operation's returned
+   `idempotencyKey` only to retry that same save or check start after a lost response.
+3. For manual approval, read `workflow_version_approval_get` and have an eligible
+   person decide in the Roboflow app. A manual-only gate needs no Eval run.
+4. Poll `workflow_version_deploy_gates_get`; stop and report a failed gate. A pending
+   check is not a pass. Publish
+   with `workflow_version_deploy` only when `publishable` is true and publishing is
+   authorized. Do not remove gates to get around a failed check or missing approval.
+
+The tools enforce the caller's scopes and platform permissions. For exact gate
+configuration and permission requirements, read `workflow_deploy_gates_openapi_get`.
+Publishing can stage Workflow pins on production devices for another approval;
+check each device's `devices_get_config.configProposal` before saying it changed
+live configuration. See [devices](./devices.md).
+
 ### Running a saved workflow
 
 Whichever mode authored it, these calls run the latest **published** version. They do not execute unpublished drafts:

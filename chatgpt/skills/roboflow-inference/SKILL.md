@@ -1,6 +1,6 @@
 ---
 name: roboflow-inference
-description: Interactive image/video previews, deployment option comparison (serverless, dedicated, self-hosted, batch) and Workflow execution patterns. For raw API URL patterns, auth, and request/response formats, see roboflow-api-reference.
+description: Interactive image/video previews, deployment option comparison (serverless, dedicated, self-hosted, batch), Workflow publishing, device management and Vision Events. For raw API URL patterns, auth, and request/response formats, see roboflow-api-reference.
 ---
 
 > **Preview first for visual testing.** When the user wants to try a saved Workflow or a project's endpoint on an image or video, use the interactive web apps: **`workflows_preview`** for the Workflow, **`project_deployment_preview`** for the project endpoint. A local video file is not a request for streaming code. See [workflows](./workflows.md#preview-images-and-videos) for media upload, clip limits, and clients without the preview app.
@@ -26,6 +26,12 @@ has requested that action and the source and destination have been checked.
 > `workflows_run` executes the latest published version, not an unpublished draft. Draft testing does not require publishing. See [workflows](./workflows.md) "Authoring & Deployment" for the full flow.
 
 > **For live streaming (webcam or RTSP):** use the WebRTC or in-process options in `skill://roboflow/roboflow-inference/workflows.md` ("Video Stream" section). A saved file belongs on this path only when the user wants to replay it as a live stream; ordinary image/video testing uses the preview apps above.
+
+## Devices and production events
+
+- For device provisioning, secure gateways, network checks, captured frames and configuration approvals, read [devices](./devices.md).
+- For production event searches, grouped filters or event deletion, read [Vision Events](./vision-events.md).
+- For a Workflow blocked by Eval checks or approval, use [publishing with checks or manual approval](./workflows.md#publishing-with-checks-or-manual-approval).
 
 ## Deployment Options
 

@@ -25,6 +25,16 @@ Target 30 to 60 examples that cover every answer value and the hard transitions.
 | Workspace images or Universe | `images_workspace_search` / `universe_dataset_images_search`, then `cases_import` with a source, or download and upload. |
 | URLs | Download into `frames/` first. Case inputs must be uploaded artifacts, never URLs. |
 
+### Search an existing suite
+
+Use `workflow_evals_datasets_search(eval_dataset_id, query=...)` to find Cases by
+saved ground truth, completeness or slices, or by semantic text and Source
+metadata. Source and semantic filters only match Source-backed Cases and also
+need `image:read`; ground-truth filters include artifact-only Cases. Keep query
+and limit fixed while following `nextCursor`, even after an empty page. Restart
+without a cursor on 409. `total: null` means unknown. This read does not execute
+Workflows or generate embeddings.
+
 ### The contract comes first
 
 Write the Dataset's `ground_truth_contract` (and which fields are `optional`) before the

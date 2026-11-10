@@ -75,9 +75,21 @@ Both flows use the same image and annotation import behavior:
 
 - **Annotations are imported.** The zip can hold annotation files next to the images. They are parsed like in the web uploader: COCO JSON (`_annotations.coco.json`), YOLO TXT (with `data.yaml` or `classes.txt`), Pascal VOC XML, CreateML JSON, CSV, and more. Annotations are matched to images by file name. In classification projects, an image's parent folder name is its class.
 - **Folders set splits.** A `train/`, `valid/` or `test/` folder (also `training/`, `validation/`, `val/`, `testing/`) anywhere in an image or video's path sets its split. Other files use the `split` argument.
-- **Annotated images go straight into the Dataset.** There is no annotation job to accept, unless the workspace has annotation review turned on (then they wait in a review job). Images without annotations land in a batch (`batch_name`, default "Uploaded via API"); label them with `annotations_save` and `add_to_dataset=true`.
+- **Without upload screening, annotated images go straight into the Dataset.** There is no annotation job to accept, unless the workspace has annotation review turned on (then they wait in a review job). Images without annotations land in a batch (`batch_name`, default "Uploaded via API"); label them with `annotations_save` and `add_to_dataset=true`.
 - **Duplicates still get their annotations.** An image already in the project is not stored again, but its annotation from the zip is saved. If it already has an annotation, that one is kept and the image is listed in `annotationErrors` as "Image was already annotated"; pass `annotation_overwrite=true` to replace it. Classification labels are always replaced.
 - **A failed chunk is safe to retry.** The zip is processed in chunks. If the status is `failed` with an `uploadErrors` entry like `chunk-0`, that chunk's images may be stored without their annotations. Upload the same zip again: stored images come back as duplicates and their missing annotations are saved. "Image was already annotated" for images that made it the first time is expected.
+
+### Images held for upload screening
+
+A completed ZIP import can include `result.screening`, a subset of `result.uploaded`;
+do not add the two counts. Held images are not yet project or Dataset-ready, even
+when they carry annotations. ZIP completion gives no per-image screening verdict.
+When an image ID is available, use `images_screening_status`: pending images remain
+held, passed or redacted images proceed through normal ingestion, and rejected or
+failed images do not enter the project. A duplicate may include a visible
+`resolvedId`. Screening status alone does not prove Dataset membership; a 404 can
+also mean the image was never held or is inaccessible. Report unverified images
+as such rather than retrying the upload to bypass screening.
 
 ## Tags
 
@@ -246,6 +258,7 @@ Don't guess a project's type or license. Confirm both with the user before calli
 | `images_search` | Semantic search inside one project, with tag, class, Dataset, batch and job filters (no RoboQL) |
 | `images_workspace_search` | RoboQL search across the workspace, e.g. `project:my-project split:valid` |
 | `image_upload_files` / `image_upload` / `image_upload_status` | Prefer host-assisted image uploads; use client ZIP + signed PUT when needed; poll the import task |
+| `images_screening_status` | Read the outcome of an image held for upload screening |
 | `versions_generate` | Generate a dataset version with preprocessing/augmentation |
 | `versions_get` | Inspect a version |
 | `versions_export` | Export a version in a given format |
