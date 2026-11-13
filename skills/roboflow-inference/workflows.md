@@ -128,9 +128,11 @@ Choose the authoring path from the user's request and existing session context. 
 
 **Use when:** the user asks the agent to build or edit a Workflow and MCP tools can complete the task.
 
-**How:** use direct tools for straightforward composition, grounding block types and properties with `workflow_blocks_list` / `workflow_blocks_get_schema`. Use `agent_chat` for complex construction; keep its `conversation_id` for follow-ups and poll a returned `run_id` with `agent_chat_result` rather than resending the same request. Validate the specification with `workflow_specs_validate` before saving or running it.
+**How:** call `agent_chat` for natural-language builds and edits, including simple goals such as "detect cups". Pass the user's goal, model choices and the existing Workflow ID when editing. For camera previews, request class filtering and a named annotated image output. The Roboflow in-app agent uses its shared build/edit tools and validates before saving. Retain `conversation_id` for clarifications and follow-ups; poll a returned `run_id` with `agent_chat_result` rather than resending the request.
 
-`agent_chat` saves edits as drafts. Test the returned `specification` with `workflow_specs_run` when execution is authorized. Publish with `agent_workflow_publish` only when the user has authorized making the changes live. Report separately whether the Workflow was saved, tested, and published.
+Use the returned Workflow ID and exact `specification`. For live cameras, read current session status after building and pass that specification unchanged to `streams_preview` with the declared image output. Edits are drafts; previewing them does not require publication. If no Workflow is returned, relay the agent's question or failure instead of inventing a graph or claiming success. Reserve raw create/update tools for explicit definitions supplied by the user or an existing integration, validating those definitions first.
+
+Publish with `agent_workflow_publish` only when the user has authorized making an edit live. Report separately whether the Workflow was saved, tested and published.
 
 #### Mode B: Platform-driven (Roboflow app + in-app agent)
 
@@ -434,7 +436,7 @@ pipeline.join()                       # blocks until video source ends or pipeli
 | `workflows_list` | List all workflows in the workspace |
 | `workflows_get` | Get a workflow's definition |
 | **`workflows_run`** | Run the published Workflow by `workflow_id` (URL slug); workspace comes from the connection. Optional `parameters`. |
-| `workflow_blocks_list` | List available block types (filterable by category) — use during Mode A design |
-| `workflow_blocks_get_schema` | Full schema for a block (properties, required fields) — use during Mode A design |
-| `workflow_specs_validate` | Validate an inline workflow spec without running it — use before saving in Mode A and before any inline run |
+| `workflow_blocks_list` | List available block types (filterable by category) — inspect explicit definitions |
+| `workflow_blocks_get_schema` | Full schema for a block (properties, required fields) — inspect explicit definitions |
+| `workflow_specs_validate` | Validate an inline workflow spec without running it — validate user-supplied or programmatic definitions |
 | `workflow_specs_run` | Test an unpublished draft or run an authorized one-off from an inline specification |

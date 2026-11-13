@@ -7,9 +7,10 @@ call the same heavy native model.
 
 ## Candidates are saved Workflows with descriptive names
 
-Each candidate is created with `workflows_create` (config in the body; 7 KB manifests are
-fine) and recorded in `created.json` with its id, url slug, family, parent (if tuned from
-another candidate), and the change in one sentence. Saved rather than inline: the user can
+Delegate each candidate build to `agent_chat` with its intended approach, model and output
+contract. The Roboflow in-app agent validates before saving; poll `agent_chat_result` for long
+builds. Record the returned Workflow in `created.json` with its id, url slug, family, parent
+(if tuned from another candidate), and the change in one sentence. Saved rather than inline: the user can
 open any candidate in the UI, Run payloads stay small, and cleanup is a list of slugs.
 
 **Name pattern:** `<model or checkpoint> + <approach> (<key change>) · cNN · <timestamp>`.
@@ -21,9 +22,10 @@ signal. Everything else goes in `business_context` and in `created.json`, not in
 Pre-existing Workflows the user brings join the portfolio with `pre-existing: true` in the
 registry. They are never modified, renamed, or deleted.
 
-Tuning a candidate means a new saved Workflow with `parent` set (the parent stays in the Run
-for comparison) or, when the parent is being replaced, `workflows_update` with the new
-specification. `workflows_update` needs the full config even for a rename. If deploy gates refuse
+Ask `agent_chat` to save a tuned candidate as a separate new Workflow with `parent` set in
+the registry, retaining the parent for comparison. If the user instead authorizes replacing
+it, continue its agent conversation; edits are drafts and require authorized publication
+before a Run by Workflow ID uses them. If deploy gates refuse
 an update, follow [publishing with checks or manual approval](../roboflow-inference/workflows.md#publishing-with-checks-or-manual-approval).
 A saved draft does not replace the published version; do not bypass its gates.
 

@@ -130,13 +130,15 @@ Choose the authoring path from the user's request and existing session context. 
 
 **Use when:** the user asks the agent to build or edit a Workflow and MCP tools can complete the task.
 
-**How:** start from a similar saved Workflow (`workflows_list`, then `workflows_get`) and copy its shape, grounding block types and properties in the `roboflow://workflows/blocks` resources. Validate the specification with `workflow_specs_validate` before saving it with `workflows_create` or `workflows_update`.
+**How:** call `agent_chat` for natural-language builds and edits, including simple goals such as "detect cups". Pass the user's goal, model choices and the existing Workflow ID when editing. For camera previews, request class filtering and a named annotated image output. The Roboflow in-app agent uses its shared build/edit tools and validates before saving. Retain `conversation_id` for clarifications and follow-ups; poll a returned `run_id` with `agent_chat_result` rather than resending the request.
 
-To test it, run the published version with `workflows_run` when execution is authorized, or use the editor preview (Mode B). Report separately whether the Workflow was saved and whether it was run.
+Use the returned Workflow ID and exact `specification`. For live cameras, read current session status after building and pass that specification unchanged to `streams_preview` with the declared image output. Edits are drafts; previewing them does not require publication. If no Workflow is returned, relay the agent's question or failure instead of inventing a graph or claiming success. Reserve raw create/update tools for explicit definitions supplied by the user or an existing integration, validating those definitions first.
+
+Publish with `agent_workflow_publish` only when the user has authorized making an edit live. Report separately whether the Workflow was saved, tested and published.
 
 #### Mode B: Platform-driven (Roboflow app + in-app agent)
 
-**Use when:** the user wants visual interaction, the client cannot complete the task, or the Workflow is too complex to compose reliably with the direct tools.
+**Use when:** the user wants visual interaction, the client cannot complete the task.
 
 **How:** explain what needs visual review or what the client could not complete, then send the returned `app_url` for an existing Workflow. For a new Workflow, use `roboflow-product-navigation` to find the builder link. The user can build or edit manually or with the in-app agent, test in the preview, and share the Workflow URL for subsequent execution. Testing a draft does not require publishing.
 

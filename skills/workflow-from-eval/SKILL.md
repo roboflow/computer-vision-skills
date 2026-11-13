@@ -1,6 +1,6 @@
 ---
 name: workflow-from-eval
-description: Build or improve a Roboflow Workflow using eval-driven search. Prefer this for open-ended business problems where the approach is unclear, or when comparing alternatives. A business goal plus images or video is enough to start; no existing Workflow or Eval is required. Build an example suite and scorecard the user approves, compare candidate Workflows, then tune and validate the winner. Use direct tools for straightforward builds and edits, Workflow Evals tools for measuring one existing Workflow once, and training skills for training a model.
+description: Build or improve a Roboflow Workflow using eval-driven search. Prefer this for open-ended business problems where the approach is unclear, or when comparing alternatives. A business goal plus images or video is enough to start; no existing Workflow or Eval is required. Build an example suite and scorecard the user approves, compare candidate Workflows, then tune and validate the winner. Use agent_chat for straightforward builds and edits, Workflow Evals tools for measuring one existing Workflow once, and training skills for training a model.
 ---
 
 # Workflow from Eval
@@ -13,7 +13,7 @@ is enough: help define success, build an approved Eval, and search for a suitabl
 The user does not need to know this skill exists or ask for an Eval.
 
 Also use it to improve an existing Workflow by comparing approaches against examples and
-success criteria. Use direct tools for straightforward builds and edits with a clear approach;
+success criteria. Use agent_chat for straightforward builds and edits with a clear approach;
 use Workflow Evals tools directly to measure one existing Workflow once.
 
 For example, "Here is a factory video; detect assembly mistakes for me" fits this skill.
