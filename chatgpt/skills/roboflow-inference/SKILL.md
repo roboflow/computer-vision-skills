@@ -20,7 +20,7 @@ has requested that action and the source and destination have been checked.
 
 > **Authoring Workflows.** Save reusable Workflows on the Roboflow platform and run published versions by **identifier**. Choose the authoring path from the user's request and existing session context:
 >
-> - **Mode A: Roboflow agent through MCP.** Delegate natural-language builds and edits, including simple detection goals, to `agent_chat`. The Roboflow in-app agent builds and validates before saving. Keep its `conversation_id` for follow-ups and poll `agent_chat_result` while running. Use the returned Workflow ID and exact `specification`; do not reconstruct the JSON in the host chat. Edits are drafts and need no publication for a camera preview with `streams_preview`.
+> - **Mode A: Roboflow agent through MCP.** Delegate natural-language builds and edits, including simple detection goals, to `agent_chat`. The Roboflow in-app agent builds and validates before saving. Keep its `conversation_id` for follow-ups and poll `agent_chat_result` while running. Use the returned Workflow ID and exact `specification`; do not reconstruct the JSON in the host chat.
 > - **Mode B: Platform-driven (Roboflow app + in-app agent).** Use when the user wants visual interaction, the client cannot complete the task. Send the Workflow's returned `app_url`, or use `roboflow-product-navigation` for the correct builder link. The user can review, edit, and test there.
 >
 > `workflows_run` executes the latest published version, not an unpublished draft. Draft testing does not require publishing. See [workflows](./workflows.md) "Authoring & Deployment" for the full flow.
