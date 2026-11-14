@@ -20,8 +20,8 @@ has requested that action and the source and destination have been checked.
 
 > **Authoring Workflows.** Save reusable Workflows on the Roboflow platform and run published versions by **identifier**. Choose the authoring path from the user's request and existing session context:
 >
-> - **Mode A: Agent-driven (MCP, in-session).** Compose the Workflow with the direct authoring tools: start from a similar saved Workflow (`workflows_list`, then `workflows_get`) and ground block types and properties in the `roboflow://workflows/blocks` resources. Validate with `workflow_specs_validate` before saving with `workflows_create` or `workflows_update`, then run the published version with `workflows_run` when execution is authorized.
-> - **Mode B: Platform-driven (Roboflow app + in-app agent).** Use when the user wants visual interaction, the client cannot complete the task, or the Workflow is too complex to compose reliably with the direct tools. Send the Workflow's returned `app_url`, or use `roboflow-product-navigation` for the correct builder link. The user can review, edit, and test there.
+> - **Mode A: Roboflow agent through MCP.** Delegate natural-language builds and edits, including simple detection goals, to `agent_chat`. The Roboflow in-app agent builds and validates before saving. Keep its `conversation_id` for follow-ups and poll `agent_chat_result` while running. Use the returned Workflow ID and exact `specification`; do not reconstruct the JSON in the host chat. Edits are drafts and need no publication for a camera preview with `streams_preview`.
+> - **Mode B: Platform-driven (Roboflow app + in-app agent).** Use when the user wants visual interaction, the client cannot complete the task. Send the Workflow's returned `app_url`, or use `roboflow-product-navigation` for the correct builder link. The user can review, edit, and test there.
 >
 > `workflows_run` executes the latest published version, not an unpublished draft. Draft testing does not require publishing. See [workflows](./workflows.md) "Authoring & Deployment" for the full flow.
 
