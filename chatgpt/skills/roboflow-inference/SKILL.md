@@ -49,7 +49,7 @@ has requested that action and the source and destination have been checked.
 - **Dedicated** -- need consistent latency, large models (Florence 2), or high throughput. Development and production tiers available. Subdomain: `<name>.roboflow.cloud`.
 - **Self-hosted** -- deploy Roboflow Inference via Docker on your own hardware (Jetson, cloud VMs, RPi). Same API surface as serverless -- just change `api_url`.
 - **Batch Processing** -- runs a Workflow on uploaded images/videos asynchronously. No real-time requirement. Results delivered as JSON.
-- **Managed Cloud Streams** -- for an ongoing Workflow on a workspace camera, use the Cloud Stream MCP tools when available. A persistent start requires an API-key connection; an OAuth-only connection can inspect or stop jobs but must use the Roboflow app to start one. See [managed Cloud Streams](./workflows.md#managed-cloud-streams).
+- **Managed Cloud Streams** -- for an ongoing Workflow on a workspace camera, use the Cloud Stream MCP tools when available. A connected OAuth account can start and manage its workspace's jobs. See [managed Cloud Streams](./workflows.md#managed-cloud-streams).
 - **Live streaming (webcam/RTSP, or explicit file replay)** -- three deployment options; use an already established choice, otherwise ask the user which one before writing streaming code:
   - **(A) Serverless GPU + WebRTC** — zero setup, just an API key; per-minute credits, plan-tiered (`webrtc-gpu-small/medium/large`).
   - **(B) Local inference server + WebRTC** — `pip install inference-cli && inference server start` (Docker recommended); lowest latency, isolates the heavy CV/model deps inside the server.

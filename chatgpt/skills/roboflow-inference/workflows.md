@@ -224,10 +224,10 @@ With authorization for the paid run and any Workflow side effects, use
 `cloud_streams_job_create` with the published Workflow URL slug (its `url` field)
 and a stable idempotency key. Use `cloud_streams_job_cancel` to stop a job, then poll its status.
 
-Starting a persistent job currently requires an API-key connection. An OAuth-only
-connection can list and stop jobs, but cannot start one; use the Roboflow app for
-that start. Do not ask users to paste a key into chat. For a temporary camera test,
-use the appropriate preview flow rather than leaving a persistent job running.
+An OAuth-connected account can start its own workspace's stream jobs without an
+API key. The member's access and connected-app consent must remain active while
+the stream runs. Do not ask users to paste credentials into chat. For a temporary
+camera test, use the appropriate preview flow rather than leaving a job running.
 
 To switch a camera to a new Workflow, set `replace_deployments=true` only when the
 user explicitly wants to replace its other deployments. The new job is created
