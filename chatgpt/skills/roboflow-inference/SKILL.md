@@ -25,7 +25,7 @@ has requested that action and the source and destination have been checked.
 >
 > `workflows_run` executes the latest published version, not an unpublished draft. Draft testing does not require publishing. See [workflows](./workflows.md) "Authoring & Deployment" for the full flow.
 
-> **For live streaming (webcam or RTSP):** use the WebRTC or in-process options in `skill://roboflow/roboflow-inference/workflows.md` ("Video Stream" section). A saved file belongs on this path only when the user wants to replay it as a live stream; ordinary image/video testing uses the preview apps above.
+> **For a managed Cloud Stream:** use the workspace Cloud Stream tools when the user wants to manage an ongoing camera deployment. See [managed Cloud Streams](./workflows.md#managed-cloud-streams). For other live streaming (webcam or RTSP), see the WebRTC or in-process options in [workflows](./workflows.md#video-stream-webcam--rtsp--webrtc). A saved file belongs on this path only when the user wants to replay it as a live stream; ordinary image/video testing uses the preview apps above.
 
 ## Devices and production events
 
@@ -49,6 +49,7 @@ has requested that action and the source and destination have been checked.
 - **Dedicated** -- need consistent latency, large models (Florence 2), or high throughput. Development and production tiers available. Subdomain: `<name>.roboflow.cloud`.
 - **Self-hosted** -- deploy Roboflow Inference via Docker on your own hardware (Jetson, cloud VMs, RPi). Same API surface as serverless -- just change `api_url`.
 - **Batch Processing** -- runs a Workflow on uploaded images/videos asynchronously. No real-time requirement. Results delivered as JSON.
+- **Managed Cloud Streams** -- for an ongoing Workflow on a workspace camera, use the Cloud Stream MCP tools when available. A persistent start requires an API-key connection; an OAuth-only connection can inspect or stop jobs but must use the Roboflow app to start one. See [managed Cloud Streams](./workflows.md#managed-cloud-streams).
 - **Live streaming (webcam/RTSP, or explicit file replay)** -- three deployment options; use an already established choice, otherwise ask the user which one before writing streaming code:
   - **(A) Serverless GPU + WebRTC** — zero setup, just an API key; per-minute credits, plan-tiered (`webrtc-gpu-small/medium/large`).
   - **(B) Local inference server + WebRTC** — `pip install inference-cli && inference server start` (Docker recommended); lowest latency, isolates the heavy CV/model deps inside the server.
