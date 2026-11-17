@@ -142,6 +142,19 @@ Publish with `agent_workflow_publish` only when the user has authorized making a
 
 **How:** explain what needs visual review or what the client could not complete, then send the returned `app_url` for an existing Workflow. For a new Workflow, use `roboflow-product-navigation` to find the builder link. The user can build or edit manually or with the in-app agent, test in the preview, and share the Workflow URL for subsequent execution. Testing a draft does not require publishing.
 
+### Editing branched Workflows through MCP
+
+When editing an existing Workflow definition directly, call `workflows_get` with
+`draft=true` and keep its `workflow.branchSave` receipt with the snapshot used for
+the edit. For a specific named branch, use the Workflow document ID with
+`workflow_branches_list`, then use `workflow_branch_get` for its snapshot and receipt.
+Pass that exact receipt as `branch_save` to `workflows_update` or
+`workflow_versions_save`. On a head conflict, read the draft again and reconcile
+the change before retrying; do not silently overwrite another edit. Preview a named branch with
+`workflow_branch_merge_preview` before `workflow_branch_merge`. Pass both heads
+from that preview. Merging changes Main but does not publish; overwriting Main on
+conflict requires the user's explicit intent. A receipt for Main already saves Main.
+
 ### Publishing with checks or manual approval
 
 A saved draft is not a published version. If `workflows_update` or an agent publish
@@ -202,6 +215,27 @@ For requests such as "try this Workflow on my local video" or "show what this pr
 - Read the tool's preview guidance before execution: `skill://roboflow-apps/workflow-preview/SKILL.md` or `skill://roboflow-apps/model-preview/SKILL.md`. Preview runs spend credits. Workflow sinks run by default; use `disable_sinks` when the user wants a preview without external actions. Do not change a project's saved endpoint model merely to preview it; the project preview can create its base endpoint if it has never had one.
 - Check the tools exposed by the current connection. If the relevant preview tool is unavailable, or the client cannot display the app, use the appropriate Roboflow UI link from `roboflow-product-navigation`. Do not treat a missing preview tool or the image-only `workflows_run` API as a reason to start WebRTC. Use the SDK when the user asks for integration code, and WebRTC when the task needs live streaming.
 
+### Managed Cloud Streams
+
+When a user wants an ongoing deployment on their own workspace camera, check that
+the Cloud Stream tools are available. Use `cloud_streams_sources_list` to find the
+camera and `cloud_streams_jobs_list` or `cloud_streams_job_get` to inspect jobs.
+With authorization for the paid run and any Workflow side effects, use
+`cloud_streams_job_create` with the published Workflow URL slug (its `url` field)
+and a stable idempotency key. Use `cloud_streams_job_cancel` to stop a job, then poll its status.
+
+Starting a persistent job currently requires an API-key connection. An OAuth-only
+connection can list and stop jobs, but cannot start one; use the Roboflow app for
+that start. Do not ask users to paste a key into chat. For a temporary camera test,
+use the appropriate preview flow rather than leaving a persistent job running.
+
+To switch a camera to a new Workflow, set `replace_deployments=true` only when the
+user explicitly wants to replace its other deployments. The new job is created
+first; older deployments on the camera are then stopped and may briefly run and
+bill alongside it. The job does not inherit the previous job's inputs. Check the
+replacement result for incomplete stops and poll affected jobs. Reuse the same
+idempotency key only for retries of the same request.
+
 ### Deploy
 
 | Method | How |
@@ -210,6 +244,7 @@ For requests such as "try this Workflow on my local video" or "show what this pr
 | **Dedicated** | Point at `<name>.roboflow.cloud` endpoint |
 | **Self-hosted** | `inference server start`, use `api_url="http://localhost:9001"` |
 | **Interactive image/video preview** | `workflows_preview` or `project_deployment_preview`; see "Preview images and videos" above. |
+| **Managed Cloud Streams** | `cloud_streams_sources_list` and `cloud_streams_job_create` for an ongoing workspace camera deployment; see "Managed Cloud Streams" above. |
 | **Live streaming (webcam/RTSP, or explicit file replay)** | WebRTC via `inference_sdk.webrtc` — runs on serverless GPU or your local inference server (see "Video Stream" below). `InferencePipeline` is the in-process alternative. |
 
 ### SDK Code
