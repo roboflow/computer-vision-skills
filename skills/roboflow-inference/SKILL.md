@@ -25,7 +25,7 @@ description: Interactive image/video previews, deployment option comparison (ser
 ## Devices and production events
 
 - For device provisioning, secure gateways, network checks, captured frames and configuration approvals, read [devices](./devices.md).
-- For production event searches, grouped filters or event deletion, read [Vision Events](./vision-events.md).
+- For production event searches, image retrieval, grouped filters, or event deletion, read [Vision Events](./vision-events.md).
 - For a Workflow blocked by Eval checks or approval, use [publishing with checks or manual approval](./workflows.md#publishing-with-checks-or-manual-approval).
 
 ## Deployment Options
