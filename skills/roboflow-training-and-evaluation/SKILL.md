@@ -260,8 +260,8 @@ The MCP server exposes every evaluation panel. All require the `model-eval:read`
 | Get model info | `models_get` |
 | List models | `models_list` |
 | Find evaluations | `model_evals_list` |
-| Check compatibility with another version (read-only) | `model_evals_check_compatibility(model_url, project_id, version_number)`: `allowed`, `blocks`, `leakage`. `model_not_ready` (both tools): wait for the training or upload, then retry |
-| Evaluate a model on another version (spends compute) | `model_evals_create(model_url, project_id, version_number, rerun=False)`: `reused: true` returns the existing one. `pending` can mean a TensorRT compile, not a failure |
+| Check compatibility (read-only) | `model_evals_check_compatibility(model_url, project_id, version_number)`: `allowed`, `blocks`, `leakage`. `model_not_ready` (both tools): training or upload in progress, wait and retry. Failed, train or upload again |
+| Evaluate on another version (spends compute) | `model_evals_create(model_url, project_id, version_number, rerun=False)`: `reused: true` is the existing one. `pending` can mean a TensorRT compile, not a failure |
 | Evaluation summary | `model_evals_get` |
 | Evaluation recommendations | `model_evals_get_recommendations` |
 | Per-class metrics | `model_evals_get_performance_by_class` |
