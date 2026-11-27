@@ -104,13 +104,13 @@ Read [`model-ids.md`](./model-ids.md) before calling a training tool. It contain
 
 **When you are training a model on the user's data for detection or instance segmentation, start
 with NAS.** Neural Architecture Search searches the RF-DETR space against that data and reports a
-speed/accuracy frontier, so it is the option most likely to land on the best model for it. Reach
-for a single named architecture when NAS is unavailable (see prerequisites below), when the user
-asks for a specific one, or when a quick throwaway baseline is all that's wanted.
+speed/accuracy frontier, so it is the option most likely to land on the best model for it. Use
+a named architecture when NAS is unavailable (see prerequisites below), the user asks for one,
+or a quick throwaway baseline is enough.
 
-This summarises the training branches of the decision tree above; it does not override it. The
-tree may route a non-COCO request to Roboflow Rapid or SAM3 zero-shot first, neither of which
-trains a model — NAS only applies once custom training is the chosen path.
+This summarises the training branches of the tree above and does not override it. The tree can
+route a non-COCO request to Roboflow Rapid or SAM3 zero-shot first. Neither trains a model. NAS
+applies only once custom training is the chosen path.
 
 | Goal | Recommended |
 |---|---|
@@ -133,16 +133,15 @@ If you are comparing architectures rather than picking one, **include a NAS pare
 candidates** whenever the prerequisites are met — e.g. `rfdetr-medium` vs `yolo26m` vs
 `rfdetr-nas-parent`. Launch one `trainings_create` per candidate and keep each `trainingId`.
 
-Before comparing results, read [NAS results](./nas-results.md). It explains why a `recommended` child is not necessarily the highest-accuracy child and how to choose a fair comparison.
+Before comparing results, read [NAS results](./nas-results.md). It explains why a `recommended` child is not always the most accurate and how to compare fairly.
 
-The NAS arm also takes longer than a single fine-tune, so report the named-model arms as they
-finish rather than blocking on NAS.
+The NAS arm takes longer than a single fine-tune. Report the named-model arms as they finish.
 
 ## RF-DETR NAS (Neural Architecture Search)
 
 Instead of picking a single RF-DETR size manually, NAS trains one parent model and mines many architectures out of it, reporting the speed/accuracy frontier so you can pick the one that fits your hardware budget.
 
-- **What:** A NAS run trains a single parent model, then searches the RF-DETR architecture space *within* that trained parent to identify frontier candidates, reporting each one's mAP and measured latency on target hardware (e.g., Jetson, T4 GPU). The output is a set of models on a Pareto frontier, plus a winner auto-selected per (metric, hardware) bucket using Roboflow's current ranking heuristic to balance validation accuracy against measured latency. Those per-bucket winners are not exposed individually: `models_list` flattens them into one `recommended` boolean per child (see **Picking for a specific hardware target**).
+- **What:** A NAS run trains a single parent model, then searches the RF-DETR architecture space *within* that trained parent to identify frontier candidates, reporting each one's mAP and measured latency on target hardware (e.g., Jetson, T4 GPU). The output is a set of models on a Pareto frontier, plus a winner per (metric, hardware) bucket, chosen by Roboflow's current heuristic that balances validation accuracy and measured latency. Those per-bucket winners are not exposed individually: `models_list` flattens them into one `recommended` boolean per child (see **Picking for a specific hardware target**).
 - **Tasks:** Object Detection (`rfdetr-nas`) and Instance Segmentation (`rfdetr-nas-seg`).
 - **When to use:** When you want the best speed/accuracy tradeoff for a specific deployment target and don't want to A/B-test sizes manually. Especially valuable for edge hardware where latency budgets are tight.
 - **Phases:**
@@ -151,11 +150,11 @@ Instead of picking a single RF-DETR size manually, NAS trains one parent model a
 - **Model IDs:** `rfdetr-nas-parent` (Standard — use this by default), `rfdetr-nas-pecoret-parent` (Fast), `rfdetr-nas-base-parent` (Plus) for object detection; `rfdetr-nas-seg-parent` for instance segmentation.
 - **Prerequisites — check both before offering NAS:**
   1. **≥15 validation images.** `versions_get` returns `splits.valid`; below 15 the train call fails with `insufficient_validation_images_for_nas`, and waiting will not help — the user must generate a version with a larger validation split.
-  2. **Plan entitlement.** NAS is included on Core and Growth plans; any other plan needs it granted on the workspace. Basic/starter/sandbox/research/trial need to upgrade; enterprise/legacy need to contact sales. Entitlement is not readable from the MCP, so this cannot be checked up front — a non-entitled workspace finds out when `trainings_create` rejects the run with code `nas_not_available_for_plan`. Treat that as a plan limit, not a transient error: do not retry it. Explain that NAS is unavailable and may need an upgrade or workspace enablement, using the `plan` on the error to tell which. Offer a named model for the task — `rfdetr-medium` (detection) or `rfdetr-seg-medium` (segmentation) — but do not start a different training until the user explicitly approves that model and its credit usage. Do **not** fall back to a hyperparameter sweep.
+  2. **Plan entitlement.** NAS is included on Core and Growth plans; any other plan needs it granted on the workspace. Basic/starter/sandbox/research/trial need to upgrade; enterprise/legacy need to contact sales. The MCP cannot read entitlement, so a non-entitled workspace finds out only when `trainings_create` rejects the run with code `nas_not_available_for_plan`. Treat that as a plan limit, not a transient error: do not retry it. Explain that NAS is unavailable and may need an upgrade or workspace enablement, using the `plan` on the error to tell which. Offer `rfdetr-medium` (detection) or `rfdetr-seg-medium` (segmentation), but do not start a different training until the user approves that model and its credit usage. Do **not** fall back to a hyperparameter sweep.
 - **Start a run:** `trainings_create(project_id, version_number, model_type="rfdetr-nas-parent")`. NAS launches through the normal training tool; there is no separate engine parameter. (The UI equivalent is the Train page with `?engine=nas`.) Results land at `/{workspace}/{project}/nas-runs/{versionId}`.
 - **Nothing to hand-tune:** a NAS parent's whole hyperparameter surface is `epochs` (default 200, range 100–300). There are no learning-rate or loss-weight knobs, because the architecture search *is* the sweep.
 - **Reading a run and selecting a hardware target:** Read [NAS results](./nas-results.md) before interpreting child metrics or choosing a model. It covers paging, latency formats, and the limits of recommendation flags.
-- **Deploy:** Each NAS-produced model deploys like any other — pick one and use it as a normal Roboflow model. Call it the hardware-recommended child only when an authoritative `recommendedByHardware` entry actually says so; otherwise it is the child the user chose from the frontier. Inference type is `rfdetr-nas` / `rfdetr-nas-seg`, but it's served through the standard inference paths.
+- **Deploy:** Each NAS-produced model deploys like any other — pick one and use it as a normal Roboflow model. Call it the hardware-recommended child only when an authoritative `recommendedByHardware` entry says so. Otherwise it is the child the user chose from the frontier. Inference type is `rfdetr-nas` / `rfdetr-nas-seg`, but it's served through the standard inference paths.
 - **References:** [RF-DETR paper (arxiv)](https://arxiv.org/html/2511.09554v2), [ICLR 2026](https://openreview.net/forum?id=qHm5GePxTh), [What is NAS? (blog)](https://blog.roboflow.com/neural-architecture-search/).
 
 ## Roboflow Instant / Rapid
@@ -247,6 +246,7 @@ The MCP server exposes every evaluation panel. All require the `model-eval:read`
 
 - **Models page:** Project sidebar > Models. Shows all Instant + fine-tuned models with metrics, architecture, license, dataset version used.
 - **Universe tab:** Starred Universe models available for transfer learning.
+- **Leakage:** Before you compare models, read each `leakage` tag. Leaked images stay in the metrics. Do not pick a best model from an evaluation with leakage `detected` or `unknown`. Do not rerun in a loop to get a better number.
 - **Visualize:** Quick test on test-set images, uploaded images, or webcam. Works for OD, segmentation, classification, keypoint. Not supported for multimodal.
 
 ## MCP Tools Reference
@@ -260,6 +260,8 @@ The MCP server exposes every evaluation panel. All require the `model-eval:read`
 | Get model info | `models_get` |
 | List models | `models_list` |
 | Find evaluations | `model_evals_list` |
+| Check compatibility (read-only) | `model_evals_check_compatibility(model_url, project_id, version_number)`: `allowed`, `blocks`, `leakage`. `model_not_ready` (both tools): training or upload in progress, wait and retry. Failed, train or upload again |
+| Evaluate on another version (spends compute) | `model_evals_create(model_url, project_id, version_number, rerun=False)`: `reused: true` is the existing one. `pending` can mean a TensorRT compile, not a failure |
 | Evaluation summary | `model_evals_get` |
 | Evaluation recommendations | `model_evals_get_recommendations` |
 | Per-class metrics | `model_evals_get_performance_by_class` |
