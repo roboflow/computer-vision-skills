@@ -260,7 +260,7 @@ The MCP server exposes every evaluation panel. All require the `model-eval:read`
 | Get model info | `models_get` |
 | List models | `models_list` |
 | Find evaluations | `model_evals_list` |
-| Preflight an evaluation on another dataset version (read-only) | `model_evals_preflight(model_url, project_id, version_number)`: `allowed`, `blocks`, `leakage` |
+| Compatibility check for an evaluation on another dataset version (read-only) | `model_evals_check_compatibility(model_url, project_id, version_number)`: `allowed`, `blocks`, `leakage` |
 | Evaluate a model on another version (spends compute) | `model_evals_create(model_url, project_id, version_number, rerun=False)`: `reused: true` returns the existing evaluation |
 | Evaluation summary | `model_evals_get` |
 | Evaluation recommendations | `model_evals_get_recommendations` |
