@@ -246,7 +246,7 @@ The MCP server exposes every evaluation panel. All require the `model-eval:read`
 
 - **Models page:** Project sidebar > Models. Shows all Instant + fine-tuned models with metrics, architecture, license, dataset version used.
 - **Universe tab:** Starred Universe models available for transfer learning.
-- **Leakage:** Before you compare models, read the `leakage` tag of each evaluation. Leaked images stay in the metrics. Do not pick a best model from an evaluation with leakage `detected` or `unknown`. Do not rerun in a loop to get a better number.
+- **Leakage:** Before you compare models, read each `leakage` tag. Leaked images stay in the metrics. Do not pick a best model from an evaluation with leakage `detected` or `unknown`. Do not rerun in a loop to get a better number.
 - **Visualize:** Quick test on test-set images, uploaded images, or webcam. Works for OD, segmentation, classification, keypoint. Not supported for multimodal.
 
 ## MCP Tools Reference
@@ -260,8 +260,8 @@ The MCP server exposes every evaluation panel. All require the `model-eval:read`
 | Get model info | `models_get` |
 | List models | `models_list` |
 | Find evaluations | `model_evals_list` |
-| Compatibility check for an evaluation on another dataset version (read-only) | `model_evals_check_compatibility(model_url, project_id, version_number)`: `allowed`, `blocks`, `leakage` |
-| Evaluate a model on another version (spends compute) | `model_evals_create(model_url, project_id, version_number, rerun=False)`: `reused: true` returns the existing evaluation |
+| Check compatibility with another version (read-only) | `model_evals_check_compatibility(model_url, project_id, version_number)`: `allowed`, `blocks`, `leakage`. `model_not_ready` (both tools): wait for the training or upload, then retry |
+| Evaluate a model on another version (spends compute) | `model_evals_create(model_url, project_id, version_number, rerun=False)`: `reused: true` returns the existing one. `pending` can mean a TensorRT compile, not a failure |
 | Evaluation summary | `model_evals_get` |
 | Evaluation recommendations | `model_evals_get_recommendations` |
 | Per-class metrics | `model_evals_get_performance_by_class` |
